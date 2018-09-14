@@ -1,0 +1,29 @@
+replicaCount: 1
+image:
+  repository: acme
+  tag: latest
+  pullPolicy: Always
+service:
+  type: ClusterIP
+  externalPort: 80
+  internalPort: 8080
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+ingress:
+  enabled: true
+  basedomain: 127.0.0.1.nip.io
+hpa:
+  enabled: true
+  min: 1
+  max: 5
+  cpu: 50
+profile: default
+configmap:
+  enabled: false
+secret:
+  enabled: false
