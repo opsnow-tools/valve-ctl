@@ -22,11 +22,11 @@ echo "VERSION=${VERSION}"
 if [ -z ${VERSION} ]; then
     VERSION=$(cat ./VERSION | xargs)
 else
-    MAJOR=$(echo ./VERSION | cut -d'.' -f1 | xargs)
-    MINOR=$(echo ./VERSION | cut -d'.' -f2 | xargs)
+    MAJOR=$(echo ./VERSION | xargs | cut -d'.' -f1)
+    MINOR=$(echo ./VERSION | xargs | cut -d'.' -f2)
 
-    LATEST_MAJOR=$(echo "${VERSION}" | cut -d'.' -f1 | xargs)
-    LATEST_MINOR=$(echo "${VERSION}" | cut -d'.' -f2 | xargs)
+    LATEST_MAJOR=$(echo "${VERSION}" | cut -d'.' -f1)
+    LATEST_MINOR=$(echo "${VERSION}" | cut -d'.' -f2)
 
     if [ "x${MAJOR}" != "x${LATEST_MAJOR}" ] || [ "x${MINOR}" != "x${LATEST_MINOR}" ]; then
         VERSION=$(cat ./VERSION | xargs)
