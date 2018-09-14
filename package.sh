@@ -3,6 +3,9 @@
 # curl -s https://api.github.com/rate_limit
 # echo
 
+USERNAME=${1:-opsnow-tools}
+REPONAME=${2:-valve-tee}
+
 rm -rf target
 mkdir -p target/dist
 mkdir -p target/charts
@@ -13,7 +16,7 @@ OS_NAME="$(uname | awk '{print tolower($0)}')"
 echo "OS_NAME=${OS_NAME}"
 
 # VERSION
-VERSION=$(curl -s https://api.github.com/repos/opsnow-tools/valve-tee/releases/latest | grep tag_name | cut -d'"' -f4 | xargs)
+VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4 | xargs)
 
 if [ -z ${VERSION} ]; then
     VERSION=$(cat ./VERSION | xargs)
