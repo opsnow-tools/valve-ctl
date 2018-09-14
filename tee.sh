@@ -126,7 +126,7 @@ _logo() {
 
 _usage() {
     _logo
-    _echo " Usage: $0 {create|up|tools|update|version}"
+    _echo " Usage: $0 {create|up|delete|tools|update|version}"
     _bar
     _error
 }
@@ -138,11 +138,14 @@ _run() {
         i|init)
             _draft_init
             ;;
-        c|create|gen)
+        c|gen|create)
             _draft_create
             ;;
         u|up)
             _draft_up
+            ;;
+        d|rm|delete)
+            _draft_delete
             ;;
         tools)
             _tools
@@ -253,7 +256,7 @@ _draft_create() {
     echo
 
     if [ "${ANSWER}" != "YES" ]; then
-        exit 0
+        _error
     fi
 
     DIST=/tmp/tee-draft-${THIS_VERSION}
@@ -378,14 +381,28 @@ _draft_up() {
 _draft_delete() {
     # _draft_init
 
-    _command "helm ls --all"
-    helm ls --all
+    # _command "helm ls --all"
+    # helm ls --all
 
-    _read "Enter chart name : "
+    # _read "Enter chart name : "
 
-    if [ ! -z ${ANSWER} ]; then
-        _command "helm delete --purge ${ANSWER}"
-        helm delete --purge ${ANSWER}
+    if [ ! -f draft.toml ]; then
+        _error "Not found draft.toml"
+    fi
+
+    echo
+    _read "Do you really want to delete? (YES/[no]) : "
+    echo
+
+    if [ "${ANSWER}" != "YES" ]; then
+        _error
+    fi
+
+    NAME="$(cat draft.toml | grep "name =" | cut -d'"' -f2 | xargs)"
+
+    if [ ! -z ${NAME} ]; then
+        _command "helm delete --purge ${NAME}"
+        helm delete --purge ${NAME}
     fi
 }
 
