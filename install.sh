@@ -44,7 +44,7 @@ if [ -z ${VERSION} ]; then
     _error
 fi
 
-DIST=/tmp/valve-tee
+DIST=/tmp/valve-tee-${VERSION}
 rm -rf ${DIST}
 
 # download
