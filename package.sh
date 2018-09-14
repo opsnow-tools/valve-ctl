@@ -62,3 +62,7 @@ echo
 
 # target/charts/
 cp -rf charts/* target/charts/
+
+# ls
+ls -al target
+ls -al target/dist
