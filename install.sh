@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# curl -sL repo.opsnow.io/install | bash
-
-OS_NAME="$(uname | awk '{print tolower($0)}')"
-
-################################################################################
-
 command -v tput > /dev/null || TPUT=false
 
 _echo() {
@@ -35,6 +29,8 @@ _error() {
 }
 
 ################################################################################
+
+OS_NAME="$(uname | awk '{print tolower($0)}')"
 
 VERSION=$(curl -s https://api.github.com/repos/opsnow-tools/valve-tee/releases/latest | grep tag_name | cut -d'"' -f4)
 

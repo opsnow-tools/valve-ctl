@@ -1,16 +1,5 @@
 #!/bin/bash
 
-# curl -sL toast.sh/helper/bastion.sh | bash
-
-#figlet bastion
-echo "================================================================================"
-echo "  _               _   _ "
-echo " | |__   __ _ ___| |_(_) ___  _ __ "
-echo " | '_ \ / _' / __| __| |/ _ \| '_ \ "
-echo " | |_) | (_| \__ \ |_| | (_) | | | | "
-echo " |_.__/ \__,_|___/\__|_|\___/|_| |_| "
-echo "================================================================================"
-
 command -v tput > /dev/null || TPUT=false
 
 _echo() {
@@ -39,6 +28,8 @@ _error() {
     exit 1
 }
 
+################################################################################
+
 DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
 OS_NAME="$(uname | awk '{print tolower($0)}')"
@@ -66,7 +57,7 @@ fi
 echo "${OS_FULL}"
 echo "${DATE}"
 
-if [ "${OS_TYPE}" == "" ]; then
+if [ -z ${OS_TYPE} ]; then
     _error "Not supported OS. [${OS_NAME}]"
 fi
 
