@@ -25,15 +25,15 @@ else
     MAJOR=$(echo ./VERSION | cut -d'.' -f1 | xargs)
     MINOR=$(echo ./VERSION | cut -d'.' -f2 | xargs)
 
-    LATEST_MAJOR=$(echo ${VERSION} | cut -d'.' -f1 | xargs)
-    LATEST_MINOR=$(echo ${VERSION} | cut -d'.' -f2 | xargs)
+    LATEST_MAJOR=$(echo "${VERSION}" | cut -d'.' -f1 | xargs)
+    LATEST_MINOR=$(echo "${VERSION}" | cut -d'.' -f2 | xargs)
 
     if [ "x${MAJOR}" != "x${LATEST_MAJOR}" ] || [ "x${MINOR}" != "x${LATEST_MINOR}" ]; then
         VERSION=$(cat ./VERSION | xargs)
     fi
 
     # add
-    VERSION=$(echo ${VERSION} | perl -pe 's/^(([v\d]+\.)*)(\d+)(.*)$/$1.($3+1).$4/e')
+    VERSION=$(echo "${VERSION}" | perl -pe 's/^(([v\d]+\.)*)(\d+)(.*)$/$1.($3+1).$4/e')
 fi
 
 printf "${VERSION}" > target/VERSION
