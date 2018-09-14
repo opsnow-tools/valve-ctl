@@ -17,6 +17,7 @@ echo "OS_NAME=${OS_NAME}"
 
 # VERSION
 VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4 | xargs)
+echo "VERSION=${VERSION}"
 
 if [ -z ${VERSION} ]; then
     VERSION=$(cat ./VERSION | xargs)
