@@ -28,7 +28,7 @@ else
     LATEST_MAJOR=$(echo ${VERSION} | cut -d'.' -f1 | xargs)
     LATEST_MINOR=$(echo ${VERSION} | cut -d'.' -f2 | xargs)
 
-    if [ "${MAJOR}" != "${LATEST_MAJOR}" ] || [ "${MINOR}" != "${LATEST_MINOR}" ]; then
+    if [ "x${MAJOR}" != "x${LATEST_MAJOR}" ] || [ "x${MINOR}" != "x${LATEST_MINOR}" ]; then
         VERSION=$(cat ./VERSION | xargs)
     fi
 
