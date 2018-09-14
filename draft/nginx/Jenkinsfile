@@ -1,5 +1,5 @@
 def IMAGE_NAME = "sample"
-def REPOSITORY_URL = "https://github.com/nalbam/sample"
+def REPOSITORY_URL = "https://github.com/opsnow/sample"
 def REPOSITORY_SECRET = ""
 def CLUSTER = ""
 def BASE_DOMAIN = ""
