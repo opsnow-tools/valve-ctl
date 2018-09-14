@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# curl -s https://api.github.com/rate_limit
-# echo
+curl -s https://api.github.com/rate_limit
+echo
 
 USERNAME=${1:-opsnow-tools}
 REPONAME=${2:-valve-tee}
