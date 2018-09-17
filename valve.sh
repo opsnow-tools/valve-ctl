@@ -398,10 +398,12 @@ _draft_launch() {
     fi
 
     _command "draft up -e ${NAMESPACE}"
-	draft up -e ${NAMESPACE}
+    draft up -e ${NAMESPACE}
 
-    draft logs | grep error > /tmp/valve-draft-logs-error
-    COUNT=$(cat /tmp/valve-draft-logs-error | wc -l)
+    DRAFT_LOGS=$(mktemp /tmp/valve-draft-logs.XXXXXX)
+
+    draft logs | grep error > ${DRAFT_LOGS}
+    COUNT=$(cat ${DRAFT_LOGS} | wc -l | xargs)
     if [ "x${COUNT}" != "x0" ]; then
         _command "draft logs"
         draft logs
