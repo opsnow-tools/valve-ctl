@@ -189,26 +189,28 @@ _config_save() {
     echo "NEXUS=${NEXUS}" >> ${CONFIG}
 }
 
-_waiting() {
-    STR=${1}
-    SEC=${2:-30}
+_waiting_pod() {
+    _NS=${1}
+    _NM=${2}
+    SEC=${3:-30}
 
-    _command "${STR}"
-
-    printf '.'
+    _command "kubectl get pod -n ${_NS} | grep ${_NM}"
 
     IDX=0
     while [ 1 ]; do
-        CHK=$(echo $STR)
-        if [ "x${CHK}" != "x0" ] || [ "x${IDX}" == "x${SEC}" ]; then
+        kubectl get pod -n ${_NS} | grep ${_NM}
+        STATUS=$(kubectl get pod -n ${_NS} | grep ${_NM} | awk '{print $3}' | head -1)
+
+        if [ "${STATUS}" == "Running" ] || [ "x${IDX}" == "x${SEC}" ]; then
             break
         fi
+
         IDX=$(( ${IDX} + 1 ))
-        printf '.'
-        wait 1
+        # printf '.'
+        sleep 1
     done
 
-    printf '.\n'
+    # printf '.\n'
 }
 
 _helm_init() {
@@ -216,7 +218,7 @@ _helm_init() {
     helm init
 
     # waiting tiller
-    _waiting "kubectl get pod -n kube-system | grep tiller | grep Running | wc -l"
+    _waiting_pod "kube-system" "tiller"
 
     _command "helm version"
     helm version
@@ -256,10 +258,10 @@ _draft_init() {
 
     if [ "x${ING_CNT}" == "x0" ] || [ "x${REG_CNT}" == "x0" ]; then
         # waiting nginx-ingress
-        _waiting "kubectl get pod -n ${NAMESPACE} | grep nginx-ingress | grep Running | wc -l"
+        _waiting_pod "${NAMESPACE}" "nginx-ingress"
 
         # waiting docker-registry
-        _waiting "kubectl get pod -n ${NAMESPACE} | grep docker-registry | grep Running | wc -l"
+        _waiting_pod "${NAMESPACE}" "docker-registry"
     fi
 
     REGISTRY=
