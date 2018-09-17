@@ -352,9 +352,9 @@ _draft_create() {
 
     # charts/acme/values.yaml
     if [ -z ${REGISTRY} ]; then
-        _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
+        _replace "s|repository: .*|repository: ${NAME}|" charts/acme/values.yaml
     else
-        _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
+        _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/acme/values.yaml
     fi
 
     # charts path
