@@ -342,13 +342,13 @@ _draft_create() {
     # Jenkinsfile IMAGE_NAME
     DEFAULT=$(basename $(pwd))
     _chart_replace "Jenkinsfile" "def IMAGE_NAME" "${DEFAULT}"
-    IMAGE_NAME="${REPLACE_VAL}"
+    NAME="${REPLACE_VAL}"
 
     # draft.toml NAME
-    _replace "s|NAME|${IMAGE_NAME}|" draft.toml
+    _replace "s|NAME|${NAME}|" draft.toml
 
     # charts/acme/Chart.yaml
-    _replace "s|name: .*|name: ${IMAGE_NAME}|" charts/acme/Chart.yaml
+    _replace "s|name: .*|name: ${NAME}|" charts/acme/Chart.yaml
 
     # charts/acme/values.yaml
     if [ -z ${REGISTRY} ]; then
@@ -358,7 +358,7 @@ _draft_create() {
     fi
 
     # charts path
-    mv charts/acme charts/${IMAGE_NAME}
+    mv charts/acme charts/${NAME}
 
     # Jenkinsfile REPOSITORY_URL
     DEFAULT=
