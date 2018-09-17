@@ -410,7 +410,7 @@ _draft_launch() {
         _error
     fi
 
-    _command "helm ls"
+    _command "helm ls ${NAME}"
     helm ls
 
     _waiting_pod "${NAMESPACE}" "${NAME}"
