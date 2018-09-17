@@ -351,7 +351,11 @@ _draft_create() {
     _replace "s|name: .*|name: ${IMAGE_NAME}|" charts/acme/Chart.yaml
 
     # charts/acme/values.yaml
-    _replace "s|repository: .*|repository: ${IMAGE_NAME}|" charts/acme/values.yaml
+    if [ -z ${REGISTRY} ]; then
+        _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
+    else
+        _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
+    fi
 
     # charts name
     mv charts/acme charts/${IMAGE_NAME}
