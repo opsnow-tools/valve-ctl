@@ -126,7 +126,7 @@ _logo() {
 
 _usage() {
     _logo
-    _echo " Usage: $0 {create|up|delete|tools|update|version}"
+    _echo " Usage: $0 {gen|up|rm|tools|update|version}"
     _bar
     _error
 }
@@ -141,8 +141,8 @@ _run() {
         c|gen|create)
             _draft_create
             ;;
-        u|up)
-            _draft_up
+        u|up|launch)
+            _draft_launch
             ;;
         d|rm|delete)
             _draft_delete
@@ -189,14 +189,42 @@ _config_save() {
     echo "NEXUS=${NEXUS}" >> ${CONFIG}
 }
 
+_waiting() {
+    STR=${1}
+    SEC=${2:-30}
+
+    _command "${STR}"
+
+    echo
+    printf 'w '
+
+    IDX=0
+    while [ 1 ]; do
+        CHK=$($STR)
+        if [ "x${CHK}" != "x0" ] || [ "x${IDX}" == "x${SEC}" ]; then
+            break
+        fi
+        IDX=$(( ${IDX} + 1 ))
+        printf '.'
+        wait 1
+    done
+
+    printf '.\n'
+    echo
+}
+
 _helm_init() {
     _command "helm init"
     helm init
 
     # TODO wait tiller
+    _waiting "kubectl get pod -n kube-system | grep tiller | grep Running | wc -l"
 
     _command "helm version"
     helm version
+
+    _command "helm repo update"
+    helm repo update
 }
 
 _draft_init() {
@@ -350,7 +378,7 @@ _draft_create() {
     _config_save
 }
 
-_draft_up() {
+_draft_launch() {
     _draft_init
 
     if [ ! -f draft.toml ]; then
