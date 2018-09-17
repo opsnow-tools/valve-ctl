@@ -198,9 +198,10 @@ _waiting_pod() {
 
     IDX=0
     while [ 1 ]; do
-        kubectl get pod -n ${_NS} | grep ${_NM} | head -1
+        kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > /tmp/valve-status
+        cat /tmp/valve-status
 
-        STATUS=$(kubectl get pod -n ${_NS} | grep ${_NM} | awk '{print $3}' | head -1)
+        STATUS=$(cat /tmp/valve-status | awk '{print $3}')
         if [ "${STATUS}" == "Running" ] || [ "x${IDX}" == "x${SEC}" ]; then
             break
         fi
@@ -399,10 +400,17 @@ _draft_launch() {
     _command "draft up -e ${NAMESPACE}"
 	draft up -e ${NAMESPACE}
 
-    _waiting_pod "${NAMESPACE}" "${NAME}"
+    draft logs | grep error > /tmp/valve-draft-logs-error
+    if [ "$(cat /tmp/valve-draft-logs-error | wc -l)" != "0" ]; then
+        _command "draft logs"
+        draft logs
+        _error
+    fi
 
     _command "helm ls"
     helm ls
+
+    _waiting_pod "${NAMESPACE}" "${NAME}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
