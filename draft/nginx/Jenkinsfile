@@ -6,7 +6,7 @@ def BASE_DOMAIN = ""
 def SLACK_TOKEN = ""
 
 @Library("github.com/opsnow-tools/valve-butler")
-def pump = new com.opsnow.valve.Pump()
+def pump = new com.opsnow.valve.Butler()
 def label = "worker-${UUID.randomUUID().toString()}"
 def VERSION = ""
 def SOURCE_LANG = ""
