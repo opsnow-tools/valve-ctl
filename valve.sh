@@ -357,7 +357,7 @@ _draft_create() {
         _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
     fi
 
-    # charts name
+    # charts path
     mv charts/acme charts/${IMAGE_NAME}
 
     # Jenkinsfile REPOSITORY_URL
