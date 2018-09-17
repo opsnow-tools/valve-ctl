@@ -36,6 +36,10 @@ else
     VERSION=$(echo ${VERSION} | perl -pe 's/^(([v\d]+\.)*)(\d+)(.*)$/$1.($3+1).$4/e')
 fi
 
+printf "${VERSION}" > target/VERSION
+echo "VERSION=${VERSION}"
+echo
+
 # 755
 find ./** | grep [.]sh | xargs chmod 755
 
