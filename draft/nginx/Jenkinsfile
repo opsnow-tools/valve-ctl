@@ -5,7 +5,7 @@ def CLUSTER = ""
 def BASE_DOMAIN = ""
 def SLACK_TOKEN = ""
 
-@Library("github.com/opsnow-tools/valve-pump")
+@Library("github.com/opsnow-tools/valve-butler")
 def pump = new com.opsnow.valve.Pump()
 def label = "worker-${UUID.randomUUID().toString()}"
 def VERSION = ""
