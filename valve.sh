@@ -198,19 +198,16 @@ _waiting_pod() {
 
     IDX=0
     while [ 1 ]; do
-        kubectl get pod -n ${_NS} | grep ${_NM}
-        STATUS=$(kubectl get pod -n ${_NS} | grep ${_NM} | awk '{print $3}' | head -1)
+        kubectl get pod -n ${_NS} | grep ${_NM} | head -1
 
+        STATUS=$(kubectl get pod -n ${_NS} | grep ${_NM} | awk '{print $3}' | head -1)
         if [ "${STATUS}" == "Running" ] || [ "x${IDX}" == "x${SEC}" ]; then
             break
         fi
 
         IDX=$(( ${IDX} + 1 ))
-        # printf '.'
-        sleep 1
+        sleep 2
     done
-
-    # printf '.\n'
 }
 
 _helm_init() {
@@ -257,10 +254,7 @@ _draft_init() {
     fi
 
     if [ "x${ING_CNT}" == "x0" ] || [ "x${REG_CNT}" == "x0" ]; then
-        # waiting nginx-ingress
         _waiting_pod "${NAMESPACE}" "nginx-ingress"
-
-        # waiting docker-registry
         _waiting_pod "${NAMESPACE}" "docker-registry"
     fi
 
@@ -404,6 +398,8 @@ _draft_launch() {
 
     _command "draft up -e ${NAMESPACE}"
 	draft up -e ${NAMESPACE}
+
+    _waiting_pod "${NAMESPACE}" "${NAME}"
 
     _command "helm ls"
     helm ls
