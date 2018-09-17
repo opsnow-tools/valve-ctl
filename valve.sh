@@ -195,12 +195,11 @@ _waiting() {
 
     _command "${STR}"
 
-    echo
-    printf 'w '
+    printf '.'
 
     IDX=0
     while [ 1 ]; do
-        CHK=$($STR)
+        CHK=$(echo $STR)
         if [ "x${CHK}" != "x0" ] || [ "x${IDX}" == "x${SEC}" ]; then
             break
         fi
@@ -210,14 +209,13 @@ _waiting() {
     done
 
     printf '.\n'
-    echo
 }
 
 _helm_init() {
     _command "helm init"
     helm init
 
-    # TODO wait tiller
+    # waiting tiller
     _waiting "kubectl get pod -n kube-system | grep tiller | grep Running | wc -l"
 
     _command "helm version"
@@ -239,8 +237,8 @@ _draft_init() {
     NAMESPACE="kube-public"
 
     # nginx-ingress
-    COUNT=$(helm ls nginx-ingress | wc -l | xargs)
-    if [ "x${COUNT}" == "x0" ]; then
+    ING_CNT=$(helm ls nginx-ingress | wc -l | xargs)
+    if [ "x${ING_CNT}" == "x0" ]; then
         curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/nginx-ingress.yaml > /tmp/nginx-ingress.yaml
 
         _command "helm upgrade --install nginx-ingress stable/nginx-ingress"
@@ -248,15 +246,21 @@ _draft_init() {
     fi
 
     # docker-registry
-    COUNT=$(helm ls docker-registry | wc -l | xargs)
-    if [ "x${COUNT}" == "x0" ]; then
+    REG_CNT=$(helm ls docker-registry | wc -l | xargs)
+    if [ "x${REG_CNT}" == "x0" ]; then
         curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/docker-registry.yaml > /tmp/docker-registry.yaml
 
         _command "helm upgrade --install docker-registry stable/docker-registry"
         helm upgrade --install docker-registry stable/docker-registry --namespace ${NAMESPACE} -f /tmp/docker-registry.yaml
     fi
 
-    # TODO wait infra
+    if [ "x${ING_CNT}" == "x0" ] || [ "x${REG_CNT}" == "x0" ]; then
+        # waiting nginx-ingress
+        _waiting "kubectl get pod -n ${NAMESPACE} | grep nginx-ingress | grep Running | wc -l"
+
+        # waiting docker-registry
+        _waiting "kubectl get pod -n ${NAMESPACE} | grep docker-registry | grep Running | wc -l"
+    fi
 
     REGISTRY=
     REGISTRY="docker-registry.127.0.0.1.nip.io:30500"
