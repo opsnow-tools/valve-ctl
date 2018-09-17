@@ -26,7 +26,7 @@ jobs:
       - run:
           name: Publish
           command: |
-            aws s3 sync workspace/target/ s3://repo.opsnow.io/valve-tee/ --acl public-read
+            aws s3 sync workspace/target/ s3://repo.opsnow.io/${CIRCLE_PROJECT_REPONAME}/ --acl public-read
   release:
     docker:
       - image: circleci/golang

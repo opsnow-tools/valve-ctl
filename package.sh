@@ -4,7 +4,7 @@ curl -s https://api.github.com/rate_limit
 echo
 
 USERNAME=${1:-opsnow-tools}
-REPONAME=${2:-valve-tee}
+REPONAME=${2:-valve-ctl}
 
 rm -rf target
 mkdir -p target/dist
@@ -44,14 +44,14 @@ echo
 # 755
 find ./** | grep [.]sh | xargs chmod 755
 
-# tee
-cp -rf tee.sh target/dist/tee
+# valve
+cp -rf valve.sh target/dist/valve
 
 # version
 if [ "${OS_NAME}" == "linux" ]; then
-    sed -i -e "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/" target/dist/tee
+    sed -i -e "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/" target/dist/valve
 elif [ "${OS_NAME}" == "darwin" ]; then
-    sed -i "" -e "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/" target/dist/tee
+    sed -i "" -e "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/" target/dist/valve
 fi
 
 # target/

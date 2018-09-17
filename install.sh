@@ -32,7 +32,7 @@ _error() {
 
 OS_NAME="$(uname | awk '{print tolower($0)}')"
 
-VERSION=$(curl -s https://api.github.com/repos/opsnow-tools/valve-tee/releases/latest | grep tag_name | cut -d'"' -f4)
+VERSION=$(curl -s https://api.github.com/repos/opsnow-tools/valve-ctl/releases/latest | grep tag_name | cut -d'"' -f4)
 
 _result "version: ${VERSION}"
 
@@ -40,19 +40,19 @@ if [ -z ${VERSION} ]; then
     _error
 fi
 
-DIST=/tmp/valve-tee-${VERSION}
+DIST=/tmp/valve-ctl-${VERSION}
 rm -rf ${DIST}
 
 # download
-curl -sL -o ${DIST} https://github.com/opsnow-tools/valve-tee/releases/download/${VERSION}/tee
+curl -sL -o ${DIST} https://github.com/opsnow-tools/valve-ctl/releases/download/${VERSION}/valve
 chmod +x ${DIST}
 
 if [ -d ~/.local/bin ]; then
-    mv -f ${DIST} ~/.local/bin/tee
+    mv -f ${DIST} ~/.local/bin/valve
 elif [ -d ~/bin ]; then
-    mv -f ${DIST} ~/bin/tee
+    mv -f ${DIST} ~/bin/valve
 else
-    mv -f ${DIST} /usr/local/bin/tee
+    mv -f ${DIST} /usr/local/bin/valve
 fi
 
 # done

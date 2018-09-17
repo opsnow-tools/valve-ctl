@@ -23,7 +23,7 @@ CHARTMUSEUM=
 SONARQUBE=
 NEXUS=
 
-CONFIG=${HOME}/.valve-tee
+CONFIG=${HOME}/.valve-ctl
 
 touch ${CONFIG} && . ${CONFIG}
 
@@ -114,13 +114,13 @@ _replace() {
 }
 
 _logo() {
-    #figlet valve tee
+    #figlet valve ctl
     _bar
-    _echo "             _             _             "
-    _echo " __   ____ _| |_   _____  | |_ ___  ___  "
-    _echo " \ \ / / _' | \ \ / / _ \ | __/ _ \/ _ \ "
-    _echo "  \ V / (_| | |\ V /  __/ | ||  __/  __/ "
-    _echo "   \_/ \__,_|_| \_/ \___|  \__\___|\___|  ${THIS_VERSION}"
+    _echo "             _                  _   _  "
+    _echo " __   ____ _| |_   _____    ___| |_| | "
+    _echo " \ \ / / _' | \ \ / / _ \  / __| __| | "
+    _echo "  \ V / (_| | |\ V /  __/ | (__| |_| | "
+    _echo "   \_/ \__,_|_| \_/ \___|  \___|\__|_|  ${THIS_VERSION} "
     _bar
 }
 
@@ -162,12 +162,12 @@ _run() {
 }
 
 _tools() {
-    curl -sL repo.opsnow.io/valve-tee/tools | bash
+    curl -sL repo.opsnow.io/valve-ctl/tools | bash
     exit 0
 }
 
 _update() {
-    curl -sL repo.opsnow.io/valve-tee/install | bash
+    curl -sL repo.opsnow.io/valve-ctl/install | bash
     exit 0
 }
 
@@ -176,7 +176,7 @@ _version() {
 }
 
 _config_save() {
-    echo "# tee config" > ${CONFIG}
+    echo "# valve config" > ${CONFIG}
     echo "SECRET=${SECRET}" >> ${CONFIG}
     echo "PACKAGE=${PACKAGE}" >> ${CONFIG}
     echo "NAMESPACE=${NAMESPACE}" >> ${CONFIG}
@@ -213,7 +213,7 @@ _draft_init() {
     # nginx-ingress
     COUNT=$(helm ls nginx-ingress | wc -l | xargs)
     if [ "x${COUNT}" == "x0" ]; then
-        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-tee/master/charts/nginx-ingress.yaml > /tmp/nginx-ingress.yaml
+        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/nginx-ingress.yaml > /tmp/nginx-ingress.yaml
 
         _command "helm upgrade --install nginx-ingress stable/nginx-ingress"
         helm upgrade --install nginx-ingress stable/nginx-ingress --namespace ${NAMESPACE} -f /tmp/nginx-ingress.yaml
@@ -222,7 +222,7 @@ _draft_init() {
     # docker-registry
     COUNT=$(helm ls docker-registry | wc -l | xargs)
     if [ "x${COUNT}" == "x0" ]; then
-        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-tee/master/charts/docker-registry.yaml > /tmp/docker-registry.yaml
+        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/docker-registry.yaml > /tmp/docker-registry.yaml
 
         _command "helm upgrade --install docker-registry stable/docker-registry"
         helm upgrade --install docker-registry stable/docker-registry --namespace ${NAMESPACE} -f /tmp/docker-registry.yaml
@@ -259,15 +259,15 @@ _draft_create() {
         _error
     fi
 
-    DIST=/tmp/tee-draft-${THIS_VERSION}
-    LIST=/tmp/tee-draft-ls
+    DIST=/tmp/valve-draft-${THIS_VERSION}
+    LIST=/tmp/valve-draft-ls
 
     if [ ! -d ${DIST} ]; then
         mkdir -p ${DIST}
 
         # download
         pushd ${DIST}
-        curl -sL https://github.com/opsnow-tools/valve-tee/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
+        curl -sL https://github.com/opsnow-tools/valve-ctl/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
         popd
 
         echo
