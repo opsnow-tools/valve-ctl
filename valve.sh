@@ -189,36 +189,34 @@ _config_save() {
     echo "NEXUS=${NEXUS}" >> ${CONFIG}
 }
 
-_waiting() {
-    STR=${1}
-    SEC=${2:-30}
+_waiting_pod() {
+    _NS=${1}
+    _NM=${2}
+    SEC=${3:-30}
 
-    _command "${STR}"
-
-    echo
-    printf 'w '
+    _command "kubectl get pod -n ${_NS} | grep ${_NM}"
 
     IDX=0
     while [ 1 ]; do
-        CHK=$($STR)
-        if [ "x${CHK}" != "x0" ] || [ "x${IDX}" == "x${SEC}" ]; then
+        kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > /tmp/valve-status
+        cat /tmp/valve-status
+
+        STATUS=$(cat /tmp/valve-status | awk '{print $3}')
+        if [ "${STATUS}" == "Running" ] || [ "x${IDX}" == "x${SEC}" ]; then
             break
         fi
-        IDX=$(( ${IDX} + 1 ))
-        printf '.'
-        wait 1
-    done
 
-    printf '.\n'
-    echo
+        IDX=$(( ${IDX} + 1 ))
+        sleep 2
+    done
 }
 
 _helm_init() {
     _command "helm init"
     helm init
 
-    # TODO wait tiller
-    _waiting "kubectl get pod -n kube-system | grep tiller | grep Running | wc -l"
+    # waiting tiller
+    _waiting_pod "kube-system" "tiller"
 
     _command "helm version"
     helm version
@@ -239,8 +237,8 @@ _draft_init() {
     NAMESPACE="kube-public"
 
     # nginx-ingress
-    COUNT=$(helm ls nginx-ingress | wc -l | xargs)
-    if [ "x${COUNT}" == "x0" ]; then
+    ING_CNT=$(helm ls nginx-ingress | wc -l | xargs)
+    if [ "x${ING_CNT}" == "x0" ]; then
         curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/nginx-ingress.yaml > /tmp/nginx-ingress.yaml
 
         _command "helm upgrade --install nginx-ingress stable/nginx-ingress"
@@ -248,15 +246,18 @@ _draft_init() {
     fi
 
     # docker-registry
-    COUNT=$(helm ls docker-registry | wc -l | xargs)
-    if [ "x${COUNT}" == "x0" ]; then
+    REG_CNT=$(helm ls docker-registry | wc -l | xargs)
+    if [ "x${REG_CNT}" == "x0" ]; then
         curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/docker-registry.yaml > /tmp/docker-registry.yaml
 
         _command "helm upgrade --install docker-registry stable/docker-registry"
         helm upgrade --install docker-registry stable/docker-registry --namespace ${NAMESPACE} -f /tmp/docker-registry.yaml
     fi
 
-    # TODO wait infra
+    if [ "x${ING_CNT}" == "x0" ] || [ "x${REG_CNT}" == "x0" ]; then
+        _waiting_pod "${NAMESPACE}" "nginx-ingress"
+        _waiting_pod "${NAMESPACE}" "docker-registry"
+    fi
 
     REGISTRY=
     REGISTRY="docker-registry.127.0.0.1.nip.io:30500"
@@ -341,19 +342,23 @@ _draft_create() {
     # Jenkinsfile IMAGE_NAME
     DEFAULT=$(basename $(pwd))
     _chart_replace "Jenkinsfile" "def IMAGE_NAME" "${DEFAULT}"
-    IMAGE_NAME="${REPLACE_VAL}"
+    NAME="${REPLACE_VAL}"
 
     # draft.toml NAME
-    _replace "s|NAME|${IMAGE_NAME}|" draft.toml
+    _replace "s|NAME|${NAME}|" draft.toml
 
     # charts/acme/Chart.yaml
-    _replace "s|name: .*|name: ${IMAGE_NAME}|" charts/acme/Chart.yaml
+    _replace "s|name: .*|name: ${NAME}|" charts/acme/Chart.yaml
 
     # charts/acme/values.yaml
-    _replace "s|repository: .*|repository: ${IMAGE_NAME}|" charts/acme/values.yaml
+    if [ -z ${REGISTRY} ]; then
+        _replace "s|repository: .*|repository: ${NAME}|" charts/acme/values.yaml
+    else
+        _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/acme/values.yaml
+    fi
 
-    # charts name
-    mv charts/acme charts/${IMAGE_NAME}
+    # charts path
+    mv charts/acme charts/${NAME}
 
     # Jenkinsfile REPOSITORY_URL
     DEFAULT=
@@ -397,10 +402,22 @@ _draft_launch() {
     fi
 
     _command "draft up -e ${NAMESPACE}"
-	draft up -e ${NAMESPACE}
+    draft up -e ${NAMESPACE}
 
-    _command "helm ls"
+    DRAFT_LOGS=$(mktemp /tmp/valve-draft-logs.XXXXXX)
+
+    draft logs | grep error > ${DRAFT_LOGS}
+    COUNT=$(cat ${DRAFT_LOGS} | wc -l | xargs)
+    if [ "x${COUNT}" != "x0" ]; then
+        _command "draft logs"
+        draft logs
+        _error
+    fi
+
+    _command "helm ls ${NAME}"
     helm ls
+
+    _waiting_pod "${NAMESPACE}" "${NAME}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
