@@ -401,7 +401,8 @@ _draft_launch() {
 	draft up -e ${NAMESPACE}
 
     draft logs | grep error > /tmp/valve-draft-logs-error
-    if [ "$(cat /tmp/valve-draft-logs-error | wc -l)" != "0" ]; then
+    COUNT=$(cat /tmp/valve-draft-logs-error | wc -l)
+    if [ "x${COUNT}" != "x0" ]; then
         _command "draft logs"
         draft logs
         _error
