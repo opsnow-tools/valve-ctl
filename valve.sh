@@ -96,11 +96,13 @@ _command() {
 }
 
 _success() {
+    echo
     _echo "+ $@" 2
     exit 0
 }
 
 _error() {
+    echo
     _echo "- $@" 1
     exit 1
 }
@@ -448,7 +450,7 @@ _draft_launch() {
     fi
 
     _command "helm ls ${NAME}"
-    helm ls
+    helm ls ${NAME}
 
     _waiting_pod "${NAMESPACE}" "${NAME}"
 
