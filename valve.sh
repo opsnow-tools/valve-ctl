@@ -310,6 +310,7 @@ _draft_create() {
 
     # find all
     ls ${DIST} > ${LIST}
+    CNT=$(cat ${LIST} | wc -l | xargs)
 
     IDX=0
     while read VAL; do
@@ -318,7 +319,7 @@ _draft_create() {
     done < ${LIST}
 
     echo
-    _read "Please select a project type. (1-5) : "
+    _read "Please select a project type. (1-${CNT}) : "
     echo
 
     SELECTED=
@@ -330,59 +331,87 @@ _draft_create() {
         _error
     fi
     SELECTED=$(sed -n ${ANSWER}p ${LIST})
+    if [ -z ${SELECTED} ]; then
+        _error
+    fi
+    if [ ! -d ${DIST}/${SELECTED} ]; then
+        _error
+    fi
 
     _result "${SELECTED}"
 
     rm -rf charts
 
     # copy
-    cp -rf ${DIST}/${SELECTED}/charts charts
-    cp -rf ${DIST}/${SELECTED}/dockerignore .dockerignore
-    cp -rf ${DIST}/${SELECTED}/draftignore .draftignore
-    cp -rf ${DIST}/${SELECTED}/Dockerfile Dockerfile
-    cp -rf ${DIST}/${SELECTED}/Jenkinsfile Jenkinsfile
-    cp -rf ${DIST}/${SELECTED}/draft.toml draft.toml
-
-    # Jenkinsfile IMAGE_NAME
-    DEFAULT=$(basename $(pwd))
-    _chart_replace "Jenkinsfile" "def IMAGE_NAME" "${DEFAULT}"
-    NAME="${REPLACE_VAL}"
-
-    # draft.toml NAME
-    _replace "s|NAME|${NAME}|" draft.toml
-
-    # charts/acme/Chart.yaml
-    _replace "s|name: .*|name: ${NAME}|" charts/acme/Chart.yaml
-
-    # charts/acme/values.yaml
-    if [ -z ${REGISTRY} ]; then
-        _replace "s|repository: .*|repository: ${NAME}|" charts/acme/values.yaml
-    else
-        _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/acme/values.yaml
+    if [ -d ${DIST}/${SELECTED}/charts ]; then
+        cp -rf ${DIST}/${SELECTED}/charts charts
+    fi
+    if [ -f cp -rf ${DIST}/${SELECTED}/dockerignore ]; then
+        cp -rf ${DIST}/${SELECTED}/dockerignore .dockerignore
+    fi
+    if [ -f cp -rf ${DIST}/${SELECTED}/draftignore ]; then
+        cp -rf ${DIST}/${SELECTED}/draftignore .draftignore
+    fi
+    if [ -f cp -rf ${DIST}/${SELECTED}/Dockerfile ]; then
+        cp -rf ${DIST}/${SELECTED}/Dockerfile Dockerfile
+    fi
+    if [ -f cp -rf ${DIST}/${SELECTED}/Jenkinsfile ]; then
+        cp -rf ${DIST}/${SELECTED}/Jenkinsfile Jenkinsfile
+    fi
+    if [ -f cp -rf ${DIST}/${SELECTED}/draft.toml ]; then
+        cp -rf ${DIST}/${SELECTED}/draft.toml draft.toml
     fi
 
-    # charts path
-    mv charts/acme charts/${NAME}
-
-    # Jenkinsfile REPOSITORY_URL
-    DEFAULT=
-    if [ -d .git ]; then
-        DEFAULT=$(git remote -v | head -1 | awk '{print $2}')
+    if [ -f Jenkinsfile ]; then
+        # Jenkinsfile IMAGE_NAME
+        DEFAULT=$(basename $(pwd))
+        _chart_replace "Jenkinsfile" "def IMAGE_NAME" "${DEFAULT}"
+        NAME="${REPLACE_VAL}"
     fi
-    _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${DEFAULT}"
-    REPOSITORY_URL="${REPLACE_VAL}"
 
-    # Jenkinsfile REPOSITORY_SECRET
-    _chart_replace "Jenkinsfile" "def REPOSITORY_SECRET" "${SECRET}"
-    SECRET="${REPLACE_VAL}"
+    if [ -f draft.toml ] && [ ! -z ${NAME} ]; then
+        # draft.toml NAME
+        _replace "s|NAME|${NAME}|" draft.toml
+    fi
 
-    # Jenkinsfile CLUSTER
-    _chart_replace "Jenkinsfile" "def CLUSTER" "${CLUSTER}"
-    CLUSTER="${REPLACE_VAL}"
+    if [ -d charts ] && [ ! -z ${NAME} ]; then
+        # charts/acme/Chart.yaml
+        _replace "s|name: .*|name: ${NAME}|" charts/acme/Chart.yaml
 
-    # Jenkinsfile BASE_DOMAIN
-    _chart_replace "Jenkinsfile" "def BASE_DOMAIN" "${BASE_DOMAIN}"
-    BASE_DOMAIN="${REPLACE_VAL}"
+        # charts/acme/values.yaml
+        if [ -z ${REGISTRY} ]; then
+            _replace "s|repository: .*|repository: ${NAME}|" charts/acme/values.yaml
+        else
+            _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/acme/values.yaml
+        fi
+
+        # charts path
+        mv charts/acme charts/${NAME}
+    fi
+
+    if [ -f Jenkinsfile ]; then
+        # Jenkinsfile REPOSITORY_URL
+        DEFAULT=
+        if [ -d .git ]; then
+            DEFAULT=$(git remote -v | head -1 | awk '{print $2}')
+        fi
+        _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${DEFAULT}"
+        REPOSITORY_URL="${REPLACE_VAL}"
+
+        # Jenkinsfile REPOSITORY_SECRET
+        _chart_replace "Jenkinsfile" "def REPOSITORY_SECRET" "${SECRET}"
+        SECRET="${REPLACE_VAL}"
+    fi
+
+    if [ -d charts ]; then
+        # Jenkinsfile CLUSTER
+        _chart_replace "Jenkinsfile" "def CLUSTER" "${CLUSTER}"
+        CLUSTER="${REPLACE_VAL}"
+
+        # Jenkinsfile BASE_DOMAIN
+        _chart_replace "Jenkinsfile" "def BASE_DOMAIN" "${BASE_DOMAIN}"
+        BASE_DOMAIN="${REPLACE_VAL}"
+    fi
 
     _config_save
 }
