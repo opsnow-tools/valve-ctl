@@ -12,7 +12,7 @@ jobs:
       - run:
           name: Package
           command: |
-            ./package.sh ${CIRCLE_PROJECT_USERNAME} ${CIRCLE_PROJECT_REPONAME}
+            ./package.sh ${CIRCLE_PROJECT_USERNAME} ${CIRCLE_PROJECT_REPONAME} ${SLACK_TOKEN}
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
