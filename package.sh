@@ -56,6 +56,7 @@ fi
 
 # target/
 cp -rf install.sh target/install
+cp -rf slack.sh   target/slack
 cp -rf tools.sh   target/tools
 
 # target/dist/draft.tar.gz
