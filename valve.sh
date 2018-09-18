@@ -7,6 +7,8 @@ THIS_VERSION=v0.0.0
 CMD=$1
 SUB=$2
 
+FORCE=
+
 NAME=
 VERSION=0.0.0
 
@@ -51,6 +53,10 @@ for v in "$@"; do
         ;;
     --cluster=*)
         CLUSTER="${v#*=}"
+        shift
+        ;;
+    --force=*)
+        FORCE="${v#*=}"
         shift
         ;;
     --this=*)
@@ -259,8 +265,9 @@ _helm_apply() {
     _NS=$1
     _NM=$2
 
-    ING_CNT=$(helm ls ${_NM} | wc -l | xargs)
-    if [ "x${ING_CNT}" == "x0" ]; then
+    CNT=$(helm ls ${_NM} | wc -l | xargs)
+
+    if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         CHART=/tmp/${_NM}.yaml
 
         curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/${_NM}.yaml > ${CHART}
