@@ -196,14 +196,36 @@ _waiting_pod() {
     _NM=${2}
     SEC=${3:-30}
 
+    # # TODO use deploy
+    # _command "kubectl get deploy ${_NM} -n ${_NS} | grep ${_NM}"
+
+    # IDX=0
+    # while [ 1 ]; do
+    #     kubectl get deploy ${_NM} -n ${_NS} | grep ${_NM} | head -1 > /tmp/valve-deploy-status
+    #     cat /tmp/valve-deploy-status
+
+    #     DESIRED=$(cat /tmp/valve-deploy-status | awk '{print $2}')
+    #     CURRENT=$(cat /tmp/valve-deploy-status | awk '{print $3}')
+    #     AVAILAB=$(cat /tmp/valve-deploy-status | awk '{print $5}')
+
+    #     if [ "${DESIRED}" == "${CURRENT}" ] && [ "${DESIRED}" == "${AVAILAB}" ]; then
+    #         break
+    #     elif [ "x${IDX}" == "x${SEC}" ]; then
+    #         _error "Timeout"
+    #     fi
+
+    #     IDX=$(( ${IDX} + 1 ))
+    #     sleep 2
+    # done
+
     _command "kubectl get pod -n ${_NS} | grep ${_NM}"
 
     IDX=0
     while [ 1 ]; do
-        kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > /tmp/valve-status
-        cat /tmp/valve-status
+        kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > /tmp/valve-pod-status
+        cat /tmp/valve-pod-status
 
-        STATUS=$(cat /tmp/valve-status | awk '{print $3}')
+        STATUS=$(cat /tmp/valve-pod-status | awk '{print $3}')
         if [ "${STATUS}" == "Running" ]; then
             break
         elif [ "${STATUS}" == "Error" ]; then
@@ -239,10 +261,19 @@ _helm_apply() {
 
     ING_CNT=$(helm ls ${_NM} | wc -l | xargs)
     if [ "x${ING_CNT}" == "x0" ]; then
-        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/${_NM}.yaml > /tmp/${_NM}.yaml
+        CHART=/tmp/${_NM}.yaml
 
-        _command "helm upgrade --install ${_NM} stable/${_NM}"
-        helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f /tmp/${_NM}.yaml
+        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/${_NM}.yaml > ${CHART}
+
+        CHART_VERSION=$(cat ${CHART} | grep chart-version | awk '{print $3}')
+
+        if [ -z ${CHART_VERSION} ] || [ "${CHART_VERSION}" == "latest" ]; then
+            _command "helm upgrade --install ${_NM} stable/${_NM}"
+            helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART}
+        else
+            _command "helm upgrade --install ${_NM} stable/${_NM}" --version ${CHART_VERSION}
+            helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}
+        fi
     fi
 }
 
