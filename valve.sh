@@ -206,6 +206,8 @@ _waiting_pod() {
         STATUS=$(cat /tmp/valve-status | awk '{print $3}')
         if [ "${STATUS}" == "Running" ]; then
             break
+        elif [ "${STATUS}" == "Error" ]; then
+            _error "${STATUS}"
         elif [ "${STATUS}" == "CrashLoopBackOff" ]; then
             _error "${STATUS}"
         elif [ "x${IDX}" == "x${SEC}" ]; then
