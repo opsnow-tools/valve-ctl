@@ -346,19 +346,19 @@ _draft_create() {
     if [ -d ${DIST}/${SELECTED}/charts ]; then
         cp -rf ${DIST}/${SELECTED}/charts charts
     fi
-    if [ -f cp -rf ${DIST}/${SELECTED}/dockerignore ]; then
+    if [ -f ${DIST}/${SELECTED}/dockerignore ]; then
         cp -rf ${DIST}/${SELECTED}/dockerignore .dockerignore
     fi
-    if [ -f cp -rf ${DIST}/${SELECTED}/draftignore ]; then
+    if [ -f ${DIST}/${SELECTED}/draftignore ]; then
         cp -rf ${DIST}/${SELECTED}/draftignore .draftignore
     fi
-    if [ -f cp -rf ${DIST}/${SELECTED}/Dockerfile ]; then
+    if [ -f ${DIST}/${SELECTED}/Dockerfile ]; then
         cp -rf ${DIST}/${SELECTED}/Dockerfile Dockerfile
     fi
-    if [ -f cp -rf ${DIST}/${SELECTED}/Jenkinsfile ]; then
+    if [ -f ${DIST}/${SELECTED}/Jenkinsfile ]; then
         cp -rf ${DIST}/${SELECTED}/Jenkinsfile Jenkinsfile
     fi
-    if [ -f cp -rf ${DIST}/${SELECTED}/draft.toml ]; then
+    if [ -f ${DIST}/${SELECTED}/draft.toml ]; then
         cp -rf ${DIST}/${SELECTED}/draft.toml draft.toml
     fi
 
