@@ -207,9 +207,9 @@ _waiting_pod() {
         if [ "${STATUS}" == "Running" ]; then
             break
         elif [ "${STATUS}" == "CrashLoopBackOff" ]; then
-            _error "${STATUS}."
+            _error "${STATUS}"
         elif [ "x${IDX}" == "x${SEC}" ]; then
-            _error "Timeout."
+            _error "Timeout"
         fi
 
         IDX=$(( ${IDX} + 1 ))
