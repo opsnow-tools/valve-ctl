@@ -397,7 +397,7 @@ _draft_create() {
         # Jenkinsfile REPOSITORY_URL
         DEFAULT=
         if [ -d .git ]; then
-            DEFAULT=$(git remote -v | head -1 | awk '{print $2}')
+            DEFAULT=$(git config --get remote.origin.url | head -1 | xargs)
         fi
         _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${DEFAULT}"
         REPOSITORY_URL="${REPLACE_VAL}"
