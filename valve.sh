@@ -233,6 +233,19 @@ _helm_init() {
     helm repo update
 }
 
+_helm_apply() {
+    _NS=$1
+    _NM=$2
+
+    ING_CNT=$(helm ls ${_NM} | wc -l | xargs)
+    if [ "x${ING_CNT}" == "x0" ]; then
+        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/${_NM}.yaml > /tmp/${_NM}.yaml
+
+        _command "helm upgrade --install ${_NM} stable/${_NM}"
+        helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f /tmp/${_NM}.yaml
+    fi
+}
+
 _draft_init() {
     _helm_init
 
@@ -244,27 +257,14 @@ _draft_init() {
 
     NAMESPACE="kube-public"
 
-    # nginx-ingress
-    ING_CNT=$(helm ls nginx-ingress | wc -l | xargs)
-    if [ "x${ING_CNT}" == "x0" ]; then
-        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/nginx-ingress.yaml > /tmp/nginx-ingress.yaml
-
-        _command "helm upgrade --install nginx-ingress stable/nginx-ingress"
-        helm upgrade --install nginx-ingress stable/nginx-ingress --namespace ${NAMESPACE} -f /tmp/nginx-ingress.yaml
-    fi
-
-    # docker-registry
-    REG_CNT=$(helm ls docker-registry | wc -l | xargs)
-    if [ "x${REG_CNT}" == "x0" ]; then
-        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/docker-registry.yaml > /tmp/docker-registry.yaml
-
-        _command "helm upgrade --install docker-registry stable/docker-registry"
-        helm upgrade --install docker-registry stable/docker-registry --namespace ${NAMESPACE} -f /tmp/docker-registry.yaml
-    fi
+    # local tools
+    _helm_apply "${NAMESPACE}" "docker-registry"
+    _helm_apply "${NAMESPACE}" "metrics-server"
+    _helm_apply "${NAMESPACE}" "nginx-ingress"
 
     if [ "x${ING_CNT}" == "x0" ] || [ "x${REG_CNT}" == "x0" ]; then
-        _waiting_pod "${NAMESPACE}" "nginx-ingress"
         _waiting_pod "${NAMESPACE}" "docker-registry"
+        _waiting_pod "${NAMESPACE}" "nginx-ingress"
     fi
 
     REGISTRY=
