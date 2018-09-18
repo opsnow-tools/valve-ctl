@@ -123,7 +123,7 @@ def slack(token = "", color = "", title = "", message = "", footer = "") {
   try {
     // butler.slack("$token", "$color", "$title", "$message", "$footer")
     sh """
-      curl -sL repo.opsnow.io/slack | bash -s -- --token='$token' \
+      curl -sL repo.opsnow.io/valve-ctl/slack | bash -s -- --token='$token' \
       --color='$color' --title='$title' --footer='$footer' '$message'
     """
   } catch (ignored) {
