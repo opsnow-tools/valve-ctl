@@ -5,6 +5,7 @@
 
 USERNAME=${1:-opsnow-tools}
 REPONAME=${2:-valve-ctl}
+SLACK_TOKEN=${3}
 
 rm -rf target
 mkdir -p target/dist
@@ -65,3 +66,9 @@ echo
 
 # target/charts/
 cp -rf charts/* target/charts/
+
+# slack
+if [ ! -z ${SLACK_TOKEN} ]; then
+    ./slack.sh --token="${SLACK_TOKEN}" \
+        --color="good" --title="${REPONAME} updated" --emoji=":construction_worker:" "\`${VERSION}\`"
+fi
