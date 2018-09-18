@@ -446,7 +446,7 @@ _draft_launch() {
     if [ "x${COUNT}" != "x0" ]; then
         _command "draft logs"
         draft logs
-        _error "${DRAFT_LOGS}"
+        _error "$(cat ${DRAFT_LOGS})"
     fi
 
     _command "helm ls ${NAME}"
