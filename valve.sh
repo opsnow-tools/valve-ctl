@@ -202,8 +202,12 @@ _waiting_pod() {
         cat /tmp/valve-status
 
         STATUS=$(cat /tmp/valve-status | awk '{print $3}')
-        if [ "${STATUS}" == "Running" ] || [ "x${IDX}" == "x${SEC}" ]; then
+        if [ "${STATUS}" == "Running" ]; then
             break
+        elif [ "${STATUS}" == "CrashLoopBackOff" ]; then
+            _error "${STATUS}."
+        elif [ "x${IDX}" == "x${SEC}" ]; then
+            _error "Timeout."
         fi
 
         IDX=$(( ${IDX} + 1 ))
