@@ -438,6 +438,10 @@ _draft_launch() {
         _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
     fi
 
+    # TODO delete
+    # _command "helm delete ${NAME} --purge"
+    # helm delete ${NAME} --purge
+
     _command "draft up -e ${NAMESPACE}"
     draft up -e ${NAMESPACE}
 
@@ -483,8 +487,8 @@ _draft_delete() {
     NAME="$(cat draft.toml | grep "name =" | cut -d'"' -f2 | xargs)"
 
     if [ ! -z ${NAME} ]; then
-        _command "helm delete --purge ${NAME}"
-        helm delete --purge ${NAME}
+        _command "helm delete ${NAME} --purge"
+        helm delete ${NAME} --purge
     fi
 }
 
