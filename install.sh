@@ -49,7 +49,7 @@ chmod +x ${DIST}
 
 if [ ! -z $HOME ]; then
     $HAS_PATH=$(echo "$PATH" | grep "$HOME/bin")
-    if [ -z ${$HAS_PATH} ]; then
+    if [ -z ${HAS_PATH} ]; then
         echo "PATH=$HOME/bin:$PATH" >> $HOME/.bash_profile
     fi
 
