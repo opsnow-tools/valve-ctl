@@ -47,13 +47,25 @@ rm -rf ${DIST}
 curl -sL -o ${DIST} https://github.com/opsnow-tools/valve-ctl/releases/download/${VERSION}/valve
 chmod +x ${DIST}
 
-if [ -d ~/.local/bin ]; then
-    mv -f ${DIST} ~/.local/bin/valve
-elif [ -d ~/bin ]; then
-    mv -f ${DIST} ~/bin/valve
+if [ ! -z $HOME ]; then
+    $HAS_PATH=$(echo $PATH | grep "$HOME/bin")
+    if [ -z ${$HAS_PATH} ]; then
+        echo "PATH=$HOME/bin:$PATH" >> $HOME/.bash_profile
+    fi
+
+    mkdir -p $HOME/bin
+    mv -f ${DIST} $HOME/bin/valve
 else
     mv -f ${DIST} /usr/local/bin/valve
 fi
+
+# if [ -d ~/.local/bin ]; then
+#     mv -f ${DIST} ~/.local/bin/valve
+# elif [ -d ~/bin ]; then
+#     mv -f ${DIST} ~/bin/valve
+# else
+#     mv -f ${DIST} /usr/local/bin/valve
+# fi
 
 # done
 _success "done."
