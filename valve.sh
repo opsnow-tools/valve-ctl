@@ -7,23 +7,19 @@ THIS_VERSION=v0.0.0
 CMD=$1
 SUB=$2
 
-FORCE=
-
 NAME=
 VERSION=0.0.0
 
 SECRET=
-PACKAGE=
 
 NAMESPACE=
 CLUSTER=
 
 BASE_DOMAIN=
-JENKINS=
 REGISTRY=
 CHARTMUSEUM=
-SONARQUBE=
-NEXUS=
+
+FORCE=
 
 CONFIG=${HOME}/.valve-ctl
 
@@ -31,6 +27,10 @@ touch ${CONFIG} && . ${CONFIG}
 
 for v in "$@"; do
     case ${v} in
+    --this=*)
+        THIS_VERSION="${v#*=}"
+        shift
+        ;;
     --name=*)
         NAME="${v#*=}"
         shift
@@ -41,10 +41,6 @@ for v in "$@"; do
         ;;
     --secret=*)
         SECRET="${v#*=}"
-        shift
-        ;;
-    --package=*)
-        PACKAGE="${v#*=}"
         shift
         ;;
     --namespace=*)
@@ -65,10 +61,6 @@ for v in "$@"; do
         ;;
     --force)
         FORCE=true
-        shift
-        ;;
-    --this=*)
-        THIS_VERSION="${v#*=}"
         shift
         ;;
     *)
@@ -197,15 +189,11 @@ _version() {
 _config_save() {
     echo "# valve config" > ${CONFIG}
     echo "SECRET=${SECRET}" >> ${CONFIG}
-    echo "PACKAGE=${PACKAGE}" >> ${CONFIG}
     echo "NAMESPACE=${NAMESPACE}" >> ${CONFIG}
     echo "CLUSTER=${CLUSTER}" >> ${CONFIG}
     echo "BASE_DOMAIN=${BASE_DOMAIN}" >> ${CONFIG}
-    echo "JENKINS=${JENKINS}" >> ${CONFIG}
     echo "REGISTRY=${REGISTRY}" >> ${CONFIG}
     echo "CHARTMUSEUM=${CHARTMUSEUM}" >> ${CONFIG}
-    echo "SONARQUBE=${SONARQUBE}" >> ${CONFIG}
-    echo "NEXUS=${NEXUS}" >> ${CONFIG}
 }
 
 _waiting_pod() {
