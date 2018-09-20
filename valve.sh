@@ -160,8 +160,8 @@ _run() {
         up)
             _draft_up
             ;;
-        launch)
-            _draft_launch
+        dn|launch)
+            _draft_dn
             ;;
         rm|delete)
             _draft_rm
@@ -258,6 +258,34 @@ _waiting_pod() {
     done
 }
 
+_select_one() {
+    echo
+
+    IDX=0
+    while read VAL; do
+        IDX=$(( ${IDX} + 1 ))
+        printf "%3s. %s\n" "$IDX" "$VAL";
+    done < ${LIST}
+
+    CNT=$(cat ${LIST} | wc -l | xargs)
+
+    echo
+    _read "Please select one. (1-${CNT}) : "
+
+    SELECTED=
+    if [ -z ${ANSWER} ]; then
+        _error
+    fi
+    TEST='^[0-9]+$'
+    if ! [[ ${ANSWER} =~ ${TEST} ]]; then
+        _error
+    fi
+    SELECTED=$(sed -n ${ANSWER}p ${LIST})
+    if [ -z ${SELECTED} ]; then
+        _error
+    fi
+}
+
 _helm_init() {
     _command "helm init"
     helm init
@@ -268,6 +296,10 @@ _helm_init() {
     _command "helm version"
     helm version
 
+    _helm_repo
+}
+
+_helm_repo() {
     # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C '.'
     if [ ! -z ${CHARTMUSEUM} ]; then
         _command "helm repo add chartmuseum https://${CHARTMUSEUM}"
@@ -276,25 +308,8 @@ _helm_init() {
 
     _command "helm repo update"
     helm repo update
-}
 
-_helm_charts() {
-    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C 'keys[]' -r
-    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts/sample-node | jq -C '.[] | {version} | .version' -r
-
-    namespace="development"
-
-    helm repo add chartmuseum https://chartmuseum-devops.demo.opsnow.com
-
-    name="sample-node"
-    version="v0.1.1-20180918-0635"
-    base_domain="127.0.0.1.nip.io"
-
-    helm upgrade --install $name-$namespace chartmuseum/$name \
-                    --version $version --namespace $namespace --devel \
-                    --set fullnameOverride=$name-$namespace \
-                    --set ingress.basedomain=$base_domain
-
+    _config_save
 }
 
 _helm_apply() {
@@ -364,9 +379,8 @@ _draft_gen() {
     DIST=/tmp/valve-draft-${THIS_VERSION}
     LIST=/tmp/valve-draft-ls
 
-    echo
-
     if [ ! -d ${DIST} ]; then
+        echo
         mkdir -p ${DIST}
 
         # download
@@ -376,35 +390,13 @@ _draft_gen() {
 
         echo
         _result "draft package downloaded."
-        echo
     fi
 
     # find all
     ls ${DIST} > ${LIST}
 
-    IDX=0
-    while read VAL; do
-        IDX=$(( ${IDX} + 1 ))
-        printf "%3s %s\n" "$IDX" "$VAL";
-    done < ${LIST}
+    _select_one
 
-    CNT=$(cat ${LIST} | wc -l | xargs)
-
-    echo
-    _read "Please select a project type. (1-${CNT}) : "
-
-    SELECTED=
-    if [ -z ${ANSWER} ]; then
-        _error
-    fi
-    TEST='^[0-9]+$'
-    if ! [[ ${ANSWER} =~ ${TEST} ]]; then
-        _error
-    fi
-    SELECTED=$(sed -n ${ANSWER}p ${LIST})
-    if [ -z ${SELECTED} ]; then
-        _error
-    fi
     if [ ! -d ${DIST}/${SELECTED} ]; then
         _error
     fi
@@ -532,6 +524,66 @@ _draft_up() {
     kubectl get pod,svc,ing -n ${NAMESPACE}
 }
 
+_draft_dn() {
+    _helm_init
+
+    if [ -z ${CHARTMUSEUM} ]; then
+        _read "CHARTMUSEUM : "
+
+        if [ -z ${ANSWER} ]; then
+            _error
+        fi
+
+        CHARTMUSEUM="${ANSWER}"
+
+        _helm_repo
+    fi
+
+    NAMESPACE="development"
+    BASE_DOMAIN="127.0.0.1.nip.io"
+
+    # curl -sL chartmuseum-devops.coruscant.opsnow.com/api/charts | jq -C 'keys[]' -r
+    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts/sample-node | jq -C '.[] | {version} | .version' -r
+
+    LIST=/tmp/valve-charts-ls
+
+    # chart name
+    curl -sL ${CHARTMUSEUM}/api/charts | jq -C 'keys[]' -r > ${LIST}
+
+    _select_one
+
+    echo
+    _result "${SELECTED}"
+    echo
+
+    NAME="${SELECTED}"
+
+    # version
+    curl -sL ${CHARTMUSEUM}/api/charts/${NAME} | jq -C '.[] | {version} | .version' -r | head -7 > ${LIST}
+
+    _select_one
+
+    echo
+    _result "${SELECTED}"
+    echo
+
+    VERSION="${SELECTED}"
+
+    # helm install
+    helm upgrade --install $NAME chartmuseum/$NAME \
+                    --version $VERSION --namespace $NAMESPACE --devel \
+                    --set fullnameOverride=$NAME \
+                    --set ingress.basedomain=$BASE_DOMAIN
+
+    _command "helm ls ${NAME}"
+    helm ls ${NAME}
+
+    _waiting_pod "${NAMESPACE}" "${NAME}"
+
+    _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
+    kubectl get pod,svc,ing -n ${NAMESPACE}
+}
+
 _draft_rm() {
     _draft_init
 
@@ -540,31 +592,7 @@ _draft_rm() {
     _command "helm ls --all"
     helm ls --all | grep development | awk '{print $1}' > ${LIST}
 
-    echo
-
-    IDX=0
-    while read VAL; do
-        IDX=$(( ${IDX} + 1 ))
-        printf "%3s %s\n" "$IDX" "$VAL";
-    done < ${LIST}
-
-    CNT=$(cat ${LIST} | wc -l | xargs)
-
-    echo
-    _read "Please select a project. (1-${CNT}) : "
-
-    SELECTED=
-    if [ -z ${ANSWER} ]; then
-        _error
-    fi
-    TEST='^[0-9]+$'
-    if ! [[ ${ANSWER} =~ ${TEST} ]]; then
-        _error
-    fi
-    SELECTED=$(sed -n ${ANSWER}p ${LIST})
-    if [ -z ${SELECTED} ]; then
-        _error
-    fi
+    _select_one
 
     echo
     _result "${SELECTED}"
