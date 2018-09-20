@@ -30,7 +30,7 @@ _error() {
 
 ################################################################################
 
-OS_NAME="$(uname | awk '{print tolower($0)}')"
+NAME="valve"
 
 VERSION=$(curl -s https://api.github.com/repos/opsnow-tools/valve-ctl/releases/latest | grep tag_name | cut -d'"' -f4)
 
@@ -40,32 +40,26 @@ if [ -z ${VERSION} ]; then
     _error
 fi
 
-DIST=/tmp/valve-ctl-${VERSION}
+# dist
+DIST=/tmp/${NAME}-${VERSION}
 rm -rf ${DIST}
 
 # download
 curl -sL -o ${DIST} https://github.com/opsnow-tools/valve-ctl/releases/download/${VERSION}/valve
 chmod +x ${DIST}
 
+# copy
 if [ ! -z $HOME ]; then
-    COUNT=$(echo "$PATH" | grep "$HOME/bin" | wc -l | xargs)
+    COUNT=$(echo "$PATH" | grep "$HOME/.local/bin" | wc -l | xargs)
     if [ "x${COUNT}" == "x0" ]; then
-        echo "PATH=$HOME/bin:$PATH" >> $HOME/.bash_profile
+        echo "PATH=$HOME/.local/bin:$PATH" >> $HOME/.bash_profile
     fi
 
-    mkdir -p $HOME/bin
-    mv -f ${DIST} $HOME/bin/valve
+    mkdir -p $HOME/.local/bin
+    mv -f ${DIST} $HOME/.local/bin/${NAME}
 else
-    mv -f ${DIST} /usr/local/bin/valve
+    mv -f ${DIST} /usr/local/bin/${NAME}
 fi
-
-# if [ -d ~/bin ]; then
-#     mv -f ${DIST} ~/bin/valve
-# elif [ -d ~/.local/bin ]; then
-#     mv -f ${DIST} ~/.local/bin/valve
-# else
-#     mv -f ${DIST} /usr/local/bin/valve
-# fi
 
 # done
 _success "done."
