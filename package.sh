@@ -67,9 +67,3 @@ echo
 
 # target/charts/
 cp -rf charts/* target/charts/
-
-# slack
-if [ ! -z ${SLACK_TOKEN} ]; then
-    ./slack.sh --token="${SLACK_TOKEN}" \
-        --color="good" --title="${REPONAME} updated" --emoji=":construction_worker:" "\`${VERSION}\`"
-fi
