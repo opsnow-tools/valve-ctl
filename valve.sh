@@ -63,8 +63,8 @@ for v in "$@"; do
         CHARTMUSEUM="${v#*=}"
         shift
         ;;
-    --force=*)
-        FORCE="${v#*=}"
+    --force)
+        FORCE=true
         shift
         ;;
     --this=*)
