@@ -52,7 +52,7 @@ chmod +x ${DIST}
 COPY_PATH=/usr/local/bin
 if [ ! -z $HOME ]; then
     COUNT=$(echo "$PATH" | grep "$HOME/.local/bin" | wc -l | xargs)
-    if [ "x${COUNT}" == "x0" ]; then
+    if [ "x${COUNT}" != "x0" ]; then
         COPY_PATH=$HOME/.local/bin
         mkdir -p ${COPY_PATH}
     fi
