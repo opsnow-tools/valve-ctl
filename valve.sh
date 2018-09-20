@@ -502,6 +502,7 @@ _draft_up() {
     _command "helm delete ${NAME} --purge"
     helm delete ${NAME} --purge
 
+    # draft up
     _command "draft up -e ${NAMESPACE}"
     draft up -e ${NAMESPACE}
 
