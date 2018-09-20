@@ -55,6 +55,14 @@ for v in "$@"; do
         CLUSTER="${v#*=}"
         shift
         ;;
+    --registry=*)
+        REGISTRY="${v#*=}"
+        shift
+        ;;
+    --chartmuseum=*)
+        CHARTMUSEUM="${v#*=}"
+        shift
+        ;;
     --force=*)
         FORCE="${v#*=}"
         shift
@@ -143,17 +151,20 @@ _usage() {
 
 _run() {
     case ${CMD} in
-        i|init)
+        init)
             _draft_init
             ;;
-        c|gen|create)
-            _draft_create
+        gen)
+            _draft_gen
             ;;
-        u|up|launch)
+        up)
+            _draft_up
+            ;;
+        launch)
             _draft_launch
             ;;
-        d|rm|delete)
-            _draft_delete
+        rm|delete)
+            _draft_rm
             ;;
         tools)
             _tools
@@ -257,8 +268,38 @@ _helm_init() {
     _command "helm version"
     helm version
 
+    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C '.'
+    if [ ! -z ${CHARTMUSEUM} ]; then
+        _command "helm repo add chartmuseum https://${CHARTMUSEUM}"
+        helm repo add chartmuseum https://${CHARTMUSEUM}
+    fi
+
     _command "helm repo update"
     helm repo update
+}
+
+_helm_charts() {
+    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C 'keys[]' -r
+    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts/sample-node | jq -C '.[] | {version} | .version' -r
+
+    helm repo add chartmuseum https://chartmuseum-devops.coruscant.opsnow.com
+
+    name="sample-node"
+    namespace="development"
+    version="v0.1.1-20180918-0635"
+    base_domain="127.0.0.1.nip.io"
+    configmap="false"
+    secret="false"
+    profile="default"
+
+    helm upgrade --install $name-$namespace chartmuseum/$name \
+                    --version $version --namespace $namespace --devel \
+                    --set fullnameOverride=$name-$namespace \
+                    --set ingress.basedomain=$base_domain \
+                    --set configmap.enabled=$configmap \
+                    --set secret.enabled=$secret \
+                    --set profile=$profile
+
 }
 
 _helm_apply() {
@@ -305,11 +346,10 @@ _draft_init() {
         _waiting_pod "${NAMESPACE}" "nginx-ingress"
     fi
 
-    REGISTRY=
-    REGISTRY="docker-registry.127.0.0.1.nip.io:30500"
-    # curl -sL docker-registry.127.0.0.1.nip.io:30500/v2/_catalog
-
     draft config set disable-push-warning 1
+
+    # curl -sL docker-registry.127.0.0.1.nip.io:30500/v2/_catalog | jq -C '.'
+    REGISTRY="docker-registry.127.0.0.1.nip.io:30500"
 
     # registry
     if [ -z ${REGISTRY} ]; then
@@ -323,12 +363,12 @@ _draft_init() {
     _config_save
 }
 
-_draft_create() {
+_draft_gen() {
     _result "draft package version: ${THIS_VERSION}"
 
     echo
-    _read "Do you really want to apply? (YES/[no]) : "
-    echo
+    # _read "Do you really want to apply? (YES/[no]) : "
+    # echo
 
     if [ "${ANSWER}" != "YES" ]; then
         _error
@@ -362,7 +402,6 @@ _draft_create() {
 
     echo
     _read "Please select a project type. (1-${CNT}) : "
-    echo
 
     SELECTED=
     if [ -z ${ANSWER} ]; then
@@ -380,6 +419,7 @@ _draft_create() {
         _error
     fi
 
+    echo
     _result "${SELECTED}"
 
     rm -rf charts
@@ -458,7 +498,7 @@ _draft_create() {
     _config_save
 }
 
-_draft_launch() {
+_draft_up() {
     _draft_init
 
     if [ ! -f draft.toml ]; then
@@ -502,32 +542,45 @@ _draft_launch() {
     kubectl get pod,svc,ing -n ${NAMESPACE}
 }
 
-_draft_delete() {
-    # _draft_init
+_draft_rm() {
+    _draft_init
 
-    # _command "helm ls --all"
-    # helm ls --all
+    LIST=/tmp/valve-helm-ls
 
-    # _read "Enter chart name : "
+    _command "helm ls --all"
+    helm ls --all | grep development | awk '{print $1}' > ${LIST}
+    CNT=$(cat ${LIST} | wc -l | xargs)
 
-    if [ ! -f draft.toml ]; then
-        _error "Not found draft.toml"
+    echo
+
+    IDX=0
+    while read VAL; do
+        IDX=$(( ${IDX} + 1 ))
+        printf "%3s %s\n" "$IDX" "$VAL";
+    done < ${LIST}
+
+    echo
+    _read "Please select a project. (1-${CNT}) : "
+
+    SELECTED=
+    if [ -z ${ANSWER} ]; then
+        _error
     fi
-
-    echo
-    _read "Do you really want to delete? (YES/[no]) : "
-    echo
-
-    if [ "${ANSWER}" != "YES" ]; then
+    TEST='^[0-9]+$'
+    if ! [[ ${ANSWER} =~ ${TEST} ]]; then
+        _error
+    fi
+    SELECTED=$(sed -n ${ANSWER}p ${LIST})
+    if [ -z ${SELECTED} ]; then
         _error
     fi
 
-    NAME="$(cat draft.toml | grep "name =" | cut -d'"' -f2 | xargs)"
+    echo
+    _result "${SELECTED}"
+    echo
 
-    if [ ! -z ${NAME} ]; then
-        _command "helm delete ${NAME} --purge"
-        helm delete ${NAME} --purge
-    fi
+    _command "helm delete ${SELECTED} --purge"
+    helm delete ${SELECTED} --purge
 }
 
 _chart_replace() {
