@@ -282,23 +282,18 @@ _helm_charts() {
     # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C 'keys[]' -r
     # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts/sample-node | jq -C '.[] | {version} | .version' -r
 
-    helm repo add chartmuseum https://chartmuseum-devops.coruscant.opsnow.com
+    namespace="development"
+
+    helm repo add chartmuseum https://chartmuseum-devops.demo.opsnow.com
 
     name="sample-node"
-    namespace="development"
     version="v0.1.1-20180918-0635"
     base_domain="127.0.0.1.nip.io"
-    configmap="false"
-    secret="false"
-    profile="default"
 
     helm upgrade --install $name-$namespace chartmuseum/$name \
                     --version $version --namespace $namespace --devel \
                     --set fullnameOverride=$name-$namespace \
-                    --set ingress.basedomain=$base_domain \
-                    --set configmap.enabled=$configmap \
-                    --set secret.enabled=$secret \
-                    --set profile=$profile
+                    --set ingress.basedomain=$base_domain
 
 }
 
@@ -366,16 +361,10 @@ _draft_init() {
 _draft_gen() {
     _result "draft package version: ${THIS_VERSION}"
 
-    echo
-    # _read "Do you really want to apply? (YES/[no]) : "
-    # echo
-
-    if [ "${ANSWER}" != "YES" ]; then
-        _error
-    fi
-
     DIST=/tmp/valve-draft-${THIS_VERSION}
     LIST=/tmp/valve-draft-ls
+
+    echo
 
     if [ ! -d ${DIST} ]; then
         mkdir -p ${DIST}
@@ -392,13 +381,14 @@ _draft_gen() {
 
     # find all
     ls ${DIST} > ${LIST}
-    CNT=$(cat ${LIST} | wc -l | xargs)
 
     IDX=0
     while read VAL; do
         IDX=$(( ${IDX} + 1 ))
         printf "%3s %s\n" "$IDX" "$VAL";
     done < ${LIST}
+
+    CNT=$(cat ${LIST} | wc -l | xargs)
 
     echo
     _read "Please select a project type. (1-${CNT}) : "
@@ -549,7 +539,6 @@ _draft_rm() {
 
     _command "helm ls --all"
     helm ls --all | grep development | awk '{print $1}' > ${LIST}
-    CNT=$(cat ${LIST} | wc -l | xargs)
 
     echo
 
@@ -558,6 +547,8 @@ _draft_rm() {
         IDX=$(( ${IDX} + 1 ))
         printf "%3s %s\n" "$IDX" "$VAL";
     done < ${LIST}
+
+    CNT=$(cat ${LIST} | wc -l | xargs)
 
     echo
     _read "Please select a project. (1-${CNT}) : "
