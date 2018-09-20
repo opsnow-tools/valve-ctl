@@ -49,7 +49,7 @@ jobs:
           name: Notification
           command: |
             VERSION=$(cat workspace/target/VERSION)
-            workspace/target/slack.sh --token="${SLACK_TOKEN}" \
+            workspace/target/slack --token="${SLACK_TOKEN}" \
                 --color="good" --title="${CIRCLE_PROJECT_REPONAME} updated" --emoji=":construction_worker:" "\`${VERSION}\`"
 
 workflows:
