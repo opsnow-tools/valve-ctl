@@ -54,10 +54,15 @@ if [ ! -z $HOME ]; then
     COUNT=$(echo "$PATH" | grep "$HOME/.local/bin" | wc -l | xargs)
     if [ "x${COUNT}" != "x0" ]; then
         COPY_PATH=$HOME/.local/bin
-        mkdir -p ${COPY_PATH}
+    else
+        COUNT=$(echo "$PATH" | grep "$HOME/bin" | wc -l | xargs)
+        if [ "x${COUNT}" != "x0" ]; then
+            COPY_PATH=$HOME/bin
+        fi
     fi
 fi
 
+mkdir -p ${COPY_PATH}
 mv -f ${DIST} ${COPY_PATH}/${NAME}
 
 # done
