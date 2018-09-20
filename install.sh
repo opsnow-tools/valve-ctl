@@ -48,8 +48,8 @@ curl -sL -o ${DIST} https://github.com/opsnow-tools/valve-ctl/releases/download/
 chmod +x ${DIST}
 
 if [ ! -z $HOME ]; then
-    $HAS_PATH=$(echo "$PATH" | grep "$HOME/bin")
-    if [ -z ${HAS_PATH} ]; then
+    COUNT=$(echo "$PATH" | grep "$HOME/bin" | wc -l | xargs)
+    if [ "x${COUNT}" == "x0" ]; then
         echo "PATH=$HOME/bin:$PATH" >> $HOME/.bash_profile
     fi
 
