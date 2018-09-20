@@ -499,8 +499,8 @@ _draft_up() {
     fi
 
     # TODO delete
-    # _command "helm delete ${NAME} --purge"
-    # helm delete ${NAME} --purge
+    _command "helm delete ${NAME} --purge"
+    helm delete ${NAME} --purge
 
     _command "draft up -e ${NAMESPACE}"
     draft up -e ${NAMESPACE}
@@ -568,6 +568,10 @@ _draft_dn() {
     VERSION="${SELECTED}"
 
     echo
+
+    # TODO delete
+    _command "helm delete ${NAME} --purge"
+    helm delete ${NAME} --purge
 
     # helm install
     helm upgrade --install $NAME chartmuseum/$NAME \
