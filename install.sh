@@ -49,17 +49,16 @@ curl -sL -o ${DIST} https://github.com/opsnow-tools/valve-ctl/releases/download/
 chmod +x ${DIST}
 
 # copy
+COPY_PATH=/usr/local/bin
 if [ ! -z $HOME ]; then
     COUNT=$(echo "$PATH" | grep "$HOME/.local/bin" | wc -l | xargs)
     if [ "x${COUNT}" == "x0" ]; then
-        echo "PATH=$HOME/.local/bin:$PATH" >> $HOME/.bash_profile
+        COPY_PATH=$HOME/.local/bin
+        mkdir -p ${COPY_PATH}
     fi
-
-    mkdir -p $HOME/.local/bin
-    mv -f ${DIST} $HOME/.local/bin/${NAME}
-else
-    mv -f ${DIST} /usr/local/bin/${NAME}
 fi
+
+mv -f ${DIST} ${COPY_PATH}/${NAME}
 
 # done
 _success "done."
