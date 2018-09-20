@@ -498,9 +498,11 @@ _draft_up() {
         _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
     fi
 
-    # TODO delete
-    _command "helm delete ${NAME} --purge"
-    helm delete ${NAME} --purge
+    # delete
+    if [ ! -z ${FORCE} ]; then
+        _command "helm delete ${NAME} --purge"
+        helm delete ${NAME} --purge
+    fi
 
     # draft up
     _command "draft up -e ${NAMESPACE}"
@@ -570,9 +572,11 @@ _draft_dn() {
 
     echo
 
-    # TODO delete
-    _command "helm delete ${NAME} --purge"
-    helm delete ${NAME} --purge
+    # delete
+    if [ ! -z ${FORCE} ]; then
+        _command "helm delete ${NAME} --purge"
+        helm delete ${NAME} --purge
+    fi
 
     # helm install
     _command "helm install ${NAME} chartmuseum/$NAME --version $VERSION --namespace $NAMESPACE"
