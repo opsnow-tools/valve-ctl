@@ -575,8 +575,8 @@ _draft_dn() {
     helm delete ${NAME} --purge
 
     # helm install
-    helm upgrade --install $NAME chartmuseum/$NAME \
-                    --version $VERSION --namespace $NAMESPACE --devel \
+    _command "helm install ${NAME} chartmuseum/$NAME --version $VERSION --namespace $NAMESPACE"
+    helm upgrade --install $NAME chartmuseum/$NAME --version $VERSION --namespace $NAMESPACE --devel \
                     --set fullnameOverride=$NAME \
                     --set ingress.basedomain=$BASE_DOMAIN
 
