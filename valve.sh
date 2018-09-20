@@ -554,7 +554,6 @@ _draft_dn() {
 
     echo
     _result "${SELECTED}"
-    echo
 
     NAME="${SELECTED}"
 
@@ -565,9 +564,10 @@ _draft_dn() {
 
     echo
     _result "${SELECTED}"
-    echo
 
     VERSION="${SELECTED}"
+
+    echo
 
     # helm install
     helm upgrade --install $NAME chartmuseum/$NAME \
