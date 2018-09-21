@@ -77,7 +77,6 @@ KUBECTL=
 KOPS=
 HELM=
 DRAFT=
-SKAFFOLD=
 ISTIOCTL=
 JENKINS_X=
 TERRAFORM=
@@ -87,10 +86,9 @@ MAVEN=
 HEPTIO=
 GUARD=
 
-CONFIG=~/.bastion
-if [ -f ${CONFIG} ]; then
-  . ${CONFIG}
-fi
+CONFIG=~/.tools
+
+touch ${CONFIG} && . ${CONFIG}
 
 # update
 echo "================================================================================"
@@ -217,27 +215,6 @@ _result "install draft..."
 
 draft version --short | xargs
 
-# # skaffold
-# echo "================================================================================"
-# _result "install skaffold..."
-
-# #if [ "${OS_TYPE}" == "brew" ]; then
-# #    command -v skaffold > /dev/null || brew install skaffold
-# #else
-#     VERSION=$(curl -s https://api.github.com/repos/GoogleContainerTools/skaffold/releases/latest | jq -r '.tag_name')
-
-#     if [ "${SKAFFOLD}" != "${VERSION}" ]; then
-#         _result " ${SKAFFOLD} >> ${VERSION}"
-
-#         curl -LO https://storage.googleapis.com/skaffold/releases/${VERSION}/skaffold-${OS_NAME}-amd64
-#         chmod +x skaffold-${OS_NAME}-amd64 && sudo mv skaffold-${OS_NAME}-amd64 /usr/local/bin/skaffold
-
-#         SKAFFOLD="${VERSION}"
-#     fi
-# #fi
-
-# skaffold version | xargs
-
 # istioctl
 echo "================================================================================"
 _result "install istioctl..."
@@ -311,20 +288,22 @@ terraform version | xargs | awk '{print $2}'
 echo "================================================================================"
 _result "install nodejs..."
 
-VERSION=10
+if [ "${OS_TYPE}" == "brew" ]; then
+    command -v node > /dev/null || brew install node
+else
+    VERSION=10
 
-if [ "${NODE}" != "${VERSION}" ] || [ "$(command -v node)" == "" ]; then
-    if [ "${OS_TYPE}" == "apt" ]; then
-        curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-        sudo apt install -y nodejs
-    elif [ "${OS_TYPE}" == "yum" ]; then
-        curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -
-        sudo yum install -y nodejs
-    elif [ "${OS_TYPE}" == "brew" ]; then
-        brew install node
+    if [ "${NODE}" != "${VERSION}" ] || [ "$(command -v node)" == "" ]; then
+        if [ "${OS_TYPE}" == "apt" ]; then
+            curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+            sudo apt install -y nodejs
+        elif [ "${OS_TYPE}" == "yum" ]; then
+            curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -
+            sudo yum install -y nodejs
+        fi
+
+        NODE="${VERSION}"
     fi
-
-    NODE="${VERSION}"
 fi
 
 node -v | xargs
@@ -333,21 +312,23 @@ node -v | xargs
 echo "================================================================================"
 _result "install java..."
 
-VERSION=1.8.0
+if [ "${OS_TYPE}" == "brew" ]; then
+    command -v java > /dev/null || brew cask install java
+else
+    VERSION=1.8.0
 
-if [ "${JAVA}" != "${VERSION}" ] || [ "$(command -v java)" == "" ]; then
-    _result " ${JAVA} >> ${VERSION}"
+    if [ "${JAVA}" != "${VERSION}" ] || [ "$(command -v java)" == "" ]; then
+        _result " ${JAVA} >> ${VERSION}"
 
-    if [ "${OS_TYPE}" == "apt" ]; then
-        sudo apt install -y openjdk-8-jdk
-    elif [ "${OS_TYPE}" == "yum" ]; then
-        sudo yum remove -y java-1.7.0-openjdk
-        sudo yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel
-    elif [ "${OS_TYPE}" == "brew" ]; then
-        brew cask install java
+        if [ "${OS_TYPE}" == "apt" ]; then
+            sudo apt install -y openjdk-8-jdk
+        elif [ "${OS_TYPE}" == "yum" ]; then
+            sudo yum remove -y java-1.7.0-openjdk
+            sudo yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel
+        fi
+
+        JAVA="${VERSION}"
     fi
-
-    JAVA="${VERSION}"
 fi
 
 java -version 2>&1 | grep version | cut -d'"' -f2
@@ -396,7 +377,6 @@ echo "==========================================================================
 _result "install guard..."
 
 VERSION=0.1.2
-
 
 if [ "${GUARD}" != "${VERSION}" ] || [ "$(command -v guard)" == "" ]; then
     _result " ${GUARD} >> ${VERSION}"
