@@ -11,7 +11,6 @@ NAME=
 VERSION=0.0.0
 
 SECRET=
-
 NAMESPACE=
 CLUSTER=
 
@@ -22,7 +21,6 @@ CHARTMUSEUM=
 FORCE=
 
 CONFIG=${HOME}/.valve-ctl
-
 touch ${CONFIG} && . ${CONFIG}
 
 for v in "$@"; do
@@ -122,13 +120,15 @@ _replace() {
 }
 
 _logo() {
-    #figlet valve ctl
     _bar
-    _echo "             _                  _   _  "
-    _echo " __   ____ _| |_   _____    ___| |_| | "
-    _echo " \ \ / / _' | \ \ / / _ \  / __| __| | "
-    _echo "  \ V / (_| | |\ V /  __/ | (__| |_| | "
-    _echo "   \_/ \__,_|_| \_/ \___|  \___|\__|_|  ${THIS_VERSION} "
+    #figlet valve ctl
+cat <<EOF
+             _                  _   _
+ __   ____ _| |_   _____    ___| |_| |
+ \ \ / / _' | \ \ / / _ \  / __| __| |
+  \ V / (_| | |\ V /  __/ | (__| |_| |
+   \_/ \__,_|_| \_/ \___|  \___|\__|_|  ${THIS_VERSION}
+EOF
     _bar
 }
 
@@ -143,6 +143,9 @@ _usage() {
 
 _run() {
     case ${CMD} in
+        conf|config)
+            _config
+            ;;
         init)
             _draft_init
             ;;
@@ -184,16 +187,6 @@ _update() {
 
 _version() {
     _success ${THIS_VERSION} 2
-}
-
-_config_save() {
-    echo "# valve config" > ${CONFIG}
-    echo "SECRET=${SECRET}" >> ${CONFIG}
-    echo "NAMESPACE=${NAMESPACE}" >> ${CONFIG}
-    echo "CLUSTER=${CLUSTER}" >> ${CONFIG}
-    echo "BASE_DOMAIN=${BASE_DOMAIN}" >> ${CONFIG}
-    echo "REGISTRY=${REGISTRY}" >> ${CONFIG}
-    echo "CHARTMUSEUM=${CHARTMUSEUM}" >> ${CONFIG}
 }
 
 _waiting_pod() {
@@ -272,6 +265,22 @@ _select_one() {
     if [ -z ${SELECTED} ]; then
         _error
     fi
+}
+
+_config() {
+    echo
+    cat ${CONFIG}
+    echo
+}
+
+_config_save() {
+    echo "# valve config" > ${CONFIG}
+    echo "SECRET=${SECRET}" >> ${CONFIG}
+    echo "NAMESPACE=${NAMESPACE}" >> ${CONFIG}
+    echo "CLUSTER=${CLUSTER}" >> ${CONFIG}
+    echo "BASE_DOMAIN=${BASE_DOMAIN}" >> ${CONFIG}
+    echo "REGISTRY=${REGISTRY}" >> ${CONFIG}
+    echo "CHARTMUSEUM=${CHARTMUSEUM}" >> ${CONFIG}
 }
 
 _helm_init() {
