@@ -8,7 +8,7 @@ CMD=$1
 SUB=$2
 
 NAME=
-VERSION=0.0.0
+VERSION=
 
 SECRET=
 NAMESPACE=
@@ -275,7 +275,6 @@ _config() {
 _config_save() {
     echo "# valve config" > ${CONFIG}
     echo "SECRET=${SECRET}" >> ${CONFIG}
-    echo "NAMESPACE=${NAMESPACE}" >> ${CONFIG}
     echo "CLUSTER=${CLUSTER}" >> ${CONFIG}
     echo "BASE_DOMAIN=${BASE_DOMAIN}" >> ${CONFIG}
     echo "REGISTRY=${REGISTRY}" >> ${CONFIG}
@@ -429,9 +428,12 @@ _draft_gen() {
         NAME="${REPLACE_VAL}"
     fi
 
+    NAMESPACE="${NAMESPACE:-development}"
+
     if [ -f draft.toml ] && [ ! -z ${NAME} ]; then
         # draft.toml NAME
-        _replace "s|NAME|${NAME}|" draft.toml
+        _replace "s|NAMESPACE|${NAMESPACE}|" draft.toml
+        _replace "s|NAME|${NAME}-${NAMESPACE}|" draft.toml
     fi
 
     if [ -d charts ] && [ ! -z ${NAME} ]; then
@@ -482,10 +484,13 @@ _draft_up() {
     if [ ! -f draft.toml ]; then
         _error "Not found draft.toml"
     fi
+    if [ ! -d charts ]; then
+        _error "Not found charts"
+    fi
 
-    NAME="$(cat draft.toml | grep "name =" | cut -d'"' -f2 | xargs)"
+    NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
 
-    NAMESPACE="development"
+    NAMESPACE="${NAMESPACE:-development}"
 
     # charts/acme/values.yaml
     if [ -z ${REGISTRY} ]; then
@@ -538,7 +543,8 @@ _draft_dn() {
         _helm_repo
     fi
 
-    NAMESPACE="development"
+    NAMESPACE="${NAMESPACE:-development}"
+
     BASE_DOMAIN="127.0.0.1.nip.io"
 
     # curl -sL chartmuseum-devops.coruscant.opsnow.com/api/charts | jq -C 'keys[]' -r
@@ -547,43 +553,47 @@ _draft_dn() {
     LIST=/tmp/valve-charts-ls
 
     # chart name
-    curl -sL ${CHARTMUSEUM}/api/charts | jq -C 'keys[]' -r > ${LIST}
+    if [ -z ${NAME} ]; then
+        curl -sL ${CHARTMUSEUM}/api/charts | jq -C 'keys[]' -r > ${LIST}
 
-    _select_one
+        _select_one
 
-    echo
-    _result "${SELECTED}"
+        echo
+        _result "${SELECTED}"
 
-    NAME="${SELECTED}"
+        NAME="${SELECTED}"
+    fi
 
     # version
-    curl -sL ${CHARTMUSEUM}/api/charts/${NAME} | jq -C '.[] | {version} | .version' -r | head -7 > ${LIST}
+    if [ -z ${VERSION} ]; then
+        curl -sL ${CHARTMUSEUM}/api/charts/${NAME} | jq -C '.[] | {version} | .version' -r | head -7 > ${LIST}
 
-    _select_one
+        _select_one
 
-    echo
-    _result "${SELECTED}"
+        echo
+        _result "${SELECTED}"
 
-    VERSION="${SELECTED}"
+        VERSION="${SELECTED}"
+    fi
 
     echo
 
     # delete
     if [ ! -z ${FORCE} ]; then
-        _command "helm delete ${NAME} --purge"
-        helm delete ${NAME} --purge
+        _command "helm delete ${NAME}-${NAMESPACE} --purge"
+        helm delete ${NAME}-${NAMESPACE} --purge
     fi
 
     # helm install
-    _command "helm install ${NAME} chartmuseum/$NAME --version $VERSION --namespace $NAMESPACE"
-    helm upgrade --install $NAME chartmuseum/$NAME --version $VERSION --namespace $NAMESPACE --devel \
-                    --set fullnameOverride=$NAME \
+    _command "helm install $NAME-$NAMESPACE chartmuseum/$NAME --version $VERSION --namespace $NAMESPACE"
+    helm upgrade --install $NAME-$NAMESPACE chartmuseum/$NAME --version $VERSION --namespace $NAMESPACE --devel \
+                    --set fullnameOverride=$NAME-$NAMESPACE \
                     --set ingress.basedomain=$BASE_DOMAIN
 
-    _command "helm ls ${NAME}"
-    helm ls ${NAME}
+    _command "helm ls ${NAME}-$NAMESPACE"
+    helm ls ${NAME}-$NAMESPACE
 
-    _waiting_pod "${NAMESPACE}" "${NAME}"
+    _waiting_pod "${NAMESPACE}" "${NAME}-$NAMESPACE"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}

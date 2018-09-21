@@ -1,7 +1,7 @@
 [environments]
-  [environments.development]
+  [environments.NAMESPACE]
     name = "NAME"
-    namespace = "development"
+    namespace = "NAMESPACE"
     wait = true
     watch = false
     watch-delay = 2
