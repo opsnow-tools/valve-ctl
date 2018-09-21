@@ -20,6 +20,7 @@ REGISTRY=
 CHARTMUSEUM=
 
 FORCE=
+REMOTE=
 
 CONFIG=${HOME}/.valve-ctl
 touch ${CONFIG} && . ${CONFIG}
@@ -64,6 +65,10 @@ for v in "$@"; do
         ;;
     --force)
         FORCE=true
+        shift
+        ;;
+    --remote)
+        REMOTE=true
         shift
         ;;
     *)
@@ -141,7 +146,7 @@ EOF
 
 _usage() {
     _logo
-    _echo " Usage: $0 {init|gen|up|rm|tools|update|version}"
+    _echo " Usage: $0 {init|gen|up|remote|rm|tools|update|version}"
     _bar
     _error
 }
@@ -160,13 +165,17 @@ _run() {
             _draft_gen
             ;;
         up)
-            _draft_up
+            if [ -z ${REMOTE} ]; then
+                _draft_up
+            else
+                _draft_remote
+            fi
             ;;
-        dn|launch)
-            _draft_dn
+        rt|remote)
+            _draft_remote
             ;;
-        rm|delete)
-            _draft_rm
+        rm|remove)
+            _draft_remove
             ;;
         clean)
             _clean
@@ -575,7 +584,7 @@ _draft_up() {
     kubectl get pod,svc,ing -n ${NAMESPACE}
 }
 
-_draft_dn() {
+_draft_remote() {
     _helm_init
 
     if [ -z ${CHARTMUSEUM} ]; then
@@ -646,7 +655,7 @@ _draft_dn() {
     kubectl get pod,svc,ing -n ${NAMESPACE}
 }
 
-_draft_rm() {
+_draft_remove() {
     _helm_init
 
     LIST=/tmp/valve-helm-ls
