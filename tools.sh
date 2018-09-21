@@ -78,7 +78,6 @@ KOPS=
 HELM=
 DRAFT=
 ISTIOCTL=
-JENKINS_X=
 TERRAFORM=
 NODE=
 JAVA=
@@ -355,6 +354,7 @@ echo "${VERSION}"
 echo "================================================================================"
 _result "install guard..."
 
+# VERSION=$(curl -s https://api.github.com/repos/appscode/guard/releases/latest | jq -r '.tag_name')
 VERSION=0.1.2
 
 if [ "${GUARD}" != "${VERSION}" ] || [ "$(command -v guard)" == "" ]; then
@@ -390,7 +390,6 @@ echo "KOPS=\"${KOPS}\"" >> ${CONFIG}
 echo "HELM=\"${HELM}\"" >> ${CONFIG}
 echo "DRAFT=\"${DRAFT}\"" >> ${CONFIG}
 echo "ISTIOCTL=\"${ISTIOCTL}\"" >> ${CONFIG}
-echo "JENKINS_X=\"${JENKINS_X}\"" >> ${CONFIG}
 echo "TERRAFORM=\"${TERRAFORM}\"" >> ${CONFIG}
 echo "NODE=\"${NODE}\"" >> ${CONFIG}
 echo "JAVA=\"${JAVA}\"" >> ${CONFIG}
