@@ -187,6 +187,8 @@ _run() {
 
 _clean() {
     rm -rf ${CONFIG}
+    rm -rf /tmp/valve-*
+
     docker rm $(docker ps -a -q)
     docker rmi -f $(docker images -q)
 }
