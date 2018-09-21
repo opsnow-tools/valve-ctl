@@ -658,7 +658,6 @@ _draft_rm() {
         _select_one
 
         _result "${SELECTED}"
-        echo
 
         NAME="${SELECTED}"
     fi
