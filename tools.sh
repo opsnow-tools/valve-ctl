@@ -85,6 +85,7 @@ NODE=
 JAVA=
 MAVEN=
 HEPTIO=
+GUARD=
 
 CONFIG=~/.bastion
 if [ -f ${CONFIG} ]; then
@@ -386,6 +387,23 @@ fi
 
 echo "${VERSION}"
 
+# guard
+echo "================================================================================"
+_result "install guard..."
+
+VERSION=0.1.2
+
+if [ "${GUARD}" != "${VERSION}" ] || [ "$(command -v guard)" == "" ]; then
+    _result " ${GUARD} >> ${VERSION}"
+
+    curl -LO https://github.com/kubernetes/kops/releases/download/${VERSION}/kops-${OS_NAME}-amd64
+    chmod +x kops-${OS_NAME}-amd64 && sudo mv kops-${OS_NAME}-amd64 /usr/local/bin/kops
+
+    GUARD="${VERSION}"
+fi
+
+guard version 2>&1 | grep 'Version ' | xargs | awk '{print $3}'
+
 echo "================================================================================"
 _result "clean all..."
 
@@ -414,5 +432,6 @@ echo "NODE=\"${NODE}\"" >> ${CONFIG}
 echo "JAVA=\"${JAVA}\"" >> ${CONFIG}
 echo "MAVEN=\"${MAVEN}\"" >> ${CONFIG}
 echo "HEPTIO=\"${HEPTIO}\"" >> ${CONFIG}
+echo "GUARD=\"${GUARD}\"" >> ${CONFIG}
 
 _success "done."
