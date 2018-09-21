@@ -19,6 +19,7 @@ BASE_DOMAIN=
 REGISTRY=
 CHARTMUSEUM=
 
+INFRA=
 FORCE=
 REMOTE=
 
@@ -159,23 +160,24 @@ _run() {
             _config
             ;;
         init)
-            _draft_init
+            INFRA=${FORCE}
+            _init
             ;;
         gen)
-            _draft_gen
+            _gen
             ;;
         up)
             if [ -z ${REMOTE} ]; then
-                _draft_up
+                _up
             else
-                _draft_remote
+                _remote
             fi
             ;;
         rt|remote)
-            _draft_remote
+            _remote
             ;;
         rm|remove)
-            _draft_remove
+            _remove
             ;;
         clean)
             _clean
@@ -192,14 +194,6 @@ _run() {
         *)
             _usage
     esac
-}
-
-_clean() {
-    rm -rf ${CONFIG}
-    rm -rf /tmp/valve-*
-
-    docker rm $(docker ps -a -q)
-    docker rmi -f $(docker images -q)
 }
 
 _tools() {
@@ -315,6 +309,19 @@ _config_save() {
     echo "CHARTMUSEUM=${CHARTMUSEUM}" >> ${CONFIG}
 }
 
+_clean() {
+    rm -rf ${CONFIG}
+    rm -rf /tmp/valve-*
+
+    docker rm $(docker ps -a -q)
+    docker rmi -f $(docker images -q)
+}
+
+_init() {
+    _helm_init
+    _draft_init
+}
+
 _helm_init() {
     _command "helm init"
     helm init
@@ -325,10 +332,21 @@ _helm_init() {
     # _command "helm version"
     # helm version
 
-    _helm_repo
-}
+    if [ ! -z ${INFRA} ]; then
+        _helm_delete "docker-registry"
+        _helm_delete "metrics-server"
+        _helm_delete "nginx-ingress"
+    fi
 
-_helm_repo() {
+    _helm_install "kube-public" "docker-registry"
+    _helm_install "kube-public" "metrics-server"
+    _helm_install "kube-public" "nginx-ingress"
+
+    if [ ! -z ${INFRA} ]; then
+        _waiting_pod "kube-public" "docker-registry"
+        _waiting_pod "kube-public" "nginx-ingress"
+    fi
+
     # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C '.'
     if [ ! -z ${CHARTMUSEUM} ]; then
         _command "helm repo add chartmuseum https://${CHARTMUSEUM}"
@@ -341,14 +359,20 @@ _helm_repo() {
     _config_save
 }
 
-_helm_apply() {
-    _NS=$1
-    _NM=$2
+_helm_delete() {
+    _NM=$1
 
-    if [ ! -z ${FORCE} ]; then
+    CNT=$(helm ls ${_NM} | wc -l | xargs)
+
+    if [ "x${CNT}" != "x0" ]; then
         _command "helm delete ${_NM} --purge"
         helm delete ${_NM} --purge
     fi
+}
+
+_helm_install() {
+    _NS=$1
+    _NM=$2
 
     CNT=$(helm ls ${_NM} | wc -l | xargs)
 
@@ -366,27 +390,17 @@ _helm_apply() {
             _command "helm upgrade --install ${_NM} stable/${_NM} --version ${CHART_VERSION}"
             helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}
         fi
+
+        INFRA=true
     fi
 }
 
 _draft_init() {
-    _helm_init
-
     _command "draft init"
     draft init
 
     # _command "draft version"
     # draft version
-
-    # local tools
-    _helm_apply "kube-public" "docker-registry"
-    _helm_apply "kube-public" "metrics-server"
-    _helm_apply "kube-public" "nginx-ingress"
-
-    if [ "x${ING_CNT}" == "x0" ] || [ "x${REG_CNT}" == "x0" ]; then
-        _waiting_pod "kube-public" "docker-registry"
-        _waiting_pod "kube-public" "nginx-ingress"
-    fi
 
     draft config set disable-push-warning 1
 
@@ -405,7 +419,7 @@ _draft_init() {
     _config_save
 }
 
-_draft_gen() {
+_gen() {
     _result "draft package version: ${THIS_VERSION}"
 
     DIST=/tmp/valve-draft-${THIS_VERSION}
@@ -532,7 +546,7 @@ _draft_gen() {
     _config_save
 }
 
-_draft_up() {
+_up() {
     if [ ! -f draft.toml ]; then
         _error "Not found draft.toml"
     fi
@@ -540,7 +554,7 @@ _draft_up() {
         _error "Not found charts"
     fi
 
-    _draft_init
+    _init
 
     # name
     NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
@@ -584,7 +598,7 @@ _draft_up() {
     kubectl get pod,svc,ing -n ${NAMESPACE}
 }
 
-_draft_remote() {
+_remote() {
     _helm_init
 
     if [ -z ${CHARTMUSEUM} ]; then
@@ -655,7 +669,7 @@ _draft_remote() {
     kubectl get pod,svc,ing -n ${NAMESPACE}
 }
 
-_draft_remove() {
+_remove() {
     _helm_init
 
     LIST=/tmp/valve-helm-ls
