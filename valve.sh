@@ -625,8 +625,6 @@ _draft_dn() {
         VERSION="${SELECTED}"
     fi
 
-    echo
-
     # delete
     if [ ! -z ${FORCE} ]; then
         _command "helm delete ${NAME}-${NAMESPACE} --purge"
