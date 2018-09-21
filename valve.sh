@@ -579,7 +579,9 @@ _draft_dn() {
     _helm_init
 
     if [ -z ${CHARTMUSEUM} ]; then
-        _read "CHARTMUSEUM : "
+        echo
+        DEFAULT="chartmuseum-devops.demo.opsnow.com"
+        _read "CHARTMUSEUM (${DEFAULT}) : "
 
         if [ -z ${ANSWER} ]; then
             _error
@@ -596,7 +598,7 @@ _draft_dn() {
     # base domain
     BASE_DOMAIN="127.0.0.1.nip.io"
 
-    # curl -sL chartmuseum-devops.coruscant.opsnow.com/api/charts | jq -C 'keys[]' -r
+    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C 'keys[]' -r
     # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts/sample-node | jq -C '.[] | {version} | .version' -r
 
     LIST=/tmp/valve-charts-ls
