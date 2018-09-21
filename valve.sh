@@ -146,7 +146,7 @@ EOF
 
 _usage() {
     _logo
-    _echo " Usage: $0 {init|gen|up|remote|rm|tools|update|version}"
+    _echo " Usage: $0 {init|gen|up|remote|remove|clean|tools|update|version}"
     _bar
     _error
 }
