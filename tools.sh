@@ -241,27 +241,6 @@ _result "install istioctl..."
 
 istioctl version | grep "Version" | xargs | awk '{print $2}'
 
-# # jenkins-x
-# echo "================================================================================"
-# _result "install jenkins-x..."
-
-# if [ "${OS_TYPE}" == "brew" ]; then
-#    command -v jx > /dev/null || brew install jx
-# else
-#    VERSION=$(curl -s https://api.github.com/repos/jenkins-x/jx/releases/latest | jq -r '.tag_name')
-
-#    if [ "${JENKINS_X}" != "${VERSION}" ]; then
-#        _result " ${JENKINS_X} >> ${VERSION}"
-
-#        curl -L https://github.com/jenkins-x/jx/releases/download/${VERSION}/jx-${OS_NAME}-amd64.tar.gz | tar xz
-#        sudo mv jx /usr/local/bin/jx
-
-#        JENKINS_X="${VERSION}"
-#    fi
-# fi
-
-# jx --version | xargs
-
 # terraform
 echo "================================================================================"
 _result "install terraform..."
@@ -389,6 +368,7 @@ fi
 
 guard version 2>&1 | grep 'Version ' | xargs | awk '{print $3}'
 
+# clean
 echo "================================================================================"
 _result "clean all..."
 
@@ -409,7 +389,6 @@ echo "KUBECTL=\"${KUBECTL}\"" >> ${CONFIG}
 echo "KOPS=\"${KOPS}\"" >> ${CONFIG}
 echo "HELM=\"${HELM}\"" >> ${CONFIG}
 echo "DRAFT=\"${DRAFT}\"" >> ${CONFIG}
-echo "SKAFFOLD=\"${SKAFFOLD}\"" >> ${CONFIG}
 echo "ISTIOCTL=\"${ISTIOCTL}\"" >> ${CONFIG}
 echo "JENKINS_X=\"${JENKINS_X}\"" >> ${CONFIG}
 echo "TERRAFORM=\"${TERRAFORM}\"" >> ${CONFIG}
