@@ -9,6 +9,7 @@ SUB=$2
 
 NAME=
 VERSION=
+PACKAGE=
 
 SECRET=
 NAMESPACE=
@@ -35,6 +36,10 @@ for v in "$@"; do
         ;;
     --version=*)
         VERSION="${v#*=}"
+        shift
+        ;;
+    --package=*)
+        PACKAGE="${v#*=}"
         shift
         ;;
     --secret=*)
@@ -407,18 +412,22 @@ _draft_gen() {
         _result "draft package downloaded."
     fi
 
-    # find all
-    ls ${DIST} > ${LIST}
+    # package
+    if [ -z ${PACKAGE} ]; then
+        ls ${DIST} > ${LIST}
 
-    _select_one
+        _select_one
 
-    if [ ! -d ${DIST}/${SELECTED} ]; then
-        _error
+        if [ ! -d ${DIST}/${SELECTED} ]; then
+            _error
+        fi
+
+        _result "${SELECTED}"
+
+        PACKAGE="${SELECTED}"
     fi
 
-    _result "${SELECTED}"
-
-    # prepare
+    # default
     if [ -f Jenkinsfile ]; then
         if [ -z ${NAME} ]; then
             NAME=$(cat Jenkinsfile | grep "def IMAGE_NAME = " | cut -d'"' -f2)
@@ -440,23 +449,23 @@ _draft_gen() {
     rm -rf charts
 
     # copy
-    if [ -d ${DIST}/${SELECTED}/charts ]; then
-        cp -rf ${DIST}/${SELECTED}/charts charts
+    if [ -d ${DIST}/${PACKAGE}/charts ]; then
+        cp -rf ${DIST}/${PACKAGE}/charts charts
     fi
-    if [ -f ${DIST}/${SELECTED}/dockerignore ]; then
-        cp -rf ${DIST}/${SELECTED}/dockerignore .dockerignore
+    if [ -f ${DIST}/${PACKAGE}/dockerignore ]; then
+        cp -rf ${DIST}/${PACKAGE}/dockerignore .dockerignore
     fi
-    if [ -f ${DIST}/${SELECTED}/draftignore ]; then
-        cp -rf ${DIST}/${SELECTED}/draftignore .draftignore
+    if [ -f ${DIST}/${PACKAGE}/draftignore ]; then
+        cp -rf ${DIST}/${PACKAGE}/draftignore .draftignore
     fi
-    if [ -f ${DIST}/${SELECTED}/Dockerfile ]; then
-        cp -rf ${DIST}/${SELECTED}/Dockerfile Dockerfile
+    if [ -f ${DIST}/${PACKAGE}/Dockerfile ]; then
+        cp -rf ${DIST}/${PACKAGE}/Dockerfile Dockerfile
     fi
-    if [ -f ${DIST}/${SELECTED}/Jenkinsfile ]; then
-        cp -rf ${DIST}/${SELECTED}/Jenkinsfile Jenkinsfile
+    if [ -f ${DIST}/${PACKAGE}/Jenkinsfile ]; then
+        cp -rf ${DIST}/${PACKAGE}/Jenkinsfile Jenkinsfile
     fi
-    if [ -f ${DIST}/${SELECTED}/draft.toml ]; then
-        cp -rf ${DIST}/${SELECTED}/draft.toml draft.toml
+    if [ -f ${DIST}/${PACKAGE}/draft.toml ]; then
+        cp -rf ${DIST}/${PACKAGE}/draft.toml draft.toml
     fi
 
     if [ -f Jenkinsfile ]; then
