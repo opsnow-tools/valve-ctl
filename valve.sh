@@ -347,6 +347,10 @@ _helm_init() {
         _waiting_pod "kube-public" "nginx-ingress"
     fi
 
+    _helm_repo
+}
+
+_helm_repo() {
     # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C '.'
     if [ ! -z ${CHARTMUSEUM} ]; then
         _command "helm repo add chartmuseum https://${CHARTMUSEUM}"
