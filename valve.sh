@@ -418,6 +418,25 @@ _draft_gen() {
 
     _result "${SELECTED}"
 
+    # prepare
+    if [ -f Jenkinsfile ]; then
+        if [ -z ${NAME} ]; then
+            NAME=$(cat Jenkinsfile | grep "def IMAGE_NAME = " | cut -d'"' -f2)
+        fi
+        if [ -z ${REPOSITORY_URL} ]; then
+            REPOSITORY_URL=$(cat Jenkinsfile | grep "def REPOSITORY_URL = " | cut -d'"' -f2)
+        fi
+    fi
+    if [ -z ${NAME} ]; then
+        NAME=$(basename $(pwd))
+    fi
+    if [ -z ${REPOSITORY_URL} ]; then
+        if [ -d .git ]; then
+            REPOSITORY_URL=$(git config --get remote.origin.url | head -1 | xargs)
+        fi
+    fi
+
+    # clear
     rm -rf charts
 
     # copy
@@ -442,8 +461,7 @@ _draft_gen() {
 
     if [ -f Jenkinsfile ]; then
         # Jenkinsfile IMAGE_NAME
-        DEFAULT=$(basename $(pwd))
-        _chart_replace "Jenkinsfile" "def IMAGE_NAME" "${DEFAULT}"
+        _chart_replace "Jenkinsfile" "def IMAGE_NAME" "${NAME}"
         NAME="${REPLACE_VAL}"
     fi
 
@@ -473,11 +491,7 @@ _draft_gen() {
 
     if [ -f Jenkinsfile ]; then
         # Jenkinsfile REPOSITORY_URL
-        DEFAULT=
-        if [ -d .git ]; then
-            DEFAULT=$(git config --get remote.origin.url | head -1 | xargs)
-        fi
-        _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${DEFAULT}"
+        _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${REPOSITORY_URL}"
         REPOSITORY_URL="${REPLACE_VAL}"
 
         # Jenkinsfile REPOSITORY_SECRET
