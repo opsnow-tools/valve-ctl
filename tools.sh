@@ -85,6 +85,7 @@ NODE=
 JAVA=
 MAVEN=
 HEPTIO=
+GUARD=
 
 CONFIG=~/.bastion
 if [ -f ${CONFIG} ]; then
@@ -386,6 +387,28 @@ fi
 
 echo "${VERSION}"
 
+# guard
+echo "================================================================================"
+_result "install guard..."
+
+VERSION=0.1.2
+
+if [ "${GUARD}" != "${VERSION}" ] || [ "$(command -v guard)" == "" ]; then
+    _result " ${GUARD} >> ${VERSION}"
+
+    if [ "${OS_TYPE}" == "brew" ]; then
+        curl -LO https://github.com/appscode/guard/releases/download/0.1.2/guard-darwin-amd64
+        chmod +x guard-darwin-amd64 && sudo mv guard-darwin-amd64 /usr/local/bin/guard
+    else
+        curl -LO https://github.com/appscode/guard/releases/download/0.1.2/guard-linux-amd64
+        chmod +x guard-linux-amd64 && sudo mv guard-linux-amd64 /usr/local/bin/guard
+    fi
+
+    GUARD="${VERSION}"
+fi
+
+guard version 2>&1 | grep 'Version ' | xargs | awk '{print $3}'
+
 echo "================================================================================"
 _result "clean all..."
 
@@ -414,5 +437,6 @@ echo "NODE=\"${NODE}\"" >> ${CONFIG}
 echo "JAVA=\"${JAVA}\"" >> ${CONFIG}
 echo "MAVEN=\"${MAVEN}\"" >> ${CONFIG}
 echo "HEPTIO=\"${HEPTIO}\"" >> ${CONFIG}
+echo "GUARD=\"${GUARD}\"" >> ${CONFIG}
 
 _success "done."
