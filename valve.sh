@@ -92,21 +92,23 @@ _read() {
 }
 
 _result() {
+    _echo
     _echo "# $@" 4
 }
 
 _command() {
+    _echo
     _echo "$ $@" 3
 }
 
 _success() {
-    echo
+    _echo
     _echo "+ $@" 2
     exit 0
 }
 
 _error() {
-    echo
+    _echo
     _echo "- $@" 1
     exit 1
 }
@@ -161,6 +163,9 @@ _run() {
         rm|delete)
             _draft_rm
             ;;
+        clean)
+            _clean
+            ;;
         tools)
             _tools
             ;;
@@ -175,6 +180,12 @@ _run() {
     esac
 }
 
+_clean() {
+    rm -rf ${CONFIG}
+    docker rm $(docker ps -a -q)
+    docker rmi -f $(docker images -q)
+}
+
 _tools() {
     curl -sL repo.opsnow.io/valve-ctl/tools | bash
     exit 0
@@ -186,6 +197,13 @@ _update() {
 }
 
 _version() {
+    _command "helm version"
+    helm version
+
+    _command "draft version"
+    draft version
+
+    _command "valve version"
     _success ${THIS_VERSION} 2
 }
 
@@ -288,8 +306,8 @@ _helm_init() {
     # waiting tiller
     _waiting_pod "kube-system" "tiller"
 
-    _command "helm version"
-    helm version
+    # _command "helm version"
+    # helm version
 
     _helm_repo
 }
@@ -311,20 +329,25 @@ _helm_apply() {
     _NS=$1
     _NM=$2
 
+    if [ ! -z ${FORCE} ]; then
+        _command "helm delete ${_NM} --purge"
+        helm delete ${_NM} --purge
+    fi
+
     CNT=$(helm ls ${_NM} | wc -l | xargs)
 
-    if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
+    if [ "x${CNT}" == "x0" ]; then
         CHART=/tmp/${_NM}.yaml
 
         curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/${_NM}.yaml > ${CHART}
 
-        CHART_VERSION=$(cat ${CHART} | grep chart-version | awk '{print $3}')
+        CHART_VERSION=$(cat ${CHART} | grep chart-version | awk '{print $3}' | xargs)
 
         if [ -z ${CHART_VERSION} ] || [ "${CHART_VERSION}" == "latest" ]; then
             _command "helm upgrade --install ${_NM} stable/${_NM}"
             helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART}
         else
-            _command "helm upgrade --install ${_NM} stable/${_NM}" --version ${CHART_VERSION}
+            _command "helm upgrade --install ${_NM} stable/${_NM} --version ${CHART_VERSION}"
             helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}
         fi
     fi
@@ -336,25 +359,23 @@ _draft_init() {
     _command "draft init"
     draft init
 
-    _command "draft version"
-    draft version
-
-    NAMESPACE="kube-public"
+    # _command "draft version"
+    # draft version
 
     # local tools
-    _helm_apply "${NAMESPACE}" "docker-registry"
-    _helm_apply "${NAMESPACE}" "metrics-server"
-    _helm_apply "${NAMESPACE}" "nginx-ingress"
+    _helm_apply "kube-public" "docker-registry"
+    _helm_apply "kube-public" "metrics-server"
+    _helm_apply "kube-public" "nginx-ingress"
 
     if [ "x${ING_CNT}" == "x0" ] || [ "x${REG_CNT}" == "x0" ]; then
-        _waiting_pod "${NAMESPACE}" "docker-registry"
-        _waiting_pod "${NAMESPACE}" "nginx-ingress"
+        _waiting_pod "kube-public" "docker-registry"
+        _waiting_pod "kube-public" "nginx-ingress"
     fi
 
     draft config set disable-push-warning 1
 
     # curl -sL docker-registry.127.0.0.1.nip.io:30500/v2/_catalog | jq -C '.'
-    REGISTRY="docker-registry.127.0.0.1.nip.io:30500"
+    REGISTRY="${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}"
 
     # registry
     if [ -z ${REGISTRY} ]; then
@@ -383,7 +404,6 @@ _draft_gen() {
         curl -sL https://github.com/opsnow-tools/valve-ctl/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
         popd
 
-        echo
         _result "draft package downloaded."
     fi
 
@@ -396,7 +416,6 @@ _draft_gen() {
         _error
     fi
 
-    echo
     _result "${SELECTED}"
 
     rm -rf charts
@@ -428,6 +447,7 @@ _draft_gen() {
         NAME="${REPLACE_VAL}"
     fi
 
+    # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -f draft.toml ] && [ ! -z ${NAME} ]; then
@@ -479,8 +499,6 @@ _draft_gen() {
 }
 
 _draft_up() {
-    _draft_init
-
     if [ ! -f draft.toml ]; then
         _error "Not found draft.toml"
     fi
@@ -488,8 +506,12 @@ _draft_up() {
         _error "Not found charts"
     fi
 
+    _draft_init
+
+    # name
     NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
 
+    # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
     # charts/acme/values.yaml
@@ -543,8 +565,10 @@ _draft_dn() {
         _helm_repo
     fi
 
+    # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
+    # base domain
     BASE_DOMAIN="127.0.0.1.nip.io"
 
     # curl -sL chartmuseum-devops.coruscant.opsnow.com/api/charts | jq -C 'keys[]' -r
@@ -558,7 +582,6 @@ _draft_dn() {
 
         _select_one
 
-        echo
         _result "${SELECTED}"
 
         NAME="${SELECTED}"
@@ -570,7 +593,6 @@ _draft_dn() {
 
         _select_one
 
-        echo
         _result "${SELECTED}"
 
         VERSION="${SELECTED}"
@@ -585,36 +607,39 @@ _draft_dn() {
     fi
 
     # helm install
-    _command "helm install $NAME-$NAMESPACE chartmuseum/$NAME --version $VERSION --namespace $NAMESPACE"
-    helm upgrade --install $NAME-$NAMESPACE chartmuseum/$NAME --version $VERSION --namespace $NAMESPACE --devel \
-                    --set fullnameOverride=$NAME-$NAMESPACE \
-                    --set ingress.basedomain=$BASE_DOMAIN
+    _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
+    helm upgrade --install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE} --devel \
+                    --set fullnameOverride=${NAME}-${NAMESPACE} \
+                    --set ingress.basedomain=${BASE_DOMAIN}
 
-    _command "helm ls ${NAME}-$NAMESPACE"
-    helm ls ${NAME}-$NAMESPACE
+    _command "helm ls ${NAME}-${NAMESPACE}"
+    helm ls ${NAME}-${NAMESPACE}
 
-    _waiting_pod "${NAMESPACE}" "${NAME}-$NAMESPACE"
+    _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
 }
 
 _draft_rm() {
-    _draft_init
+    _helm_init
 
     LIST=/tmp/valve-helm-ls
 
-    _command "helm ls --all"
-    helm ls --all | grep development | awk '{print $1}' > ${LIST}
+    if [ -z ${NAME} ]; then
+        _command "helm ls --all"
+        helm ls --all | grep development | awk '{print $1}' > ${LIST}
 
-    _select_one
+        _select_one
 
-    echo
-    _result "${SELECTED}"
-    echo
+        _result "${SELECTED}"
+        echo
 
-    _command "helm delete ${SELECTED} --purge"
-    helm delete ${SELECTED} --purge
+        NAME="${SELECTED}"
+    fi
+
+    _command "helm delete ${NAME} --purge"
+    helm delete ${NAME} --purge
 }
 
 _chart_replace() {
