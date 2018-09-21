@@ -571,8 +571,8 @@ _up() {
 
     # delete
     if [ ! -z ${FORCE} ]; then
-        _command "helm delete ${NAME} --purge"
-        helm delete ${NAME} --purge
+        _command "helm delete ${NAME}-${NAMESPACE} --purge"
+        helm delete ${NAME}-${NAMESPACE} --purge
     fi
 
     # draft up
@@ -589,10 +589,10 @@ _up() {
         _error "$(cat ${DRAFT_LOGS})"
     fi
 
-    _command "helm ls ${NAME}"
-    helm ls ${NAME}
+    _command "helm ls ${NAME}-${NAMESPACE}"
+    helm ls ${NAME}-${NAMESPACE}
 
-    _waiting_pod "${NAMESPACE}" "${NAME}"
+    _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
