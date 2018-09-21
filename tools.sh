@@ -396,13 +396,8 @@ VERSION=0.1.2
 if [ "${GUARD}" != "${VERSION}" ] || [ "$(command -v guard)" == "" ]; then
     _result " ${GUARD} >> ${VERSION}"
 
-    if [ "${OS_TYPE}" == "brew" ]; then
-        curl -LO https://github.com/appscode/guard/releases/download/0.1.2/guard-darwin-amd64
-        chmod +x guard-darwin-amd64 && sudo mv guard-darwin-amd64 /usr/local/bin/guard
-    else
-        curl -LO https://github.com/appscode/guard/releases/download/0.1.2/guard-linux-amd64
-        chmod +x guard-linux-amd64 && sudo mv guard-linux-amd64 /usr/local/bin/guard
-    fi
+    curl -LO https://github.com/kubernetes/kops/releases/download/${VERSION}/kops-${OS_NAME}-amd64
+    chmod +x kops-${OS_NAME}-amd64 && sudo mv kops-${OS_NAME}-amd64 /usr/local/bin/kops
 
     GUARD="${VERSION}"
 fi
