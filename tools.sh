@@ -397,6 +397,7 @@ _result "install guard..."
 
 VERSION=0.1.2
 
+
 if [ "${GUARD}" != "${VERSION}" ] || [ "$(command -v guard)" == "" ]; then
     _result " ${GUARD} >> ${VERSION}"
 
