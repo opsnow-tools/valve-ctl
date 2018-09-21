@@ -134,7 +134,7 @@ EOF
 
 _usage() {
     _logo
-    _echo " Usage: $0 {gen|up|rm|tools|update|version}"
+    _echo " Usage: $0 {init|gen|up|rm|tools|update|version}"
     _bar
     _error
 }
@@ -270,7 +270,6 @@ _select_one() {
 _config() {
     echo
     cat ${CONFIG}
-    echo
 }
 
 _config_save() {
