@@ -356,16 +356,20 @@ java -version 2>&1 | grep version | cut -d'"' -f2
 echo "================================================================================"
 _result "install maven..."
 
-VERSION=3.5.4
+if [ "${OS_TYPE}" == "brew" ]; then
+    command -v mvn > /dev/null || brew install maven
+else
+    VERSION=3.5.4
 
-if [ "${MAVEN}" != "${VERSION}" ] || [ "$(command -v mvn)" == "" ]; then
-    _result " ${MAVEN} >> ${VERSION}"
+    if [ "${MAVEN}" != "${VERSION}" ] || [ "$(command -v mvn)" == "" ]; then
+        _result " ${MAVEN} >> ${VERSION}"
 
-    curl -L http://apache.tt.co.kr/maven/maven-3/${VERSION}/binaries/apache-maven-${VERSION}-bin.tar.gz | tar xz
-    sudo mv -f apache-maven-${VERSION} /usr/local/
-    sudo ln -sf /usr/local/apache-maven-${VERSION}/bin/mvn /usr/local/bin/mvn
+        curl -L http://apache.tt.co.kr/maven/maven-3/${VERSION}/binaries/apache-maven-${VERSION}-bin.tar.gz | tar xz
+        sudo mv -f apache-maven-${VERSION} /usr/local/
+        sudo ln -sf /usr/local/apache-maven-${VERSION}/bin/mvn /usr/local/bin/mvn
 
-    MAVEN="${VERSION}"
+        MAVEN="${VERSION}"
+    fi
 fi
 
 mvn -version | grep "Apache Maven" | xargs | awk '{print $3}'
