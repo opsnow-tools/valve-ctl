@@ -400,8 +400,8 @@ VERSION=0.1.2
 if [ "${GUARD}" != "${VERSION}" ] || [ "$(command -v guard)" == "" ]; then
     _result " ${GUARD} >> ${VERSION}"
 
-    curl -LO https://github.com/kubernetes/kops/releases/download/${VERSION}/kops-${OS_NAME}-amd64
-    chmod +x kops-${OS_NAME}-amd64 && sudo mv kops-${OS_NAME}-amd64 /usr/local/bin/kops
+    curl -LO https://github.com/appscode/guard/releases/download/${VERSION}/guard-${OS_NAME}-amd64
+    chmod +x guard-${OS_NAME}-amd64 && sudo mv guard-${OS_NAME}-amd64 /usr/local/bin/guard
 
     GUARD="${VERSION}"
 fi
