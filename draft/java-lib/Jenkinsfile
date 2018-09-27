@@ -76,7 +76,6 @@ podTemplate(label: label, containers: [
             cd $SOURCE_ROOT
             mvn test -s /home/jenkins/.m2/settings.xml
           """
-          success(SLACK_TOKEN, "Unit Tests", IMAGE_NAME, VERSION)
         } catch (e) {
           failure(SLACK_TOKEN, "Unit Tests", IMAGE_NAME)
           throw e
@@ -91,9 +90,9 @@ podTemplate(label: label, containers: [
               cd $SOURCE_ROOT
               mvn deploy -s /home/jenkins/.m2/settings.xml
             """
-            success(SLACK_TOKEN, "Build", IMAGE_NAME, VERSION)
+            success(SLACK_TOKEN, "Deploy", IMAGE_NAME, VERSION)
           } catch (e) {
-            failure(SLACK_TOKEN, "Build", IMAGE_NAME)
+            failure(SLACK_TOKEN, "Deploy", IMAGE_NAME)
             throw e
           }
         }

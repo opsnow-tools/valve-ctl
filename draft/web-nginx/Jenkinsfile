@@ -69,7 +69,6 @@ podTemplate(label: label, containers: [
             container("builder") {
               try {
                 butler.build_image(IMAGE_NAME, VERSION)
-                success(SLACK_TOKEN, "Build Docker", IMAGE_NAME, VERSION)
               } catch (e) {
                 failure(SLACK_TOKEN, "Build Docker", IMAGE_NAME)
                 throw e
@@ -80,9 +79,8 @@ podTemplate(label: label, containers: [
             container("builder") {
               try {
                 butler.build_chart(IMAGE_NAME, VERSION)
-                success(SLACK_TOKEN, "Build Docker", IMAGE_NAME, VERSION)
               } catch (e) {
-                failure(SLACK_TOKEN, "Build Docker", IMAGE_NAME)
+                failure(SLACK_TOKEN, "Build Charts", IMAGE_NAME)
                 throw e
               }
             }
