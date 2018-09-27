@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# version
+DATE=
+KUBECTL=
+KOPS=
+HELM=
+DRAFT=
+GUARD=
+
+CONFIG=${HOME}/.valve-tools
+touch ${CONFIG} && . ${CONFIG}
+
+################################################################################
+
 command -v tput > /dev/null || TPUT=false
 
 _echo() {
@@ -69,23 +82,6 @@ if [ "${OS_TYPE}" == "apt" ]; then
     export LC_ALL=C
 fi
 
-# version
-DATE=
-KUBECTL=
-KOPS=
-HELM=
-DRAFT=
-ISTIOCTL=
-TERRAFORM=
-NODE=
-JAVA=
-MAVEN=
-HEPTIO=
-GUARD=
-
-CONFIG=${HOME}/.valve-tools
-touch ${CONFIG} && . ${CONFIG}
-
 # update
 echo "================================================================================"
 _result "update..."
@@ -134,7 +130,7 @@ if [ "${OS_TYPE}" == "brew" ]; then
 else
     VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
 
-    if [ "${KUBECTL}" != "${VERSION}" ]; then
+    if [ "${KUBECTL}" != "${VERSION}" ] || [ "$(command -v kubectl)" == "" ]; then
         _result " ${KUBECTL} >> ${VERSION}"
 
         curl -LO https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/${OS_NAME}/amd64/kubectl
@@ -155,7 +151,7 @@ if [ "${OS_TYPE}" == "brew" ]; then
 else
     VERSION=$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | jq -r '.tag_name')
 
-    if [ "${KOPS}" != "${VERSION}" ]; then
+    if [ "${KOPS}" != "${VERSION}" ] || [ "$(command -v kops)" == "" ]; then
         _result " ${KOPS} >> ${VERSION}"
 
         curl -LO https://github.com/kubernetes/kops/releases/download/${VERSION}/kops-${OS_NAME}-amd64
@@ -176,7 +172,7 @@ if [ "${OS_TYPE}" == "brew" ]; then
 else
     VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq -r '.tag_name')
 
-    if [ "${HELM}" != "${VERSION}" ]; then
+    if [ "${HELM}" != "${VERSION}" ] || [ "$(command -v helm)" == "" ]; then
         _result " ${HELM} >> ${VERSION}"
 
         curl -L https://storage.googleapis.com/kubernetes-helm/helm-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz
@@ -197,7 +193,7 @@ _result "install draft..."
 #else
     VERSION=$(curl -s https://api.github.com/repos/Azure/draft/releases/latest | jq -r '.tag_name')
 
-    if [ "${DRAFT}" != "${VERSION}" ]; then
+    if [ "${DRAFT}" != "${VERSION}" ] || [ "$(command -v draft)" == "" ]; then
         _result " ${DRAFT} >> ${VERSION}"
 
         curl -L https://azuredraft.blob.core.windows.net/draft/draft-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz
@@ -208,142 +204,6 @@ _result "install draft..."
 #fi
 
 draft version --short | xargs
-
-# istioctl
-echo "================================================================================"
-_result "install istioctl..."
-
-# if [ "${OS_TYPE}" == "brew" ]; then
-#     command -v istioctl > /dev/null || brew install istioctl
-# else
-    VERSION=$(curl -s https://api.github.com/repos/istio/istio/releases/latest | jq -r '.tag_name')
-
-    if [ "${ISTIOCTL}" != "${VERSION}" ]; then
-        _result " ${ISTIOCTL} >> ${VERSION}"
-
-        if [ "${OS_NAME}" == "darwin" ]; then
-            ISTIO_OS="osx"
-        else
-            ISTIO_OS="${OS_NAME}"
-        fi
-        curl -L https://github.com/istio/istio/releases/download/${VERSION}/istio-${VERSION}-${ISTIO_OS}.tar.gz | tar xz
-        sudo mv istio-${VERSION}/bin/istioctl /usr/local/bin/istioctl && rm -rf istio-${VERSION}
-
-        ISTIOCTL="${VERSION}"
-    fi
-# fi
-
-istioctl version | grep "Version" | xargs | awk '{print $2}'
-
-# terraform
-echo "================================================================================"
-_result "install terraform..."
-
-if [ "${OS_TYPE}" == "brew" ]; then
-    command -v terraform > /dev/null || brew install terraform
-else
-    VERSION=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | jq -r '.tag_name' | cut -c 2-)
-
-    if [ "${TERRAFORM}" != "${VERSION}" ]; then
-        _result " ${TERRAFORM} >> ${VERSION}"
-
-        curl -LO https://releases.hashicorp.com/terraform/${VERSION}/terraform_${VERSION}_${OS_NAME}_amd64.zip
-        unzip terraform_${VERSION}_${OS_NAME}_amd64.zip && rm -rf terraform_${VERSION}_${OS_NAME}_amd64.zip
-        sudo mv terraform /usr/local/bin/terraform
-
-        TERRAFORM="${VERSION}"
-    fi
-fi
-
-terraform version | xargs | awk '{print $2}'
-
-# nodejs
-echo "================================================================================"
-_result "install nodejs..."
-
-if [ "${OS_TYPE}" == "brew" ]; then
-    command -v node > /dev/null || brew install node
-else
-    VERSION=10
-
-    if [ "${NODE}" != "${VERSION}" ] || [ "$(command -v node)" == "" ]; then
-        if [ "${OS_TYPE}" == "apt" ]; then
-            curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-            sudo apt install -y nodejs
-        elif [ "${OS_TYPE}" == "yum" ]; then
-            curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -
-            sudo yum install -y nodejs
-        fi
-
-        NODE="${VERSION}"
-    fi
-fi
-
-node -v | xargs
-
-# java
-echo "================================================================================"
-_result "install java..."
-
-if [ "${OS_TYPE}" == "brew" ]; then
-    command -v java > /dev/null || brew cask install java
-else
-    VERSION=1.8.0
-
-    if [ "${JAVA}" != "${VERSION}" ] || [ "$(command -v java)" == "" ]; then
-        _result " ${JAVA} >> ${VERSION}"
-
-        if [ "${OS_TYPE}" == "apt" ]; then
-            sudo apt install -y openjdk-8-jdk
-        elif [ "${OS_TYPE}" == "yum" ]; then
-            sudo yum remove -y java-1.7.0-openjdk
-            sudo yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel
-        fi
-
-        JAVA="${VERSION}"
-    fi
-fi
-
-java -version 2>&1 | grep version | cut -d'"' -f2
-
-# maven
-echo "================================================================================"
-_result "install maven..."
-
-if [ "${OS_TYPE}" == "brew" ]; then
-    command -v mvn > /dev/null || brew install maven
-else
-    VERSION=3.5.4
-
-    if [ "${MAVEN}" != "${VERSION}" ] || [ "$(command -v mvn)" == "" ]; then
-        _result " ${MAVEN} >> ${VERSION}"
-
-        curl -L http://apache.tt.co.kr/maven/maven-3/${VERSION}/binaries/apache-maven-${VERSION}-bin.tar.gz | tar xz
-        sudo mv -f apache-maven-${VERSION} /usr/local/
-        sudo ln -sf /usr/local/apache-maven-${VERSION}/bin/mvn /usr/local/bin/mvn
-
-        MAVEN="${VERSION}"
-    fi
-fi
-
-mvn -version | grep "Apache Maven" | xargs | awk '{print $3}'
-
-# heptio
-echo "================================================================================"
-_result "install heptio..."
-
-VERSION=1.10.3
-
-if [ "${HEPTIO}" != "${VERSION}" ]; then
-    _result " ${HEPTIO} >> ${VERSION}"
-
-    curl -LO https://amazon-eks.s3-us-west-2.amazonaws.com/${VERSION}/2018-06-05/bin/${OS_NAME}/amd64/heptio-authenticator-aws
-    chmod +x heptio-authenticator-aws && sudo mv heptio-authenticator-aws /usr/local/bin/heptio-authenticator-aws
-
-    HEPTIO="${VERSION}"
-fi
-
-echo "${VERSION}"
 
 # guard
 echo "================================================================================"
@@ -385,13 +245,6 @@ KUBECTL="${KUBECTL}"
 KOPS="${KOPS}"
 HELM="${HELM}"
 DRAFT="${DRAFT}"
-ISTIOCTL="${ISTIOCTL}"
-JENKINSX="${JENKINSX}"
-TERRAFORM="${TERRAFORM}"
-NODE="${NODE}"
-JAVA="${JAVA}"
-MAVEN="${MAVEN}"
-HEPTIO="${HEPTIO}"
 GUARD="${GUARD}"
 EOF
 
