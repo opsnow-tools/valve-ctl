@@ -28,8 +28,6 @@ _error() {
     exit 1
 }
 
-################################################################################
-
 DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
 OS_NAME="$(uname | awk '{print tolower($0)}')"
@@ -54,21 +52,21 @@ elif [ "${OS_NAME}" == "darwin" ]; then
     OS_TYPE="brew"
 fi
 
-echo "${OS_FULL}"
-echo "${DATE}"
+_result "${OS_FULL}"
+_result "${DATE}"
 
-if [ -z ${OS_TYPE} ]; then
+if [ "${OS_TYPE}" == "" ]; then
     _error "Not supported OS. [${OS_NAME}]"
 fi
 
+# brew for mac
 if [ "${OS_TYPE}" == "brew" ]; then
-    # brew for mac
     command -v brew > /dev/null || ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-else
-    # for ubuntu
-    if [ "${OS_TYPE}" == "apt" ]; then
-        export LC_ALL=C
-    fi
+fi
+
+# for ubuntu
+if [ "${OS_TYPE}" == "apt" ]; then
+    export LC_ALL=C
 fi
 
 # version
@@ -85,8 +83,7 @@ MAVEN=
 HEPTIO=
 GUARD=
 
-CONFIG=~/.tools
-
+CONFIG=${HOME}/.valve-tools
 touch ${CONFIG} && . ${CONFIG}
 
 # update
@@ -97,14 +94,12 @@ if [ "${OS_TYPE}" == "apt" ]; then
     sudo apt update && sudo apt upgrade -y
     command -v jq > /dev/null || sudo apt install -y jq
     command -v git > /dev/null || sudo apt install -y git
-    command -v apachectl > /dev/null || sudo apt install -y apache2
     command -v docker > /dev/null || sudo apt install -y docker
     command -v pip > /dev/null || sudo apt install -y python-pip
 elif [ "${OS_TYPE}" == "yum" ]; then
     sudo yum update -y
     command -v jq > /dev/null || sudo yum install -y jq
     command -v git > /dev/null || sudo yum install -y git
-    command -v httpd > /dev/null || sudo yum install -y httpd
     command -v docker > /dev/null || sudo yum install -y docker
     command -v pip > /dev/null || sudo yum install -y python-pip
 elif [ "${OS_TYPE}" == "brew" ]; then
@@ -357,7 +352,7 @@ _result "install guard..."
 # VERSION=$(curl -s https://api.github.com/repos/appscode/guard/releases/latest | jq -r '.tag_name')
 VERSION=0.1.2
 
-if [ "${GUARD}" != "${VERSION}" ] || [ "$(command -v guard)" == "" ]; then
+if [ "${GUARD}" != "${VERSION}" ]; then
     _result " ${GUARD} >> ${VERSION}"
 
     curl -LO https://github.com/appscode/guard/releases/download/${VERSION}/guard-${OS_NAME}-amd64
@@ -383,18 +378,21 @@ fi
 
 echo "================================================================================"
 
-echo "# bastion" > ${CONFIG}
-echo "DATE=\"${DATE}\"" >> ${CONFIG}
-echo "KUBECTL=\"${KUBECTL}\"" >> ${CONFIG}
-echo "KOPS=\"${KOPS}\"" >> ${CONFIG}
-echo "HELM=\"${HELM}\"" >> ${CONFIG}
-echo "DRAFT=\"${DRAFT}\"" >> ${CONFIG}
-echo "ISTIOCTL=\"${ISTIOCTL}\"" >> ${CONFIG}
-echo "TERRAFORM=\"${TERRAFORM}\"" >> ${CONFIG}
-echo "NODE=\"${NODE}\"" >> ${CONFIG}
-echo "JAVA=\"${JAVA}\"" >> ${CONFIG}
-echo "MAVEN=\"${MAVEN}\"" >> ${CONFIG}
-echo "HEPTIO=\"${HEPTIO}\"" >> ${CONFIG}
-echo "GUARD=\"${GUARD}\"" >> ${CONFIG}
+cat << EOF > ${CONFIG}
+# version
+DATE="${DATE}"
+KUBECTL="${KUBECTL}"
+KOPS="${KOPS}"
+HELM="${HELM}"
+DRAFT="${DRAFT}"
+ISTIOCTL="${ISTIOCTL}"
+JENKINSX="${JENKINSX}"
+TERRAFORM="${TERRAFORM}"
+NODE="${NODE}"
+JAVA="${JAVA}"
+MAVEN="${MAVEN}"
+HEPTIO="${HEPTIO}"
+GUARD="${GUARD}"
+EOF
 
 _success "done."
