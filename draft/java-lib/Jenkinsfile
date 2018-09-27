@@ -60,11 +60,25 @@ podTemplate(label: label, containers: [
         try {
           sh """
             cd $SOURCE_ROOT
-            mvn package -s /home/jenkins/.m2/settings.xml
+            mvn package -s /home/jenkins/.m2/settings.xml -DskipTests=true
           """
           success(SLACK_TOKEN, "Build", IMAGE_NAME, VERSION)
         } catch (e) {
           failure(SLACK_TOKEN, "Build", IMAGE_NAME)
+          throw e
+        }
+      }
+    }
+    stage("Unit Tests") {
+      container("maven") {
+        try {
+          sh """
+            cd $SOURCE_ROOT
+            mvn test -s /home/jenkins/.m2/settings.xml
+          """
+          success(SLACK_TOKEN, "Unit Tests", IMAGE_NAME, VERSION)
+        } catch (e) {
+          failure(SLACK_TOKEN, "Unit Tests", IMAGE_NAME)
           throw e
         }
       }
