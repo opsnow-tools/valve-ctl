@@ -11,6 +11,7 @@ def label = "worker-${UUID.randomUUID().toString()}"
 def VERSION = ""
 def SOURCE_LANG = ""
 def SOURCE_ROOT = ""
+def SONARQUBE = ""
 properties([
   buildDiscarder(logRotator(daysToKeepStr: "60", numToKeepStr: "30"))
 ])
@@ -33,6 +34,7 @@ podTemplate(label: label, containers: [
         if (!SLACK_TOKEN) {
           SLACK_TOKEN = butler.slack_token
         }
+        SONARQUBE = butler.sonarqube
       }
     }
     stage("Checkout") {
@@ -60,7 +62,7 @@ podTemplate(label: label, containers: [
         try {
           sh """
             cd $SOURCE_ROOT
-            mvn package -s /home/jenkins/.m2/settings.xml
+            mvn package -s /home/jenkins/.m2/settings.xml -DskipTests=true
           """
           success(SLACK_TOKEN, "Build", IMAGE_NAME, VERSION)
         } catch (e) {
@@ -69,6 +71,36 @@ podTemplate(label: label, containers: [
         }
       }
     }
+    stage("Unit Tests") {
+      container("maven") {
+        try {
+          sh """
+            cd $SOURCE_ROOT
+            mvn test -s /home/jenkins/.m2/settings.xml
+          """
+          success(SLACK_TOKEN, "Unit Tests", IMAGE_NAME, VERSION)
+        } catch (e) {
+          failure(SLACK_TOKEN, "Unit Tests", IMAGE_NAME)
+          throw e
+        }
+      }
+    }
+    // if (SONARQUBE) {
+    //   stage("Code Analysis") {
+    //     container("maven") {
+    //       try {
+    //         sh """
+    //           cd $SOURCE_ROOT
+    //           mvn sonar:sonar -s /home/jenkins/.m2/settings.xml -Dsonar.host.url=$SONARQUBE -DskipTests=true
+    //         """
+    //         success(SLACK_TOKEN, "Code Analysis", IMAGE_NAME, VERSION)
+    //       } catch (e) {
+    //         failure(SLACK_TOKEN, "Code Analysis", IMAGE_NAME)
+    //         throw e
+    //       }
+    //     }
+    //   }
+    // }
     // if (BRANCH_NAME != "master") {
     //   stage("Deploy PRE") {
     //     container("builder") {
@@ -82,12 +114,24 @@ podTemplate(label: label, containers: [
         parallel(
           "Build Docker": {
             container("builder") {
-              butler.build_image(IMAGE_NAME, VERSION)
+              try {
+                butler.build_image(IMAGE_NAME, VERSION)
+                success(SLACK_TOKEN, "Build Docker", IMAGE_NAME, VERSION)
+              } catch (e) {
+                failure(SLACK_TOKEN, "Build Docker", IMAGE_NAME)
+                throw e
+              }
             }
           },
           "Build Charts": {
             container("builder") {
-              butler.build_chart(IMAGE_NAME, VERSION)
+              try {
+                butler.build_chart(IMAGE_NAME, VERSION)
+                success(SLACK_TOKEN, "Build Docker", IMAGE_NAME, VERSION)
+              } catch (e) {
+                failure(SLACK_TOKEN, "Build Docker", IMAGE_NAME)
+                throw e
+              }
             }
           }
         )

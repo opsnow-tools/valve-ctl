@@ -82,12 +82,24 @@ podTemplate(label: label, containers: [
         parallel(
           "Build Docker": {
             container("builder") {
-              butler.build_image(IMAGE_NAME, VERSION)
+              try {
+                butler.build_image(IMAGE_NAME, VERSION)
+                success(SLACK_TOKEN, "Build Docker", IMAGE_NAME, VERSION)
+              } catch (e) {
+                failure(SLACK_TOKEN, "Build Docker", IMAGE_NAME)
+                throw e
+              }
             }
           },
           "Build Charts": {
             container("builder") {
-              butler.build_chart(IMAGE_NAME, VERSION)
+              try {
+                butler.build_chart(IMAGE_NAME, VERSION)
+                success(SLACK_TOKEN, "Build Docker", IMAGE_NAME, VERSION)
+              } catch (e) {
+                failure(SLACK_TOKEN, "Build Docker", IMAGE_NAME)
+                throw e
+              }
             }
           }
         )
