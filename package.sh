@@ -44,7 +44,12 @@ echo
 # 755
 find ./** | grep [.]sh | xargs chmod 755
 
-# valve
+# target/
+cp -rf install.sh target/install
+cp -rf slack.sh   target/slack
+cp -rf tools.sh   target/tools
+
+# target/dist/
 cp -rf valve.sh target/dist/valve
 
 # version
@@ -53,11 +58,6 @@ if [ "${OS_NAME}" == "linux" ]; then
 elif [ "${OS_NAME}" == "darwin" ]; then
     sed -i "" -e "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/" target/dist/valve
 fi
-
-# target/
-cp -rf install.sh target/install
-cp -rf slack.sh   target/slack
-cp -rf tools.sh   target/tools
 
 # target/dist/draft.tar.gz
 pushd draft
