@@ -51,8 +51,8 @@ podTemplate(label: label, containers: [
         butler.scan(IMAGE_NAME, BRANCH_NAME, "nodejs")
 
         VERSION = butler.version
-        SOURCE_LANG = butler.source_lang
-        SOURCE_ROOT = butler.source_root
+        // SOURCE_LANG = butler.source_lang
+        // SOURCE_ROOT = butler.source_root
       }
     }
     stage("Build") {
