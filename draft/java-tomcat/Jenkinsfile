@@ -80,7 +80,6 @@ podTemplate(label: label, containers: [
       container("maven") {
         try {
           butler.mvn_sonar()
-          success(SLACK_TOKEN, "Code Analysis", IMAGE_NAME, VERSION)
         } catch (e) {
           failure(SLACK_TOKEN, "Code Analysis", IMAGE_NAME)
           throw e
