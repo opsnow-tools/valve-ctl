@@ -58,10 +58,7 @@ podTemplate(label: label, containers: [
     stage("Build") {
       container("maven") {
         try {
-          sh """
-            cd $SOURCE_ROOT
-            mvn package -s /home/jenkins/.m2/settings.xml -DskipTests=true
-          """
+          butler.mvn_build()
           success(SLACK_TOKEN, "Build", IMAGE_NAME, VERSION)
         } catch (e) {
           failure(SLACK_TOKEN, "Build", IMAGE_NAME)
@@ -72,12 +69,20 @@ podTemplate(label: label, containers: [
     stage("Unit Tests") {
       container("maven") {
         try {
-          sh """
-            cd $SOURCE_ROOT
-            mvn test -s /home/jenkins/.m2/settings.xml
-          """
+          butler.mvn_test()
         } catch (e) {
           failure(SLACK_TOKEN, "Unit Tests", IMAGE_NAME)
+          throw e
+        }
+      }
+    }
+    stage("Code Analysis") {
+      container("maven") {
+        try {
+          butler.mvn_sonar()
+          success(SLACK_TOKEN, "Code Analysis", IMAGE_NAME, VERSION)
+        } catch (e) {
+          failure(SLACK_TOKEN, "Code Analysis", IMAGE_NAME)
           throw e
         }
       }
@@ -86,10 +91,7 @@ podTemplate(label: label, containers: [
       stage("Deploy Nexus") {
         container("maven") {
           try {
-            sh """
-              cd $SOURCE_ROOT
-              mvn deploy -s /home/jenkins/.m2/settings.xml
-            """
+            butler.mvn_deploy()
             success(SLACK_TOKEN, "Deploy", IMAGE_NAME, VERSION)
           } catch (e) {
             failure(SLACK_TOKEN, "Deploy", IMAGE_NAME)

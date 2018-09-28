@@ -58,10 +58,7 @@ podTemplate(label: label, containers: [
     stage("Build") {
       container("node") {
         try {
-          sh """
-            cd $SOURCE_ROOT
-            npm run build
-          """
+          butler.npm_build()
           success(SLACK_TOKEN, "Build", IMAGE_NAME, VERSION)
         } catch (e) {
           failure(SLACK_TOKEN, "Build", IMAGE_NAME)
