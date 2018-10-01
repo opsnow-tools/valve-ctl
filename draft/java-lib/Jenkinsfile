@@ -66,12 +66,12 @@ podTemplate(label: label, containers: [
         }
       }
     }
-    stage("Unit Tests") {
+    stage("Tests") {
       container("maven") {
         try {
           butler.mvn_test()
         } catch (e) {
-          failure(SLACK_TOKEN, "Unit Tests", IMAGE_NAME)
+          failure(SLACK_TOKEN, "Tests", IMAGE_NAME)
           throw e
         }
       }
