@@ -276,7 +276,7 @@ _select_one() {
     IDX=0
     while read VAL; do
         IDX=$(( ${IDX} + 1 ))
-        printf "%3s. %s\n" "$IDX" "$VAL";
+        printf "%3s. %s\n" "${IDX}" "${VAL}";
     done < ${LIST}
 
     CNT=$(cat ${LIST} | wc -l | xargs)
