@@ -204,6 +204,7 @@ _tools() {
 }
 
 _update() {
+    _result "version: ${THIS_VERSION}"
     curl -sL repo.opsnow.io/valve-ctl/install | bash
     exit 0
 }
