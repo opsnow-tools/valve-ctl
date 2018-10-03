@@ -5,7 +5,6 @@
 
 USERNAME=${1:-opsnow-tools}
 REPONAME=${2:-valve-ctl}
-SLACK_TOKEN=${3}
 
 rm -rf target
 mkdir -p target/dist
