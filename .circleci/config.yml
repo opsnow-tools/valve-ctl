@@ -50,7 +50,7 @@ jobs:
           command: |
             VERSION=$(cat workspace/target/VERSION)
             workspace/target/slack --token="${SLACK_TOKEN}" \
-                --emoji=":construction_worker:" --username="valve-ctl" \
+                --emoji=":construction_worker:" --username="valve" \
                 --color="good" --title="${CIRCLE_PROJECT_REPONAME} updated" "\`${VERSION}\`"
 
 workflows:
