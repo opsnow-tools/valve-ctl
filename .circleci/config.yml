@@ -48,10 +48,11 @@ jobs:
       - run:
           name: Notification
           command: |
-            VERSION=$(cat workspace/target/VERSION)
+            VERSION="$(cat workspace/target/VERSION)"
+            FOOTER="<https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}|${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}>"
             workspace/target/slack --token="${SLACK_TOKEN}" \
                 --emoji=":construction_worker:" --username="valve" \
-                --color="good" --title="${CIRCLE_PROJECT_REPONAME} updated" "\`${VERSION}\`"
+                --color="good" --title="${CIRCLE_PROJECT_REPONAME} updated" --footer="${FOOTER}" "\`${VERSION}\`"
 
 workflows:
   version: 2
