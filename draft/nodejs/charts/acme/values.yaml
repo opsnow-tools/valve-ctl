@@ -14,6 +14,20 @@ resources:
   limits:
     cpu: 200m
     memory: 256Mi
+readinessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 6
+livenessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 6
 ingress:
   enabled: true
   basedomain: 127.0.0.1.nip.io
