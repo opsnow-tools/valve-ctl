@@ -146,7 +146,8 @@ def slack(token = "", color = "", title = "", message = "", footer = "") {
     // butler.slack("$token", "$color", "$title", "$message", "$footer")
     sh """
       curl -sL repo.opsnow.io/valve-ctl/slack | bash -s -- --token='$token' \
-      --color='$color' --title='$title' --footer='$footer' '$message'
+        --footer='$footer' --footer_icon='https://jenkins.io/sites/default/files/jenkins_favicon.ico' \
+        --color='$color' --title='$title' '$message'
     """
   } catch (ignored) {
   }
