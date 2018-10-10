@@ -286,6 +286,10 @@ _select_one() {
 
     CNT=$(cat ${LIST} | wc -l | xargs)
 
+    if [ "x${CNT}" == "x0" ]; then
+        _error
+    fi
+
     echo
     _read "Please select one. (1-${CNT}) : "
 
