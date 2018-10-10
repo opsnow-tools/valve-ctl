@@ -498,10 +498,6 @@ _gen() {
     fi
 
     # copy
-    if [ -d ${DIST}/${PACKAGE}/charts ]; then
-        mkdir -p charts/acme
-        cp -rf ${DIST}/${PACKAGE}/charts/* charts/
-    fi
     if [ -f ${DIST}/${PACKAGE}/dockerignore ]; then
         cp -rf ${DIST}/${PACKAGE}/dockerignore .dockerignore
     fi
@@ -524,6 +520,11 @@ _gen() {
         NAME="${REPLACE_VAL}"
     fi
 
+    if [ -d ${DIST}/${PACKAGE}/charts ]; then
+        mkdir -p charts/${NAME}
+        cp -rf ${DIST}/${PACKAGE}/charts/acme/* charts/${NAME}/
+    fi
+
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
@@ -534,18 +535,18 @@ _gen() {
     fi
 
     if [ -d charts ] && [ ! -z ${NAME} ]; then
-        # charts/acme/Chart.yaml
-        _replace "s|name: .*|name: ${NAME}|" charts/acme/Chart.yaml
+        # charts/${NAME}/Chart.yaml
+        _replace "s|name: .*|name: ${NAME}|" charts/${NAME}/Chart.yaml
 
-        # charts/acme/values.yaml
+        # charts/${NAME}/values.yaml
         if [ -z ${REGISTRY} ]; then
-            _replace "s|repository: .*|repository: ${NAME}|" charts/acme/values.yaml
+            _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
         else
-            _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/acme/values.yaml
+            _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
         fi
 
         # charts path
-        mv charts/acme charts/${NAME}
+        # mv charts/acme charts/${NAME}
     fi
 
     if [ -f Jenkinsfile ]; then
@@ -587,7 +588,7 @@ _up() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
-    # charts/acme/values.yaml
+    # charts/${NAME}/values.yaml
     if [ -z ${REGISTRY} ]; then
         _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
     else
