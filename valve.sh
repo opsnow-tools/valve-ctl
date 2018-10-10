@@ -499,7 +499,8 @@ _gen() {
 
     # copy
     if [ -d ${DIST}/${PACKAGE}/charts ]; then
-        cp -rf ${DIST}/${PACKAGE}/charts charts
+        mkdir -p charts/acme
+        cp -rf ${DIST}/${PACKAGE}/charts/* charts/
     fi
     if [ -f ${DIST}/${PACKAGE}/dockerignore ]; then
         cp -rf ${DIST}/${PACKAGE}/dockerignore .dockerignore
