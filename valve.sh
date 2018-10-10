@@ -340,11 +340,11 @@ _helm_init() {
     # _command "helm version"
     # helm version
 
-    # if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
-    #     _helm_delete "docker-registry"
-    #     _helm_delete "metrics-server"
-    #     _helm_delete "nginx-ingress"
-    # fi
+    if [ ! -z ${DELETE} ]; then
+        _helm_delete "docker-registry"
+        _helm_delete "metrics-server"
+        _helm_delete "nginx-ingress"
+    fi
 
     _helm_install "kube-public" "docker-registry"
     _helm_install "kube-public" "metrics-server"
@@ -352,21 +352,31 @@ _helm_init() {
 
     _waiting_pod "kube-public" "docker-registry"
     _waiting_pod "kube-public" "nginx-ingress"
-
-    _helm_repo
 }
 
 _helm_repo() {
-    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C '.'
-    if [ ! -z ${CHARTMUSEUM} ]; then
+    CNT=$(helm repo list | grep chartmuseum | wc -l | xargs)
+
+    if [ "x${CNT}" != "x0" ] || [ ! -z ${FORCE} ]; then
+        echo
+        DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
+        _read "CHARTMUSEUM (${DEFAULT}) : "
+
+        if [ -z ${ANSWER} ]; then
+            CHARTMUSEUM="${DEFAULT}"
+        fi
+        if [ -z ${CHARTMUSEUM} ]; then
+            _error
+        fi
+
         _command "helm repo add chartmuseum https://${CHARTMUSEUM}"
         helm repo add chartmuseum https://${CHARTMUSEUM}
+
+        _config_save
     fi
 
     _command "helm repo update"
     helm repo update
-
-    _config_save
 }
 
 _helm_delete() {
@@ -609,19 +619,7 @@ _up() {
 _remote() {
     # _helm_init
 
-    if [ -z ${CHARTMUSEUM} ]; then
-        echo
-        DEFAULT="chartmuseum-devops.demo.opsnow.com"
-        _read "CHARTMUSEUM (${DEFAULT}) : "
-
-        if [ -z ${ANSWER} ]; then
-            _error
-        fi
-
-        CHARTMUSEUM="${ANSWER}"
-
-        _helm_repo
-    fi
+    _helm_repo
 
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
