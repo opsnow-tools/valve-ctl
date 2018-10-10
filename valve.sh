@@ -520,6 +520,7 @@ _gen() {
         NAME="${REPLACE_VAL}"
     fi
 
+    # cp charts/acme/ to charts/${NAME}/
     if [ -d ${DIST}/${PACKAGE}/charts ]; then
         mkdir -p charts/${NAME}
         cp -rf ${DIST}/${PACKAGE}/charts/acme/* charts/${NAME}/
