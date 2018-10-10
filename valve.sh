@@ -21,7 +21,6 @@ CHARTMUSEUM=
 
 FORCE=
 REMOTE=
-REINSTALL=
 
 CONFIG=${HOME}/.valve-ctl
 touch ${CONFIG} && . ${CONFIG}
@@ -162,7 +161,6 @@ _run() {
             _config
             ;;
         init)
-            REINSTALL=${FORCE}
             _init
             ;;
         gen)
@@ -336,7 +334,7 @@ _helm_init() {
     # _command "helm version"
     # helm version
 
-    # if [ ! -z ${REINSTALL} ]; then
+    # if [ ! -z ${FORCE} ]; then
     #     _helm_delete "docker-registry"
     #     _helm_delete "metrics-server"
     #     _helm_delete "nginx-ingress"
@@ -382,7 +380,7 @@ _helm_install() {
 
     CNT=$(helm ls ${_NM} | wc -l | xargs)
 
-    if [ "x${CNT}" == "x0" ] || [ ! -z ${REINSTALL} ]; then
+    if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         CHART=/tmp/${_NM}.yaml
 
         curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/${_NM}.yaml > ${CHART}
@@ -396,8 +394,6 @@ _helm_install() {
             _command "helm upgrade --install ${_NM} stable/${_NM} --version ${CHART_VERSION}"
             helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}
         fi
-
-        REINSTALL=true
     fi
 }
 
