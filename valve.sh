@@ -327,8 +327,13 @@ _init() {
 }
 
 _helm_init() {
-    _command "helm init"
-    helm init
+    if [ ! -z ${INFRA} ]; then
+        _command "helm init --upgrade"
+        helm init --upgrade
+    else
+        _command "helm init"
+        helm init
+    fi
 
     # waiting tiller
     _waiting_pod "kube-system" "tiller"
