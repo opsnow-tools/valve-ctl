@@ -601,7 +601,7 @@ _up() {
 }
 
 _remote() {
-    _helm_init
+    # _helm_init
 
     if [ -z ${CHARTMUSEUM} ]; then
         echo
@@ -672,7 +672,7 @@ _remote() {
 }
 
 _remove() {
-    _helm_init
+    # _helm_init
 
     LIST=/tmp/valve-helm-ls
 
