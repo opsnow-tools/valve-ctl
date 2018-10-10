@@ -461,7 +461,7 @@ _gen() {
 
     # package
     if [ -z ${PACKAGE} ]; then
-        ls ${DIST} > ${LIST}
+        ls ${DIST} | sort > ${LIST}
 
         _select_one
 
@@ -493,7 +493,9 @@ _gen() {
     fi
 
     # clear
-    rm -rf charts
+    if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
+        rm -rf charts
+    fi
 
     # copy
     if [ -d ${DIST}/${PACKAGE}/charts ]; then
