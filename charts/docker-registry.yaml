@@ -3,7 +3,7 @@
 nameOverride: docker-registry
 
 service:
-  type: NodePort
+  # type: NodePort
   nodePort: 30500
 
 ingress:

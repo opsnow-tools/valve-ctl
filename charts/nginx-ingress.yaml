@@ -1,7 +1,7 @@
 # chart-version: latest
 
 controller:
-  replicaCount: 2
+  replicaCount: 1
   service:
     annotations:
       # replace with the correct value of the generated certificate in the AWS console
