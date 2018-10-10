@@ -19,8 +19,10 @@ BASE_DOMAIN=
 REGISTRY=
 CHARTMUSEUM=
 
-FORCE=
 REMOTE=
+
+FORCE=
+DELETE=
 
 CONFIG=${HOME}/.valve-ctl
 touch ${CONFIG} && . ${CONFIG}
@@ -65,12 +67,16 @@ for v in "$@"; do
         CHARTMUSEUM="${v#*=}"
         shift
         ;;
+    --remote)
+        REMOTE=true
+        shift
+        ;;
     --force)
         FORCE=true
         shift
         ;;
-    --remote)
-        REMOTE=true
+    --delete)
+        DELETE=true
         shift
         ;;
     *)
@@ -334,7 +340,7 @@ _helm_init() {
     # _command "helm version"
     # helm version
 
-    # if [ ! -z ${FORCE} ]; then
+    # if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
     #     _helm_delete "docker-registry"
     #     _helm_delete "metrics-server"
     #     _helm_delete "nginx-ingress"
@@ -572,7 +578,7 @@ _up() {
     fi
 
     # delete
-    if [ ! -z ${FORCE} ]; then
+    if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
         _command "helm delete ${NAME}-${NAMESPACE} --purge"
         helm delete ${NAME}-${NAMESPACE} --purge
     fi
@@ -651,7 +657,7 @@ _remote() {
     fi
 
     # delete
-    if [ ! -z ${FORCE} ]; then
+    if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
         _command "helm delete ${NAME}-${NAMESPACE} --purge"
         helm delete ${NAME}-${NAMESPACE} --purge
     fi
