@@ -19,9 +19,9 @@ BASE_DOMAIN=
 REGISTRY=
 CHARTMUSEUM=
 
-INFRA=
 FORCE=
 REMOTE=
+REINSTALL=
 
 CONFIG=${HOME}/.valve-ctl
 touch ${CONFIG} && . ${CONFIG}
@@ -162,7 +162,7 @@ _run() {
             _config
             ;;
         init)
-            INFRA=${FORCE}
+            REINSTALL=${FORCE}
             _init
             ;;
         gen)
@@ -327,13 +327,8 @@ _init() {
 }
 
 _helm_init() {
-    if [ ! -z ${INFRA} ]; then
-        _command "helm init --upgrade"
-        helm init --upgrade
-    else
-        _command "helm init"
-        helm init
-    fi
+    _command "helm init --upgrade"
+    helm init --upgrade
 
     # waiting tiller
     _waiting_pod "kube-system" "tiller"
@@ -341,17 +336,17 @@ _helm_init() {
     # _command "helm version"
     # helm version
 
-    if [ ! -z ${INFRA} ]; then
-        _helm_delete "docker-registry"
-        _helm_delete "metrics-server"
-        _helm_delete "nginx-ingress"
-    fi
+    # if [ ! -z ${REINSTALL} ]; then
+    #     _helm_delete "docker-registry"
+    #     _helm_delete "metrics-server"
+    #     _helm_delete "nginx-ingress"
+    # fi
 
     _helm_install "kube-public" "docker-registry"
     _helm_install "kube-public" "metrics-server"
     _helm_install "kube-public" "nginx-ingress"
 
-    if [ ! -z ${INFRA} ]; then
+    if [ ! -z ${REINSTALL} ]; then
         _waiting_pod "kube-public" "docker-registry"
         _waiting_pod "kube-public" "nginx-ingress"
     fi
@@ -389,7 +384,7 @@ _helm_install() {
 
     CNT=$(helm ls ${_NM} | wc -l | xargs)
 
-    if [ "x${CNT}" == "x0" ]; then
+    if [ "x${CNT}" == "x0" ] || [ ! -z ${REINSTALL} ]; then
         CHART=/tmp/${_NM}.yaml
 
         curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/${_NM}.yaml > ${CHART}
@@ -404,7 +399,7 @@ _helm_install() {
             helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}
         fi
 
-        INFRA=true
+        REINSTALL=true
     fi
 }
 
