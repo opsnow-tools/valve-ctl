@@ -422,7 +422,7 @@ _draft_init() {
 
     draft config set disable-push-warning 1
 
-    # curl -sL docker-registry.127.0.0.1.nip.io:30500/v2/_catalog | jq -C '.'
+    # curl -sL docker-registry.127.0.0.1.nip.io:30500/v2/_catalog | jq '.'
     REGISTRY="${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}"
 
     # registry
@@ -627,14 +627,14 @@ _remote() {
     # base domain
     BASE_DOMAIN="127.0.0.1.nip.io"
 
-    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq -C 'keys[]' -r
-    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts/sample-node | jq -C '.[] | {version} | .version' -r
+    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq 'keys[]' -r
+    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts/sample-node | jq '.[] | {version} | .version' -r
 
     LIST=/tmp/valve-charts-ls
 
     # chart name
     if [ -z ${NAME} ]; then
-        curl -sL ${CHARTMUSEUM}/api/charts | jq -C 'keys[]' -r > ${LIST}
+        curl -sL ${CHARTMUSEUM}/api/charts | jq 'keys[]' -r > ${LIST}
 
         _select_one
 
@@ -645,7 +645,7 @@ _remote() {
 
     # version
     if [ -z ${VERSION} ]; then
-        curl -sL ${CHARTMUSEUM}/api/charts/${NAME} | jq -C '.[] | {version} | .version' -r | head -7 > ${LIST}
+        curl -sL ${CHARTMUSEUM}/api/charts/${NAME} | jq '.[] | {version} | .version' -r | sort -r | head -9 > ${LIST}
 
         _select_one
 
