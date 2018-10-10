@@ -346,10 +346,8 @@ _helm_init() {
     _helm_install "kube-public" "metrics-server"
     _helm_install "kube-public" "nginx-ingress"
 
-    if [ ! -z ${REINSTALL} ]; then
-        _waiting_pod "kube-public" "docker-registry"
-        _waiting_pod "kube-public" "nginx-ingress"
-    fi
+    _waiting_pod "kube-public" "docker-registry"
+    _waiting_pod "kube-public" "nginx-ingress"
 
     _helm_repo
 }
@@ -562,7 +560,7 @@ _up() {
         _error "Not found charts"
     fi
 
-    _init
+    # _init
 
     # name
     NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
