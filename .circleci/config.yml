@@ -50,7 +50,7 @@ jobs:
           command: |
             VERSION="$(cat workspace/target/VERSION)"
             FOOTER="<https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}|${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}>"
-            workspace/target/slack --token="${SLACK_TOKEN}" \
+            workspace/target/slack --token="${SLACK_TOKEN}" --channel="tools" \
                 --emoji=":construction_worker:" --username="valve" \
                 --footer="${FOOTER}" --footer_icon="https://assets-cdn.github.com/favicon.ico" \
                 --color="good" --title="${CIRCLE_PROJECT_REPONAME} updated" "\`${VERSION}\`"
