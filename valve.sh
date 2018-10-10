@@ -357,7 +357,7 @@ _helm_init() {
 _helm_repo() {
     CNT=$(helm repo list | grep chartmuseum | wc -l | xargs)
 
-    if [ "x${CNT}" != "x0" ] || [ ! -z ${FORCE} ]; then
+    if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         echo
         DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
         _read "CHARTMUSEUM (${DEFAULT}) : "
