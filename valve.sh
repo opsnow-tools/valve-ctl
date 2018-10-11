@@ -185,6 +185,9 @@ _run() {
         ls|list)
             _list
             ;;
+        log|logs)
+            _logs
+            ;;
         rm|remove)
             _remove
             ;;
@@ -692,6 +695,32 @@ _list() {
 
     _command "helm ls --all"
     helm ls --all
+}
+
+_logs() {
+    # _helm_init
+
+    LIST=/tmp/valve-helm-ls
+
+    if [ -z ${NAME} ]; then
+        _command "helm ls --all"
+        helm ls --all | grep development | awk '{print $1}' > ${LIST}
+
+        _select_one
+
+        _result "${SELECTED}"
+
+        NAME="${SELECTED}"
+    fi
+
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
+    # _command "kubectl get pod -n ${NAMESPACE} | grep ${NAME}"
+    POD=$(kubectl get pod -n ${NAMESPACE} | grep ${NAME} | head -1 | aws {'print $1'})
+
+    _command "kubectl logs -n ${NAMESPACE} ${POD}"
+    kubectl logs -n ${NAMESPACE} ${POD}
 }
 
 _remove() {
