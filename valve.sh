@@ -237,28 +237,6 @@ _waiting_pod() {
 
     TMP=/tmp/valve-pod-status
 
-    # # TODO use deploy
-    # _command "kubectl get deploy ${_NM} -n ${_NS} | grep ${_NM}"
-
-    # IDX=0
-    # while [ 1 ]; do
-    #     kubectl get deploy ${_NM} -n ${_NS} | grep ${_NM} | head -1 > ${TMP}
-    #     cat ${TMP}
-
-    #     DESIRED=$(cat ${TMP} | awk '{print $2}')
-    #     CURRENT=$(cat ${TMP} | awk '{print $3}')
-    #     AVAILAB=$(cat ${TMP} | awk '{print $5}')
-
-    #     if [ "${DESIRED}" == "${CURRENT}" ] && [ "${DESIRED}" == "${AVAILAB}" ]; then
-    #         break
-    #     elif [ "x${IDX}" == "x${SEC}" ]; then
-    #         _error "Timeout"
-    #     fi
-
-    #     IDX=$(( ${IDX} + 1 ))
-    #     sleep 2
-    # done
-
     _command "kubectl get pod -n ${_NS} | grep ${_NM}"
 
     IDX=0
@@ -616,6 +594,8 @@ _up() {
     if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
         _command "helm delete ${NAME}-${NAMESPACE} --purge"
         helm delete ${NAME}-${NAMESPACE} --purge
+
+        sleep 2
     fi
 
     # draft up
@@ -634,6 +614,11 @@ _up() {
 
     _command "helm ls ${NAME}-${NAMESPACE}"
     helm ls ${NAME}-${NAMESPACE}
+
+    CNT=$(helm ls ${NAME}-${NAMESPACE} | wc -l | xargs)
+    if [ "x${CNT}" == "x0" ]; then
+        _error
+    fi
 
     _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
 
@@ -683,6 +668,8 @@ _remote() {
     if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
         _command "helm delete ${NAME}-${NAMESPACE} --purge"
         helm delete ${NAME}-${NAMESPACE} --purge
+
+        sleep 2
     fi
 
     # helm install
@@ -694,6 +681,11 @@ _remote() {
     _command "helm ls ${NAME}-${NAMESPACE}"
     helm ls ${NAME}-${NAMESPACE}
 
+    CNT=$(helm ls ${NAME}-${NAMESPACE} | wc -l | xargs)
+    if [ "x${CNT}" == "x0" ]; then
+        _error
+    fi
+
     _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
@@ -703,11 +695,12 @@ _remote() {
 _list() {
     # _helm_init
 
-    _command "helm ls --all"
-    helm ls --all
-
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
+
+    _command "helm ls"
+    helm ls | head -1
+    helm ls | grep ${NAMESPACE}
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
@@ -722,8 +715,8 @@ _logs() {
     LIST=/tmp/valve-helm-ls
 
     if [ -z ${NAME} ]; then
-        _command "helm ls --all"
-        helm ls --all | grep ${NAMESPACE} | awk '{print $1}' > ${LIST}
+        _command "helm ls"
+        helm ls | grep ${NAMESPACE} | awk '{print $1}' > ${LIST}
 
         _select_one
 
