@@ -258,9 +258,9 @@ _waiting_pod() {
         kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > /tmp/valve-pod-status
         cat /tmp/valve-pod-status
 
-        READY=$(cat /tmp/valve-pod-status | awk '{print $2}' | cut -d'/' -f1)
+        # READY=$(cat /tmp/valve-pod-status | awk '{print $2}' | cut -d'/' -f1)
         STATUS=$(cat /tmp/valve-pod-status | awk '{print $3}')
-        if [ "${STATUS}" == "Running" ] && [ "x${READY}" != "x0" ]; then
+        if [ "${STATUS}" == "Running" ]; then
             break
         elif [ "${STATUS}" == "Error" ]; then
             _error "${STATUS}"
