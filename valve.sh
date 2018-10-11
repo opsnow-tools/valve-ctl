@@ -696,6 +696,9 @@ _list() {
     _command "helm ls --all"
     helm ls --all
 
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
 }
