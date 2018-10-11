@@ -235,17 +235,19 @@ _waiting_pod() {
     _NM=${2}
     SEC=${3:-30}
 
+    TMP=/tmp/valve-pod-status
+
     # # TODO use deploy
     # _command "kubectl get deploy ${_NM} -n ${_NS} | grep ${_NM}"
 
     # IDX=0
     # while [ 1 ]; do
-    #     kubectl get deploy ${_NM} -n ${_NS} | grep ${_NM} | head -1 > /tmp/valve-deploy-status
-    #     cat /tmp/valve-deploy-status
+    #     kubectl get deploy ${_NM} -n ${_NS} | grep ${_NM} | head -1 > ${TMP}
+    #     cat ${TMP}
 
-    #     DESIRED=$(cat /tmp/valve-deploy-status | awk '{print $2}')
-    #     CURRENT=$(cat /tmp/valve-deploy-status | awk '{print $3}')
-    #     AVAILAB=$(cat /tmp/valve-deploy-status | awk '{print $5}')
+    #     DESIRED=$(cat ${TMP} | awk '{print $2}')
+    #     CURRENT=$(cat ${TMP} | awk '{print $3}')
+    #     AVAILAB=$(cat ${TMP} | awk '{print $5}')
 
     #     if [ "${DESIRED}" == "${CURRENT}" ] && [ "${DESIRED}" == "${AVAILAB}" ]; then
     #         break
@@ -261,12 +263,18 @@ _waiting_pod() {
 
     IDX=0
     while [ 1 ]; do
-        kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > /tmp/valve-pod-status
-        cat /tmp/valve-pod-status
+        kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > ${TMP}
+        cat ${TMP}
 
-        # READY=$(cat /tmp/valve-pod-status | awk '{print $2}' | cut -d'/' -f1)
         STATUS=$(cat /tmp/valve-pod-status | awk '{print $3}')
-        if [ "${STATUS}" == "Running" ]; then
+
+        if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "development" ]; then
+            READY=$(cat /tmp/valve-pod-status | awk '{print $2}' | cut -d'/' -f1)
+        else
+            READY="1"
+        fi
+
+        if [ "${STATUS}" == "Running" ] && [ "x${READY}" != "x0" ]; then
             break
         elif [ "${STATUS}" == "Error" ]; then
             _error "${STATUS}"
