@@ -372,7 +372,7 @@ _helm_repo() {
         DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
         _read "CHARTMUSEUM (${DEFAULT}) : "
 
-        if [ -z ${ANSWER} ]; then
+        if [ ! -z ${ANSWER} ]; then
             CHARTMUSEUM="${DEFAULT}"
         fi
         if [ -z ${CHARTMUSEUM} ]; then
