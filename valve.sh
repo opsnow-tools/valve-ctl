@@ -182,6 +182,9 @@ _run() {
         rt|remote)
             _remote
             ;;
+        ls|list)
+            _list
+            ;;
         rm|remove)
             _remove
             ;;
@@ -682,6 +685,13 @@ _remote() {
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
+}
+
+_list() {
+    # _helm_init
+
+    _command "helm ls --all"
+    helm ls --all
 }
 
 _remove() {
