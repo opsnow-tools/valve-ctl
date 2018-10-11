@@ -700,11 +700,14 @@ _list() {
 _logs() {
     # _helm_init
 
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
     LIST=/tmp/valve-helm-ls
 
     if [ -z ${NAME} ]; then
         _command "helm ls --all"
-        helm ls --all | grep development | awk '{print $1}' > ${LIST}
+        helm ls --all | grep ${NAMESPACE} | awk '{print $1}' > ${LIST}
 
         _select_one
 
@@ -713,11 +716,8 @@ _logs() {
         NAME="${SELECTED}"
     fi
 
-    # namespace
-    NAMESPACE="${NAMESPACE:-development}"
-
     # _command "kubectl get pod -n ${NAMESPACE} | grep ${NAME}"
-    POD=$(kubectl get pod -n ${NAMESPACE} | grep ${NAME} | head -1 | aws {'print $1'})
+    POD=$(kubectl get pod -n ${NAMESPACE} | grep ${NAME} | head -1 | awk '{print $1}')
 
     _command "kubectl logs -n ${NAMESPACE} ${POD}"
     kubectl logs -n ${NAMESPACE} ${POD}
@@ -726,11 +726,14 @@ _logs() {
 _remove() {
     # _helm_init
 
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
     LIST=/tmp/valve-helm-ls
 
     if [ -z ${NAME} ]; then
         _command "helm ls --all"
-        helm ls --all | grep development | awk '{print $1}' > ${LIST}
+        helm ls --all | grep ${NAMESPACE} | awk '{print $1}' > ${LIST}
 
         _select_one
 
