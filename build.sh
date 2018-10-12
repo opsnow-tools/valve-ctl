@@ -126,6 +126,7 @@ _release() {
     pwd
     ls -al ${SHELL_DIR}
     ls -al ${SHELL_DIR}/target
+    ls -al ${SHELL_DIR}/target/dist
 
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
         exit 1
