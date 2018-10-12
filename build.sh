@@ -4,7 +4,7 @@ OS_NAME="$(uname | awk '{print tolower($0)}')"
 
 SHELL_DIR=$(dirname $0)
 
-CMD=${1}
+CMD=${1:-${CIRCLE_JOB}}
 
 USERNAME=${CIRCLE_PROJECT_USERNAME:-opsnow-tools}
 REPONAME=${CIRCLE_PROJECT_REPONAME:-valve-ctl}
@@ -46,7 +46,6 @@ _error() {
 
 _prepare() {
     # target
-    rm -rf ${SHELL_DIR}/target
     mkdir -p ${SHELL_DIR}/target/dist
     mkdir -p ${SHELL_DIR}/target/charts
 
@@ -118,16 +117,15 @@ _package() {
 }
 
 _publish() {
+    if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
+        exit 1
+    fi
+
     _command "aws s3 sync ${SHELL_DIR}/target/ s3://repo.opsnow.io/${REPONAME}/ --acl public-read"
     aws s3 sync ${SHELL_DIR}/target/ s3://repo.opsnow.io/${REPONAME}/ --acl public-read
 }
 
 _release() {
-    pwd
-    ls -al ${SHELL_DIR}
-    ls -al ${SHELL_DIR}/target
-    ls -al ${SHELL_DIR}/target/dist
-
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
         exit 1
     fi
