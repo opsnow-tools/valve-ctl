@@ -231,8 +231,8 @@ _update() {
 }
 
 _version() {
-    _command "helm version"
-    helm version
+    _command "helm version --client"
+    helm version --client
 
     _command "draft version"
     draft version
