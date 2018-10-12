@@ -9,6 +9,10 @@ _gen_version() {
     # previous versions
     VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4 | xargs)
 
+    if [ ! -f ./VERSION ]; then
+        echo "v0.0.0" > ./VERSION
+    fi
+
     # release version
     if [ -z ${VERSION} ]; then
         VERSION=$(cat ./VERSION | xargs)
@@ -23,7 +27,7 @@ _gen_version() {
             VERSION=$(cat ./VERSION | xargs)
         fi
 
-        # add
+        # add build version
         VERSION=$(echo ${VERSION} | perl -pe 's/^(([v\d]+\.)*)(\d+)(.*)$/$1.($3+1).$4/e')
     fi
 
