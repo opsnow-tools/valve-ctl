@@ -12,11 +12,13 @@ jobs:
       - run:
           name: Package
           command: |
-            ./package.sh ${CIRCLE_PROJECT_USERNAME} ${CIRCLE_PROJECT_REPONAME}
+            chmod 755 ./build.sh
+            ./build.sh package
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
             - target/*
+            - build.sh
   publish:
     docker:
       - image: opspresso/awscli
@@ -26,7 +28,8 @@ jobs:
       - run:
           name: Publish
           command: |
-            aws s3 sync workspace/target/ s3://repo.opsnow.io/${CIRCLE_PROJECT_REPONAME}/ --acl public-read
+            chmod 755 ./build.sh
+            ./build.sh publish
   release:
     docker:
       - image: circleci/golang
@@ -36,9 +39,8 @@ jobs:
       - run:
           name: Release
           command: |
-            go get github.com/tcnksm/ghr
-            VERSION=$(cat workspace/target/VERSION)
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} workspace/target/dist/
+            chmod 755 ./build.sh
+            ./build.sh release
   slack:
     docker:
       - image: circleci/python
@@ -46,14 +48,10 @@ jobs:
       - attach_workspace:
           at: workspace
       - run:
-          name: Notification
+          name: Slack
           command: |
-            VERSION="$(cat workspace/target/VERSION)"
-            FOOTER="<https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}|${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}>"
-            workspace/target/slack --token="${SLACK_TOKEN}" --channel="tools" \
-                --emoji=":construction_worker:" --username="valve" \
-                --footer="${FOOTER}" --footer_icon="https://assets-cdn.github.com/favicon.ico" \
-                --color="good" --title="${CIRCLE_PROJECT_REPONAME} updated" "\`${VERSION}\`"
+            chmod 755 ./build.sh
+            ./build.sh slack
 
 workflows:
   version: 2
