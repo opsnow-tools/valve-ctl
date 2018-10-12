@@ -85,7 +85,6 @@ _gen_version() {
     VERSION=$(echo ${VERSION} | perl -pe 's/^(([v\d]+\.)*)(\d+)(.*)$/$1.($3+1).$4/e')
 
     echo "${VERSION}" > ${SHELL_DIR}/target/VERSION
-    echo "${VERSION}" > ${SHELL_DIR}/versions/VERSION
 }
 
 _package() {
