@@ -39,6 +39,9 @@ jobs:
       - run:
           name: Release
           command: |
+            pwd
+            ls -al
+            ls -al workspace
             chmod 755 ./workspace/build.sh
             ./workspace/build.sh release
   slack:

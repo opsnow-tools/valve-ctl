@@ -118,6 +118,7 @@ _package() {
 }
 
 _publish() {
+    _command "aws s3 sync ${SHELL_DIR}/target/ s3://repo.opsnow.io/${REPONAME}/ --acl public-read"
     aws s3 sync ${SHELL_DIR}/target/ s3://repo.opsnow.io/${REPONAME}/ --acl public-read
 }
 
