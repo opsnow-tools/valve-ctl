@@ -136,7 +136,6 @@ _replace() {
 }
 
 _usage() {
-    _bar
     #figlet valve ctl
 cat <<EOF
 ================================================================================
@@ -149,22 +148,22 @@ cat <<EOF
  Usage: valve {command} [args]
 
  Commands:
-   update       valva 를 최신버전으로 업데이트 합니다.
    version, v   valve 버전을 확인 합니다.
+   update       valva 를 최신버전으로 업데이트 합니다.
+   tools        개발에 필요한 툴을 설치 합니다. (MacOS, Ubuntu 만 지원)
    init         초기화를 합니다. Kubernetes 에 필요한 툴을 설치 합니다.
    config       저장된 설정을 보여줍니다.
    clean        저장된 설정을 삭제 합니다.
 
-   gen          프로젝트에 개발에 필요한 파일을 설치 합니다.
-   logs, log    배포한 Pod 의 로그를 봅니다.
    list, ls     배포 내역을 보여줍니다.
+   gen          프로젝트 배포에 필요한 패키지를 설치 합니다.
+   up           프로젝트를 Local Kubernetes 에 배포 합니다.
+   logs, log    배포한 Pod 의 로그를 봅니다.
    remove, rm   배포한 Pod 를 삭제 합니다.
-   tools        개발에 필요한 툴을 설치 합니다. (MacOS, Ubuntu 만 지원)
-   up           프로젝트를 Kubernetes 에 배포 합니다.
 
 Arguments:
    --force      가능하면 재설치를 합니다.
-   --delete     기본 배포를 삭제 하고 다음 작업을 수행합니다.
+   --delete     기본 배포를 삭제 하고, 다음 작업을 수행합니다.
    --remote
 ================================================================================
 EOF
