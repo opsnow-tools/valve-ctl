@@ -238,7 +238,7 @@ _version() {
     draft version
 
     _command "valve version"
-    _success ${THIS_VERSION} 2
+    _echo "# version: ${THIS_VERSION}" 3
 }
 
 _waiting_pod() {
