@@ -123,6 +123,10 @@ _publish() {
 }
 
 _release() {
+    pwd
+    ls -al ${SHELL_DIR}
+    ls -al ${SHELL_DIR}/target
+
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
         exit 1
     fi

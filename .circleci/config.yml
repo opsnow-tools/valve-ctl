@@ -39,7 +39,6 @@ jobs:
       - run:
           name: Release
           command: |
-            ls -al workspace/target
             chmod 755 ./workspace/build.sh
             ./workspace/build.sh release
   slack:
