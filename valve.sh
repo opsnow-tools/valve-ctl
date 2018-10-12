@@ -283,7 +283,12 @@ _select_one() {
     fi
 
     echo
-    _read "Please select one. (1-${CNT}) : "
+
+    if [ "${CNT}" == "1" ]; then
+        _read "Please select one. (1) : "
+    else
+        _read "Please select one. (1-${CNT}) : "
+    fi
 
     SELECTED=
     if [ -z ${ANSWER} ]; then
@@ -356,7 +361,7 @@ _helm_repo() {
     if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         echo
         DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
-        _read "CHARTMUSEUM (${DEFAULT}) : "
+        _read "CHARTMUSEUM [${DEFAULT}] : "
 
         if [ -z ${ANSWER} ]; then
             CHARTMUSEUM="${DEFAULT}"
