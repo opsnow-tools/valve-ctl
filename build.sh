@@ -123,6 +123,10 @@ _publish() {
 }
 
 _release() {
+    if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
+        exit 1
+    fi
+
     VERSION=$(cat ${SHELL_DIR}/target/VERSION | xargs)
 
     _result "VERSION=${VERSION}"
@@ -130,13 +134,13 @@ _release() {
     _command "go get github.com/tcnksm/ghr"
     go get github.com/tcnksm/ghr
 
-    _command "ghr ${VERSION} ${SHELL_DIR}/versions/"
+    _command "ghr ${VERSION} ${SHELL_DIR}/target/dist/"
     ghr -t ${GITHUB_TOKEN} \
         -u ${USERNAME} \
         -r ${REPONAME} \
         -c ${CIRCLE_SHA1} \
         -delete \
-        ${VERSION} ${SHELL_DIR}/versions/
+        ${VERSION} ${SHELL_DIR}/target/dist/
 }
 
 _slack() {
