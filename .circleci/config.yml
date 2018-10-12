@@ -17,8 +17,8 @@ jobs:
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
+            - target/*
             - build.sh
-            - target.tar.gz
   publish:
     docker:
       - image: opspresso/awscli
