@@ -2,6 +2,8 @@
 
 OS_NAME="$(uname | awk '{print tolower($0)}')"
 
+SHELL_DIR=$(dirname $0)
+
 USERNAME=${1:-opsnow-tools}
 REPONAME=${2:-valve-ctl}
 
@@ -9,29 +11,29 @@ _gen_version() {
     # previous versions
     VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4 | xargs)
 
-    if [ ! -f ./VERSION ]; then
-        echo "v0.0.0" > ./VERSION
+    if [ ! -f ${SHELL_DIR}/VERSION ]; then
+        echo "v0.0.0" > ${SHELL_DIR}/VERSION
     fi
 
     # release version
     if [ -z ${VERSION} ]; then
-        VERSION=$(cat ./VERSION | xargs)
+        VERSION=$(cat ${SHELL_DIR}/VERSION | xargs)
     else
-        MAJOR=$(cat ./VERSION | xargs | cut -d'.' -f1)
-        MINOR=$(cat ./VERSION | xargs | cut -d'.' -f2)
+        MAJOR=$(cat ${SHELL_DIR}/VERSION | xargs | cut -d'.' -f1)
+        MINOR=$(cat ${SHELL_DIR}/VERSION | xargs | cut -d'.' -f2)
 
         LATEST_MAJOR=$(echo ${VERSION} | cut -d'.' -f1)
         LATEST_MINOR=$(echo ${VERSION} | cut -d'.' -f2)
 
         if [ "${MAJOR}" != "${LATEST_MAJOR}" ] || [ "${MINOR}" != "${LATEST_MINOR}" ]; then
-            VERSION=$(cat ./VERSION | xargs)
+            VERSION=$(cat ${SHELL_DIR}/VERSION | xargs)
         fi
 
         # add build version
         VERSION=$(echo ${VERSION} | perl -pe 's/^(([v\d]+\.)*)(\d+)(.*)$/$1.($3+1).$4/e')
     fi
 
-    printf "${VERSION}" > target/VERSION
+    printf "${VERSION}" > ${SHELL_DIR}/target/VERSION
     echo "VERSION=${VERSION}"
 }
 
