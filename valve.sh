@@ -293,16 +293,15 @@ _select_one() {
         _error
     fi
 
-    echo
-
-    if [ "${CNT}" == "1" ]; then
-        _read "Please select one. (1) : "
-    else
-        _read "Please select one. (1-${CNT}) : "
+    if [ "${CNT}" != "1" ]; then
+        CNT="1-${CNT}"
     fi
 
+    echo
+    _read "Please select one. (${CNT}) : "
+
     SELECTED=
-    if [ -z ${ANSWER} ]; then
+    if [ "${ANSWER}" == "" ]; then
         _error
     fi
     TEST='^[0-9]+$'
@@ -620,9 +619,10 @@ _up() {
 
     DRAFT_LOGS=$(mktemp /tmp/valve-draft-logs.XXXXXX)
 
+    # find draft error
     draft logs | grep error > ${DRAFT_LOGS}
-    COUNT=$(cat ${DRAFT_LOGS} | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
+    CNT=$(cat ${DRAFT_LOGS} | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         _command "draft logs"
         draft logs
         _error "$(cat ${DRAFT_LOGS})"
@@ -652,9 +652,6 @@ _remote() {
 
     # base domain
     BASE_DOMAIN="127.0.0.1.nip.io"
-
-    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts | jq 'keys[]' -r
-    # curl -sL chartmuseum-devops.demo.opsnow.com/api/charts/sample-node | jq '.[] | {version} | .version' -r
 
     LIST=/tmp/valve-charts-ls
 
@@ -714,9 +711,8 @@ _list() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
-    _command "helm ls"
-    helm ls | head -1
-    helm ls | grep ${NAMESPACE}
+    _command "helm ls --all"
+    helm ls --all
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
@@ -728,11 +724,11 @@ _logs() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
-    LIST=/tmp/valve-helm-ls
-
     if [ -z ${NAME} ]; then
-        _command "helm ls"
-        helm ls | grep ${NAMESPACE} | awk '{print $1}' > ${LIST}
+        LIST=/tmp/valve-pod-ls
+
+        _command "kubectl get pod -n ${NAMESPACE}"
+        kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
 
         _select_one
 
@@ -741,24 +737,18 @@ _logs() {
         NAME="${SELECTED}"
     fi
 
-    # _command "kubectl get pod -n ${NAMESPACE} | grep ${NAME}"
-    POD=$(kubectl get pod -n ${NAMESPACE} | grep ${NAME} | head -1 | awk '{print $1}')
-
-    _command "kubectl logs -n ${NAMESPACE} ${POD}"
-    kubectl logs -n ${NAMESPACE} ${POD}
+    _command "kubectl logs -n ${NAMESPACE} ${NAME}"
+    kubectl logs -n ${NAMESPACE} ${NAME}
 }
 
 _remove() {
     # _helm_init
 
-    # namespace
-    NAMESPACE="${NAMESPACE:-development}"
-
-    LIST=/tmp/valve-helm-ls
-
     if [ -z ${NAME} ]; then
+        LIST=/tmp/valve-helm-ls
+
         _command "helm ls --all"
-        helm ls --all | grep ${NAMESPACE} | awk '{print $1}' > ${LIST}
+        helm ls --all | grep -v "NAME" | awk '{print $1}' > ${LIST}
 
         _select_one
 
@@ -777,13 +767,14 @@ _chart_replace() {
     DEFAULT_VAL=$3
     REPLACE_TYPE=$4
 
-    echo
-
     if [ "${DEFAULT_VAL}" == "" ]; then
-        _read "${REPLACE_KEY} : "
+        Q="${REPLACE_KEY} : "
     else
-        _read "${REPLACE_KEY} [${DEFAULT_VAL}] : "
+        Q="${REPLACE_KEY} [${DEFAULT_VAL}] : "
     fi
+
+    echo
+    _read "${Q}"
 
     if [ -z ${ANSWER} ]; then
         REPLACE_VAL=${DEFAULT_VAL}
