@@ -13,7 +13,7 @@ resources:
     memory: 512Mi
   limits:
     cpu: 1000m
-    memory: 1024Mi
+    memory: 2048Mi
 readinessProbe:
   httpGet:
     path: /
@@ -35,7 +35,8 @@ hpa:
   enabled: true
   min: 1
   max: 5
-  cpu: 50
+  cpu: 66
+  mem: 66
 profile: default
 configmap:
   enabled: false
