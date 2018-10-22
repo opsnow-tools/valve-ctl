@@ -149,7 +149,7 @@ cat <<EOF
   \ V / (_| | |\ V /  __/ | (__| |_| |
    \_/ \__,_|_| \_/ \___|  \___|\__|_|  ${THIS_VERSION}
 ================================================================================
- Usage: valve {command} [args]
+ Usage: `basename $0` {command} [args]
 
  Commands:
    c, config    저장된 설정을 보여줍니다.
