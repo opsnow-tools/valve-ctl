@@ -876,12 +876,14 @@ _clean() {
     docker ps -a -q > ${LIST}
     CNT=$(cat ${LIST} | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
+        _command 'docker rm $(docker ps -a -q)'
         docker rm $(cat ${LIST})
     fi
 
     docker images -q > ${LIST}
     CNT=$(cat ${LIST} | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
+        _command 'docker rmi -f $(docker images -q)'
         docker rmi -f $(cat ${LIST})
     fi
 }
