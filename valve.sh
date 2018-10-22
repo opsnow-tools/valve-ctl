@@ -4,6 +4,8 @@ OS_NAME="$(uname | awk '{print tolower($0)}')"
 
 THIS_VERSION=v0.0.0
 
+SHELL_DIR=$(dirname $0)
+
 CMD=$1
 SUB=$2
 
@@ -461,16 +463,31 @@ _gen() {
     DIST=/tmp/valve-draft-${THIS_VERSION}
     LIST=/tmp/valve-draft-ls
 
-    if [ ! -d ${DIST} ]; then
-        echo
+    if [ "${THIS_VERSION}" == "v0.0.0" ]; then
+        if [ ! -d ${SHELL_DIR}/draft ]; then
+            _error
+        fi
+
+        rm -rf ${DIST}
         mkdir -p ${DIST}
 
-        # download
-        pushd ${DIST}
-        curl -sL https://github.com/opsnow-tools/valve-ctl/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
-        popd
+        # copy local package
+        _command "cp -rf ${SHELL_DIR}/draft/* ${DIST}"
+        cp -rf ${SHELL_DIR}/draft/* ${DIST}
 
-        _result "draft package downloaded."
+        _result "local package used."
+    else
+        if [ ! -d ${DIST} ]; then
+            echo
+            mkdir -p ${DIST}
+
+            # download
+            pushd ${DIST}
+            curl -sL https://github.com/opsnow-tools/valve-ctl/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
+            popd
+
+            _result "draft package downloaded."
+        fi
     fi
 
     # package
