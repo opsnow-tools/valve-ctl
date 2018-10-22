@@ -352,6 +352,9 @@ _helm_init() {
     _command "helm init --upgrade"
     helm init --upgrade
 
+    _command "helm repo update"
+    helm repo update
+
     # waiting tiller
     _waiting_pod "kube-system" "tiller"
 
