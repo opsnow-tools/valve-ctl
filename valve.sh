@@ -55,7 +55,7 @@ for v in "$@"; do
         SECRET="${v#*=}"
         shift
         ;;
-    --namespace=*)
+    --ns=*|--namespace=*)
         NAMESPACE="${v#*=}"
         shift
         ;;
