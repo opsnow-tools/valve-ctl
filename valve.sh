@@ -360,12 +360,15 @@ _helm_init() {
         _helm_delete "nginx-ingress"
     fi
 
-    _helm_install "kube-public" "docker-registry"
-    _helm_install "kube-public" "metrics-server"
-    _helm_install "kube-public" "nginx-ingress"
+    # namespace
+    NAMESPACE="${NAMESPACE:-kube-system}"
 
-    _waiting_pod "kube-public" "docker-registry"
-    _waiting_pod "kube-public" "nginx-ingress"
+    _helm_install "${NAMESPACE}" "docker-registry"
+    _helm_install "${NAMESPACE}" "metrics-server"
+    _helm_install "${NAMESPACE}" "nginx-ingress"
+
+    _waiting_pod "${NAMESPACE}" "docker-registry"
+    _waiting_pod "${NAMESPACE}" "nginx-ingress"
 }
 
 _helm_repo() {
