@@ -108,7 +108,7 @@ Commands:
         -n, --name=         프로젝트 이름을 알고 있을 경우 입력합니다.
         -v, --version=      프로젝트 버전을 알고 있을 경우 입력합니다.
 
-    a, all                  전체 리소스의 전체 list 를 조회 합니다.
+    a, all                  리소스의 전체 list 를 조회 합니다.
 
     l, ls, list             배포 list 를 보여줍니다.
     d, desc                 배포된 리소스의 describe 를 조회 합니다.
