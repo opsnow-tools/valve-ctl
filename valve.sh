@@ -105,8 +105,8 @@ Commands:
         -r, --remote        Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
 
     r, remote               Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
-        -n, --name          프로젝트 이름을 알고 있을 경우 입력합니다.
-        -v, --version       프로젝트 버전을 알고 있을 경우 입력합니다.
+        -n, --name=         프로젝트 이름을 알고 있을 경우 입력합니다.
+        -v, --version=      프로젝트 버전을 알고 있을 경우 입력합니다.
 
     a, all                  전체 리소스의 전체 list 를 조회 합니다.
 
@@ -114,7 +114,7 @@ Commands:
     d, desc                 배포된 리소스의 describe 를 조회 합니다.
     h, hpa                  배포된 리소스의 Horizontal Pod Autoscaler 를 조회 합니다.
     log, logs               배포한 리소스의 logs 를 조회 합니다.
-        -N, --namespace     지정된 namespace 를 조회 합니다.
+        -N, --namespace=    지정된 namespace 를 조회 합니다.
 
     rm, remove              배포한 프로젝트를 삭제 합니다.
 
