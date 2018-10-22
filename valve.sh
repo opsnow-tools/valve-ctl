@@ -917,8 +917,8 @@ _chart_replace() {
 }
 
 _get_yaml() {
-    _NAME=$2
-    _DIST=$3
+    _NAME=$1
+    _DIST=$2
 
     if [ "${THIS_VERSION}" == "v0.0.0" ]; then
         cp -rf ${SHELL_DIR}/${_NAME}.yaml ${_DIST}
