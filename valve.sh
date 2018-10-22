@@ -2,7 +2,7 @@
 
 OS_NAME="$(uname | awk '{print tolower($0)}')"
 
-THIS_REPO="valve-tools"
+THIS_REPO="opsnow-tools"
 THIS_NAME="valve-ctl"
 THIS_VERSION="v0.0.0"
 
