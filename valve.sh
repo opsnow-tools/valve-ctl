@@ -868,10 +868,10 @@ _sample() {
 }
 
 _clean() {
-    rm -rf ${CONFIG}
+    # rm -rf ${CONFIG}
     rm -rf /tmp/valve-*
 
-    LIST=/tmp/valve-helm-ls
+    LIST=/tmp/valve-docker-ls
 
     docker ps -a -q > ${LIST}
     CNT=$(cat ${LIST} | wc -l | xargs)
