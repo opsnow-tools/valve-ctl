@@ -2,7 +2,9 @@
 
 OS_NAME="$(uname | awk '{print tolower($0)}')"
 
-THIS_VERSION=v0.0.0
+THIS_REPO="valve-tools"
+THIS_NAME="valve-ctl"
+THIS_VERSION="v0.0.0"
 
 SHELL_DIR=$(dirname $0)
 
@@ -235,13 +237,13 @@ _run() {
 }
 
 _tools() {
-    curl -sL repo.opsnow.io/valve-ctl/tools | bash
+    curl -sL repo.opsnow.io/${THIS_NAME}/tools | bash
     exit 0
 }
 
 _update() {
     _echo "# version: ${THIS_VERSION}" 3
-    curl -sL repo.opsnow.io/valve-ctl/install | bash
+    curl -sL repo.opsnow.io/${THIS_NAME}/install | bash
     exit 0
 }
 
@@ -425,7 +427,7 @@ _helm_install() {
     if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         CHART=/tmp/${_NM}.yaml
 
-        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/charts/${_NM}.yaml > ${CHART}
+        _get_yaml "charts/${_NM}" "${CHART}"
 
         CHART_VERSION=$(cat ${CHART} | grep chart-version | awk '{print $3}' | xargs)
 
@@ -489,7 +491,7 @@ _gen() {
 
             # download
             pushd ${DIST}
-            curl -sL https://github.com/opsnow-tools/valve-ctl/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
+            curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
             popd
 
             _result "draft package downloaded."
@@ -851,11 +853,7 @@ _sample() {
 
     SAMPLE=$(mktemp /tmp/valve-${NAME}.XXXXXX.yaml)
 
-    if [ "${THIS_VERSION}" == "v0.0.0" ]; then
-        cp -rf ${SHELL_DIR}/sample/${NAME}.yaml ${SAMPLE}
-    else
-        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/sample/${NAME}.yaml > ${SAMPLE}
-    fi
+    _get_yaml "sample/${NAME}" "${SAMPLE}"
 
     DOMAIN="${NAME}-${NAMESPACE}.${BASE_DOMAIN}"
 
@@ -915,6 +913,17 @@ _chart_replace() {
     else
         _command "sed -i -e s|${REPLACE_KEY} = .*|${REPLACE_KEY} = ${REPLACE_VAL}| ${REPLACE_FILE}"
         _replace "s|${REPLACE_KEY} = .*|${REPLACE_KEY} = \"${REPLACE_VAL}\"|" ${REPLACE_FILE}
+    fi
+}
+
+_get_yaml() {
+    _NAME=$2
+    _DIST=$3
+
+    if [ "${THIS_VERSION}" == "v0.0.0" ]; then
+        cp -rf ${SHELL_DIR}/${_NAME}.yaml ${_DIST}
+    else
+        curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}
     fi
 }
 
