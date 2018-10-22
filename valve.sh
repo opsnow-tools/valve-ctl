@@ -217,6 +217,9 @@ _run() {
         clean)
             _clean
             ;;
+        sample)
+            _sample
+            ;;
         tools)
             _tools
             ;;
@@ -774,8 +777,8 @@ _describe() {
         NAME="${SELECTED}"
     fi
 
-    _command "kubectl describe -n ${NAMESPACE} ${NAME}"
-    kubectl describe -n ${NAMESPACE} ${NAME}
+    _command "kubectl describe pod -n ${NAMESPACE} ${NAME}"
+    kubectl describe pod -n ${NAMESPACE} ${NAME}
 }
 
 _logs() {
@@ -821,6 +824,46 @@ _remove() {
 
     _command "helm delete ${NAME} --purge"
     helm delete ${NAME} --purge
+}
+
+_sample() {
+    LIST=/tmp/valve-sample-ls
+
+    echo "redis" > ${LIST}
+    echo "sample-node" >> ${LIST}
+    echo "sample-spring" >> ${LIST}
+    echo "sample-tomcat" >> ${LIST}
+
+    _select_one
+
+    _result "${SELECTED}"
+
+    NAME="${SELECTED}"
+
+    # namespace
+    NAMESPACE="${NAMESPACE:-default}"
+
+    # base domain
+    BASE_DOMAIN="127.0.0.1.nip.io"
+
+    SAMPLE=$(mktemp /tmp/valve-${NAME}.XXXXXX.yaml)
+
+    if [ "${THIS_VERSION}" == "v0.0.0" ]; then
+        cp -rf ${SHELL_DIR}/sample/${NAME}.yaml ${SAMPLE}
+    else
+        curl -sL https://raw.githubusercontent.com/opsnow-tools/valve-ctl/master/sample/${NAME}.yaml > ${SAMPLE}
+    fi
+
+    DOMAIN="${NAME}-${NAMESPACE}.${BASE_DOMAIN}"
+
+    _replace "s/# type: SERVICE_TYPE/type: ClusterIP/" ${SAMPLE}
+    _replace "s/INGRESS_DOMAIN/${DOMAIN}/" ${SAMPLE}
+
+    _command "kubectl apply -f ${SAMPLE}"
+    kubectl apply -f ${SAMPLE}
+
+    _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
+    kubectl get pod,svc,ing -n ${NAMESPACE}
 }
 
 _clean() {
