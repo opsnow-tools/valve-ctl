@@ -368,8 +368,8 @@ _helm_init() {
 
     if [ ! -z ${DELETE} ]; then
         _helm_delete "docker-registry"
-        _helm_delete "metrics-server"
         _helm_delete "nginx-ingress"
+        _helm_delete "metrics-server"
     fi
 
     # namespace
@@ -377,8 +377,6 @@ _helm_init() {
 
     _helm_install "${NAMESPACE}" "docker-registry"
     _helm_install "${NAMESPACE}" "nginx-ingress"
-
-    _helm_install "${NAMESPACE}" "heapster"
     _helm_install "${NAMESPACE}" "metrics-server"
 
     _waiting_pod "${NAMESPACE}" "docker-registry"
