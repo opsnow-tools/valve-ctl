@@ -373,8 +373,10 @@ _helm_init() {
     NAMESPACE="${NAMESPACE:-kube-system}"
 
     _helm_install "${NAMESPACE}" "docker-registry"
-    _helm_install "${NAMESPACE}" "metrics-server"
     _helm_install "${NAMESPACE}" "nginx-ingress"
+
+    _helm_install "${NAMESPACE}" "heapster"
+    _helm_install "${NAMESPACE}" "metrics-server"
 
     _waiting_pod "${NAMESPACE}" "docker-registry"
     _waiting_pod "${NAMESPACE}" "nginx-ingress"

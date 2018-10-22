@@ -1,0 +1,6 @@
+# chart-version: latest
+
+nameOverride: heapster
+
+# image:
+#   tag: v1.4.0
