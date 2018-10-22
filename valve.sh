@@ -148,18 +148,22 @@ cat <<EOF
  Usage: valve {command} [args]
 
  Commands:
-   version, v   valve 버전을 확인 합니다.
-   update       valva 를 최신버전으로 업데이트 합니다.
-   tools        개발에 필요한 툴을 설치 합니다. (MacOS, Ubuntu 만 지원)
-   init         초기화를 합니다. Kubernetes 에 필요한 툴을 설치 합니다.
-   config       저장된 설정을 보여줍니다.
-   clean        저장된 설정을 삭제 합니다.
+   c, config    저장된 설정을 보여줍니다.
+   i, init      초기화를 합니다. Kubernetes 에 필요한 툴을 설치 합니다.
+   u, up        프로젝트를 Local Kubernetes 에 배포 합니다.
+   r, remote    Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
 
-   list, ls     배포 내역을 보여줍니다.
-   gen          프로젝트 배포에 필요한 패키지를 설치 합니다.
-   up           프로젝트를 Local Kubernetes 에 배포 합니다.
-   logs, log    배포한 Pod 의 로그를 봅니다.
-   remove, rm   배포한 Pod 를 삭제 합니다.
+   a, all       전체 리소스의 내역을 봅니다.
+   l, ls, list  배포 내역을 보여줍니다.
+   d, desc      배포된 리소스의 상세 내용을 봅니다.
+   g, gen       프로젝트 배포에 필요한 패키지를 설치 합니다.
+   log, logs    배포한 프로젝트의 로그를 봅니다.
+   rm, remove   배포한 프로젝트를 삭제 합니다.
+
+   clean        저장된 설정을 삭제 합니다. (docker 이미지도 모두 삭제)
+   tools        개발에 필요한 툴을 설치 합니다. (MacOS, Ubuntu 만 지원)
+   update       valve 를 최신버전으로 업데이트 합니다.
+   v, version   valve 버전을 확인 합니다.
 
 Arguments:
    --force      가능하면 재설치를 합니다.
@@ -196,7 +200,7 @@ _run() {
         a|all)
             _all
             ;;
-        ls|list)
+        l|ls|list)
             _list
             ;;
         d|desc|describe)
