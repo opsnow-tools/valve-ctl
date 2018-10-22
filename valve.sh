@@ -8,86 +8,25 @@ THIS_VERSION="v0.0.0"
 
 SHELL_DIR=$(dirname $0)
 
-CMD=$1
-SUB=$2
+CMD=
 
 NAME=
 VERSION=
-PACKAGE=
-
-SECRET=
-NAMESPACE=
+NEMESPACE=
 CLUSTER=
 
-BASE_DOMAIN=
-REGISTRY=
+SECRET=
 CHARTMUSEUM=
-
-REMOTE=
+REGISTRY=
+BASE_DOMAIN=
 
 FORCE=
 DELETE=
+REMOTE=
+VERVOSE=
 
 CONFIG=${HOME}/.valve-ctl
 touch ${CONFIG} && . ${CONFIG}
-
-################################################################################
-
-for v in "$@"; do
-    case ${v} in
-    --this=*)
-        THIS_VERSION="${v#*=}"
-        shift
-        ;;
-    --name=*)
-        NAME="${v#*=}"
-        shift
-        ;;
-    --version=*)
-        VERSION="${v#*=}"
-        shift
-        ;;
-    --package=*)
-        PACKAGE="${v#*=}"
-        shift
-        ;;
-    --secret=*)
-        SECRET="${v#*=}"
-        shift
-        ;;
-    --ns=*|--namespace=*)
-        NAMESPACE="${v#*=}"
-        shift
-        ;;
-    --cluster=*)
-        CLUSTER="${v#*=}"
-        shift
-        ;;
-    --registry=*)
-        REGISTRY="${v#*=}"
-        shift
-        ;;
-    --chartmuseum=*)
-        CHARTMUSEUM="${v#*=}"
-        shift
-        ;;
-    --remote)
-        REMOTE=true
-        shift
-        ;;
-    --force)
-        FORCE=true
-        shift
-        ;;
-    --delete)
-        DELETE=true
-        shift
-        ;;
-    *)
-        shift
-        ;;
-    esac
-done
 
 ################################################################################
 
@@ -149,36 +88,101 @@ cat <<EOF
   \ V / (_| | |\ V /  __/ | (__| |_| |
    \_/ \__,_|_| \_/ \___|  \___|\__|_|  ${THIS_VERSION}
 ================================================================================
- Usage: `basename $0` {command} [args]
+Usage: `basename $0` {Command} [Arguments ..]
 
- Commands:
-   c, config    저장된 설정을 보여줍니다.
-   i, init      초기화를 합니다. Kubernetes 에 필요한 툴을 설치 합니다.
-   u, up        프로젝트를 Local Kubernetes 에 배포 합니다.
-   r, remote    Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
+Commands:
+    c, config               저장된 설정을 조회 합니다.
 
-   a, all       전체 리소스의 내역을 봅니다.
-   l, ls, list  배포 내역을 보여줍니다.
-   d, desc      배포된 리소스의 상세 내용을 봅니다.
-   g, gen       프로젝트 배포에 필요한 패키지를 설치 합니다.
-   log, logs    배포한 프로젝트의 로그를 봅니다.
-   rm, remove   배포한 프로젝트를 삭제 합니다.
+    i, init                 초기화를 합니다. Kubernetes 에 필요한 툴을 설치 합니다.
+        -f, --force         가능하면 재설치 합니다.
+        -d, --delete        기존 배포를 삭제 하고, 다음 작업을 수행합니다.
 
-   clean        저장된 설정을 삭제 합니다. (docker 이미지도 모두 삭제)
-   tools        개발에 필요한 툴을 설치 합니다. (MacOS, Ubuntu 만 지원)
-   update       valve 를 최신버전으로 업데이트 합니다.
-   v, version   valve 버전을 확인 합니다.
+    g, gen                  프로젝트 배포에 필요한 패키지를 설치 합니다.
+        -d, --delete        기존 패키지를 삭제 하고, 다음 작업을 수행합니다.
 
-Arguments:
-   --force      가능하면 재설치를 합니다.
-   --delete     기본 배포를 삭제 하고, 다음 작업을 수행합니다.
-   --remote
+    u, up                   프로젝트를 Local Kubernetes 에 배포 합니다.
+        -d, --delete        기존 배포를 삭제 하고, 다음 작업을 수행합니다.
+        -r, --remote        Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
+
+    r, remote               Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
+        -n, --name          프로젝트 이름을 알고 있을 경우 입력합니다.
+        -v, --version       프로젝트 버전을 알고 있을 경우 입력합니다.
+
+    a, all                  전체 리소스의 전체 list 를 조회 합니다.
+
+    l, ls, list             배포 list 를 보여줍니다.
+    d, desc                 배포된 리소스의 describe 를 조회 합니다.
+    h, hpa                  배포된 리소스의 Horizontal Pod Autoscaler 를 조회 합니다.
+    log, logs               배포한 리소스의 logs 를 조회 합니다.
+        -N, --namespace     지정된 namespace 를 조회 합니다.
+
+    rm, remove              배포한 프로젝트를 삭제 합니다.
+
+    clean                   저장된 설정을 모두 삭제 합니다.
+        -d, --delete        docker 이미지도 모두 삭제 합니다.
+
+    tools                   개발에 필요한 툴을 설치 합니다. (MacOS, Ubuntu 만 지원)
+    update                  valve 를 최신버전으로 업데이트 합니다.
+    v, version              valve 버전을 확인 합니다.
 ================================================================================
 EOF
     _success
 }
 
-################################################################################
+_args() {
+    if [ "${OS_NAME}" == "darwin" ]; then
+        GETOPT=$(getopt 2>&1 | head -1 | xargs)
+        if [ "${GETOPT}" == "--" ]; then
+            brew install gnu-getopt
+            brew link --force gnu-getopt
+            _error
+        fi
+    fi
+
+    OPTIONS=$(getopt -l "name:,version:,namespace:,chartmuseum:,force,delete,remote,verbose" -o "n:v:N:C:fdrV" -a -- "$@")
+    eval set -- "${OPTIONS}"
+
+    while true; do
+        case $1 in
+        -n|--name)
+            shift
+            NAME=$1
+            ;;
+        -v|--version)
+            shift
+            VERSION=$1
+            ;;
+        -N|--namespace)
+            shift
+            NAMESPACE=$1
+            ;;
+        -C|--chartmuseum)
+            shift
+            CHARTMUSEUM=$1
+            ;;
+        -f|--force)
+            FORCE=1
+            ;;
+        -d|--delete)
+            DELETE=1
+            ;;
+        -r|--remote)
+            REMOTE=1
+            ;;
+        -V|--verbose)
+            VERVOSE=1
+            set -xv  # Set xtrace and verbose mode.
+            ;;
+        --)
+            shift
+            break
+            ;;
+        esac
+        shift
+    done
+
+    CMD=$1
+}
 
 _run() {
     case ${CMD} in
@@ -360,7 +364,7 @@ _helm_init() {
     _command "helm repo update"
     helm repo update
 
-    # waiting tiller
+    # tiller
     _waiting_pod "kube-system" "tiller"
 
     # _command "helm version"
@@ -375,8 +379,8 @@ _helm_init() {
     # namespace
     NAMESPACE="${NAMESPACE:-kube-system}"
 
-    _helm_install "${NAMESPACE}" "docker-registry"
     _helm_install "${NAMESPACE}" "nginx-ingress"
+    _helm_install "${NAMESPACE}" "docker-registry"
     _helm_install "${NAMESPACE}" "metrics-server"
 
     _waiting_pod "${NAMESPACE}" "docker-registry"
@@ -535,7 +539,7 @@ _gen() {
     fi
 
     # clear
-    if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
+    if [ ! -z ${DELETE} ]; then
         rm -rf charts
     fi
 
@@ -639,7 +643,7 @@ _up() {
     fi
 
     # delete
-    if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
+    if [ ! -z ${DELETE} ]; then
         _command "helm delete ${NAME}-${NAMESPACE} --purge"
         helm delete ${NAME}-${NAMESPACE} --purge
 
@@ -711,7 +715,7 @@ _remote() {
     fi
 
     # delete
-    if [ ! -z ${FORCE} ] || [ ! -z ${DELETE} ]; then
+    if [ ! -z ${DELETE} ]; then
         _command "helm delete ${NAME}-${NAMESPACE} --purge"
         helm delete ${NAME}-${NAMESPACE} --purge
 
@@ -900,18 +904,21 @@ _clean() {
 
     LIST=/tmp/valve-docker-ls
 
-    docker ps -a -q > ${LIST}
-    CNT=$(cat ${LIST} | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
-        _command 'docker rm $(docker ps -a -q)'
-        docker rm $(cat ${LIST})
-    fi
+    # delete
+    if [ ! -z ${DELETE} ]; then
+        docker ps -a -q > ${LIST}
+        CNT=$(cat ${LIST} | wc -l | xargs)
+        if [ "x${CNT}" != "x0" ]; then
+            _command 'docker rm $(docker ps -a -q)'
+            docker rm $(cat ${LIST})
+        fi
 
-    docker images -q > ${LIST}
-    CNT=$(cat ${LIST} | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
-        _command 'docker rmi -f $(docker images -q)'
-        docker rmi -f $(cat ${LIST})
+        docker images -q > ${LIST}
+        CNT=$(cat ${LIST} | wc -l | xargs)
+        if [ "x${CNT}" != "x0" ]; then
+            _command 'docker rmi -f $(docker images -q)'
+            docker rmi -f $(cat ${LIST})
+        fi
     fi
 }
 
@@ -955,6 +962,8 @@ _get_yaml() {
         curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}
     fi
 }
+
+_args $*
 
 _run
 
