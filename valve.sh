@@ -210,6 +210,9 @@ _run() {
         d|desc|describe)
             _describe
             ;;
+        h|hpa)
+            _hpa
+            ;;
         log|logs)
             _logs
             ;;
@@ -786,6 +789,30 @@ _describe() {
 
     _command "kubectl describe pod -n ${NAMESPACE} ${NAME}"
     kubectl describe pod -n ${NAMESPACE} ${NAME}
+}
+
+_hpa() {
+    # _helm_init
+
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
+    if [ -z ${NAME} ]; then
+        LIST=/tmp/valve-hpa-ls
+
+        # get pod list
+        _command "kubectl get hpa -n ${NAMESPACE}"
+        kubectl get hpa -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
+
+        _select_one
+
+        _result "${SELECTED}"
+
+        NAME="${SELECTED}"
+    fi
+
+    _command "kubectl describe hpa -n ${NAMESPACE} ${NAME}"
+    kubectl describe hpa -n ${NAMESPACE} ${NAME}
 }
 
 _logs() {
