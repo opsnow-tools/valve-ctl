@@ -196,6 +196,9 @@ _run() {
         ls|list)
             _list
             ;;
+        desc|describe)
+            _describe
+            ;;
         log|logs)
             _logs
             ;;
@@ -716,6 +719,29 @@ _list() {
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
+}
+
+_describe() {
+    # _helm_init
+
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
+    if [ -z ${NAME} ]; then
+        LIST=/tmp/valve-pod-ls
+
+        _command "kubectl get pod -n ${NAMESPACE}"
+        kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
+
+        _select_one
+
+        _result "${SELECTED}"
+
+        NAME="${SELECTED}"
+    fi
+
+    _command "kubectl describe -n ${NAMESPACE} ${NAME}"
+    kubectl describe -n ${NAMESPACE} ${NAME}
 }
 
 _logs() {
