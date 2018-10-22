@@ -174,29 +174,32 @@ EOF
 
 _run() {
     case ${CMD} in
-        conf|config)
+        c|conf|config)
             _config
             ;;
-        init)
+        i|init)
             _init
             ;;
-        gen)
+        g|gen)
             _gen
             ;;
-        up)
+        u|up)
             if [ -z ${REMOTE} ]; then
                 _up
             else
                 _remote
             fi
             ;;
-        rt|remote)
+        r|remote)
             _remote
+            ;;
+        a|all)
+            _all
             ;;
         ls|list)
             _list
             ;;
-        desc|describe)
+        d|desc|describe)
             _describe
             ;;
         log|logs)
@@ -329,14 +332,6 @@ _config_save() {
     echo "BASE_DOMAIN=${BASE_DOMAIN}" >> ${CONFIG}
     echo "REGISTRY=${REGISTRY}" >> ${CONFIG}
     echo "CHARTMUSEUM=${CHARTMUSEUM}" >> ${CONFIG}
-}
-
-_clean() {
-    rm -rf ${CONFIG}
-    rm -rf /tmp/valve-*
-
-    docker rm $(docker ps -a -q)
-    docker rmi -f $(docker images -q)
 }
 
 _init() {
@@ -711,14 +706,28 @@ _remote() {
     kubectl get pod,svc,ing -n ${NAMESPACE}
 }
 
+_all() {
+    # _helm_init
+
+    _command "helm ls --all"
+    helm ls --all
+
+    _command "kubectl get all --all-namespaces"
+    kubectl get all --all-namespaces
+}
+
 _list() {
     # _helm_init
 
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
-    _command "helm ls --all"
-    helm ls --all
+    LIST=/tmp/valve-helm-ls
+
+    _command "helm ls --all | grep ${NAMESPACE}"
+    helm ls --all > ${LIST}
+    cat ${LIST} | head -1
+    cat ${LIST} | grep ${NAMESPACE}
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
@@ -733,6 +742,7 @@ _describe() {
     if [ -z ${NAME} ]; then
         LIST=/tmp/valve-pod-ls
 
+        # get pod list
         _command "kubectl get pod -n ${NAMESPACE}"
         kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
 
@@ -756,6 +766,7 @@ _logs() {
     if [ -z ${NAME} ]; then
         LIST=/tmp/valve-pod-ls
 
+        # get pod list
         _command "kubectl get pod -n ${NAMESPACE}"
         kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
 
@@ -776,6 +787,7 @@ _remove() {
     if [ -z ${NAME} ]; then
         LIST=/tmp/valve-helm-ls
 
+        # get helm list
         _command "helm ls --all"
         helm ls --all | grep -v "NAME" | awk '{print $1}' > ${LIST}
 
@@ -788,6 +800,25 @@ _remove() {
 
     _command "helm delete ${NAME} --purge"
     helm delete ${NAME} --purge
+}
+
+_clean() {
+    rm -rf ${CONFIG}
+    rm -rf /tmp/valve-*
+
+    LIST=/tmp/valve-helm-ls
+
+    docker ps -a -q > ${LIST}
+    CNT=$(cat ${LIST} | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
+        docker rm $(cat ${LIST})
+    fi
+
+    docker images -q > ${LIST}
+    CNT=$(cat ${LIST} | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
+        docker rmi -f $(cat ${LIST})
+    fi
 }
 
 _chart_replace() {
