@@ -108,15 +108,16 @@ Commands:
         -n, --name=         프로젝트 이름을 알고 있을 경우 입력합니다.
         -v, --version=      프로젝트 버전을 알고 있을 경우 입력합니다.
 
-    a, all                  리소스의 전체 list 를 조회 합니다.
+    a, all                  배포된 리소스의 전체 list 를 조회 합니다.
 
-    l, ls, list             배포 list 를 보여줍니다.
+    l, ls, list             배포된 리소스의 list 를 조회 합니다.
     d, desc                 배포된 리소스의 describe 를 조회 합니다.
     h, hpa                  배포된 리소스의 Horizontal Pod Autoscaler 를 조회 합니다.
     log, logs               배포한 리소스의 logs 를 조회 합니다.
         -N, --namespace=    지정된 namespace 를 조회 합니다.
 
     rm, remove              배포한 프로젝트를 삭제 합니다.
+        -n, --name=         프로젝트 이름을 알고 있을 경우 입력합니다.
 
     clean                   저장된 설정을 모두 삭제 합니다.
         -d, --delete        docker 이미지도 모두 삭제 합니다.
@@ -355,6 +356,10 @@ _config_save() {
 _init() {
     _helm_init
     _draft_init
+
+    # kubernetes-dashboard url
+    PORT=$(kubectl get svc kubernetes-dashboard -n kube-system -o json | jq -r '.spec.ports[0].nodePort')
+    _result "kubernetes-dashboard: https://kubernetes-dashboard.127.0.0.1.nip.io:${PORT}/"
 }
 
 _helm_init() {
