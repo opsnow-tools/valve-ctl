@@ -358,7 +358,7 @@ _init() {
     _draft_init
 
     # kubernetes-dashboard url
-    _result "kubernetes-dashboard: https://localhost:30090/"
+    _result "kubernetes-dashboard: https://localhost:30443/"
 }
 
 _helm_init() {
