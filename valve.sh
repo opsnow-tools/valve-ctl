@@ -371,8 +371,9 @@ _helm_init() {
     # helm version
 
     if [ ! -z ${DELETE} ]; then
-        _helm_delete "docker-registry"
         _helm_delete "nginx-ingress"
+        _helm_delete "docker-registry"
+        _helm_delete "kubernetes-dashboard"
         _helm_delete "metrics-server"
     fi
 
@@ -381,6 +382,7 @@ _helm_init() {
 
     _helm_install "${NAMESPACE}" "nginx-ingress"
     _helm_install "${NAMESPACE}" "docker-registry"
+    _helm_install "${NAMESPACE}" "kubernetes-dashboard"
     _helm_install "${NAMESPACE}" "metrics-server"
 
     _waiting_pod "${NAMESPACE}" "docker-registry"
