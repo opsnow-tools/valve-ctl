@@ -2,10 +2,10 @@
 
 nameOverride: kubernetes-dashboard
 
-extraArgs:
-  - --enable-insecure-login=true
-  - --insecure-bind-address=0.0.0.0
-  - --insecure-port=9090
+# extraArgs:
+#   - --enable-insecure-login=true
+#   - --insecure-bind-address=0.0.0.0
+#   - --insecure-port=9090
 
 service:
   type: NodePort
@@ -17,7 +17,7 @@ ingress:
     kubernetes.io/ingress.class: nginx
   path: /
   hosts:
-    - kubernetes-dashboard
+    - kubernetes-dashboard.127.0.0.1.nip.io
 
 rbac:
   create: true
