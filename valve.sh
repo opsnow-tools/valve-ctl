@@ -358,8 +358,7 @@ _init() {
     _draft_init
 
     # kubernetes-dashboard url
-    PORT=$(kubectl get svc kubernetes-dashboard -n kube-system -o json | jq -r '.spec.ports[0].nodePort')
-    _result "kubernetes-dashboard: https://kubernetes-dashboard.127.0.0.1.nip.io:${PORT}/"
+    _result "kubernetes-dashboard: https://localhost:30090/"
 }
 
 _helm_init() {
