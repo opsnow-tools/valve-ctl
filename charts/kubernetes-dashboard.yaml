@@ -10,6 +10,7 @@ nameOverride: kubernetes-dashboard
 service:
   type: NodePort
   externalPort: 443
+  nodePort: 30090
 
 ingress:
   enabled: true
