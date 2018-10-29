@@ -728,9 +728,27 @@ _remote() {
         sleep 2
     fi
 
+    # has secret
+    COUNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+    if [ "x${COUNT}" != "x0" ]; then
+        SECRET=true
+    else
+        SECRET=false
+    fi
+
+    # has configmap
+    COUNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+    if [ "x${COUNT}" != "x0" ]; then
+        CONFIGMAP=true
+    else
+        CONFIGMAP=false
+    fi
+
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE} --devel \
+                    --set secret.enabled=${SECRET} \
+                    --set configmap.enabled=${CONFIGMAP} \
                     --set fullnameOverride=${NAME}-${NAMESPACE} \
                     --set ingress.basedomain=${BASE_DOMAIN}
 
