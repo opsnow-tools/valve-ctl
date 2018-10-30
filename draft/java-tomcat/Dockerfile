@@ -1,6 +1,6 @@
 # Dockerfile
 
-FROM tomcat:8-jre8-slim
+FROM tomcat:8.5.34-jre8-alpine
 ENV TZ Asia/Seoul
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && rm -rf /usr/local/tomcat/webapps/*
 EXPOSE 8080
