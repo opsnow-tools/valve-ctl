@@ -585,10 +585,13 @@ _gen() {
     fi
 
     if [ -d charts ] && [ ! -z ${NAME} ]; then
-        # charts/${NAME}/Chart.yaml
+        # charts name
         _replace "s|name: .*|name: ${NAME}|" charts/${NAME}/Chart.yaml
 
-        # charts/${NAME}/values.yaml
+        # charts version
+        _replace "s|version: .*|version: ${THIS_VERSION}|" charts/${NAME}/Chart.yaml
+
+        # charts repository
         if [ -z ${REGISTRY} ]; then
             _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
         else
