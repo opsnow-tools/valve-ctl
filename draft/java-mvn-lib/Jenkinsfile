@@ -16,20 +16,20 @@ properties([
 ])
 podTemplate(label: label, containers: [
   containerTemplate(name: "builder", image: "quay.io/opsnow-tools/valve-builder", command: "cat", ttyEnabled: true, alwaysPullImage: true),
-  containerTemplate(name: "node", image: "node", command: "cat", ttyEnabled: true)
+  containerTemplate(name: "maven", image: "maven:3.5.4-jdk-8-alpine", command: "cat", ttyEnabled: true)
 ], volumes: [
-  hostPathVolume(mountPath: "/var/run/docker.sock", hostPath: "/var/run/docker.sock"),
-  hostPathVolume(mountPath: "/home/jenkins/.draft", hostPath: "/home/jenkins/.draft"),
-  hostPathVolume(mountPath: "/home/jenkins/.helm", hostPath: "/home/jenkins/.helm")
+  // hostPathVolume(mountPath: "/var/run/docker.sock", hostPath: "/var/run/docker.sock"),
+  // hostPathVolume(mountPath: "/home/jenkins/.draft", hostPath: "/home/jenkins/.draft"),
+  // hostPathVolume(mountPath: "/home/jenkins/.helm", hostPath: "/home/jenkins/.helm")
 ]) {
   node(label) {
     stage("Prepare") {
       container("builder") {
         butler.prepare()
 
-        if (!BASE_DOMAIN) {
-          BASE_DOMAIN = butler.base_domain
-        }
+        // if (!BASE_DOMAIN) {
+        //   BASE_DOMAIN = butler.base_domain
+        // }
         if (!SLACK_TOKEN) {
           SLACK_TOKEN = butler.slack_token
         }
@@ -48,7 +48,7 @@ podTemplate(label: label, containers: [
           throw e
         }
 
-        butler.scan(IMAGE_NAME, BRANCH_NAME, "nodejs")
+        butler.scan(IMAGE_NAME, BRANCH_NAME, "java")
 
         VERSION = butler.version
         // SOURCE_LANG = butler.source_lang
@@ -56,9 +56,9 @@ podTemplate(label: label, containers: [
       }
     }
     stage("Build") {
-      container("node") {
+      container("maven") {
         try {
-          butler.npm_build()
+          butler.mvn_build()
           success(SLACK_TOKEN, "Build", IMAGE_NAME, VERSION)
         } catch (e) {
           failure(SLACK_TOKEN, "Build", IMAGE_NAME)
@@ -66,65 +66,34 @@ podTemplate(label: label, containers: [
         }
       }
     }
-    // if (BRANCH_NAME != "master") {
-    //   stage("Deploy PRE") {
-    //     container("builder") {
-    //       butler.draft_up(IMAGE_NAME, "pre", CLUSTER, BASE_DOMAIN)
-    //       success(SLACK_TOKEN, "Deploy PRE", IMAGE_NAME, VERSION, "pre", BASE_DOMAIN)
-    //     }
-    //   }
-    // }
+    stage("Tests") {
+      container("maven") {
+        try {
+          butler.mvn_test()
+        } catch (e) {
+          failure(SLACK_TOKEN, "Tests", IMAGE_NAME)
+          throw e
+        }
+      }
+    }
+    stage("Code Analysis") {
+      container("maven") {
+        try {
+          butler.mvn_sonar()
+        } catch (e) {
+          failure(SLACK_TOKEN, "Code Analysis", IMAGE_NAME)
+          throw e
+        }
+      }
+    }
     if (BRANCH_NAME == "master") {
-      stage("Build Image") {
-        parallel(
-          "Build Docker": {
-            container("builder") {
-              try {
-                butler.build_image(IMAGE_NAME, VERSION)
-              } catch (e) {
-                failure(SLACK_TOKEN, "Build Docker", IMAGE_NAME)
-                throw e
-              }
-            }
-          },
-          "Build Charts": {
-            container("builder") {
-              try {
-                butler.build_chart(IMAGE_NAME, VERSION)
-              } catch (e) {
-                failure(SLACK_TOKEN, "Build Charts", IMAGE_NAME)
-                throw e
-              }
-            }
-          }
-        )
-      }
-      stage("Deploy DEV") {
-        container("builder") {
+      stage("Deploy Nexus") {
+        container("maven") {
           try {
-            butler.helm_install(IMAGE_NAME, VERSION, "dev", BASE_DOMAIN, CLUSTER)
-            success(SLACK_TOKEN, "Deploy DEV", IMAGE_NAME, VERSION, "dev", BASE_DOMAIN)
+            butler.mvn_deploy()
+            success(SLACK_TOKEN, "Deploy", IMAGE_NAME, VERSION)
           } catch (e) {
-            failure(SLACK_TOKEN, "Deploy DEV", IMAGE_NAME)
-            throw e
-          }
-        }
-      }
-      stage("Proceed STAGE") {
-        container("builder") {
-          proceed(SLACK_TOKEN, "Deploy STAGE", IMAGE_NAME, VERSION, "stage")
-          timeout(time: 60, unit: "MINUTES") {
-            input(message: "$IMAGE_NAME $VERSION to stage")
-          }
-        }
-      }
-      stage("Deploy STAGE") {
-        container("builder") {
-          try {
-            butler.helm_install(IMAGE_NAME, VERSION, "stage", BASE_DOMAIN, CLUSTER)
-            success(SLACK_TOKEN, "Deploy STAGE", IMAGE_NAME, VERSION, "stage", BASE_DOMAIN)
-          } catch (e) {
-            failure(SLACK_TOKEN, "Deploy STAGE", IMAGE_NAME)
+            failure(SLACK_TOKEN, "Deploy", IMAGE_NAME)
             throw e
           }
         }
