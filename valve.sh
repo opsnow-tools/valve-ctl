@@ -49,23 +49,23 @@ _read() {
 }
 
 _result() {
-    _echo
+    echo
     _echo "# $@" 4
 }
 
 _command() {
-    _echo
+    echo
     _echo "$ $@" 3
 }
 
 _success() {
-    _echo
+    echo
     _echo "+ $@" 2
     exit 0
 }
 
 _error() {
-    _echo
+    echo
     _echo "- $@" 1
     exit 1
 }
