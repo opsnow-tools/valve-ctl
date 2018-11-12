@@ -852,11 +852,11 @@ _ssh() {
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-hpa-ls
+        LIST=/tmp/valve-pod-ls
 
         # get pod list
-        _command "kubectl get hpa -n ${NAMESPACE}"
-        kubectl get hpa -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
+        _command "kubectl get pod -n ${NAMESPACE}"
+        kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
 
         _select_one
 
