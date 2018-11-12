@@ -732,14 +732,6 @@ _remote() {
         sleep 2
     fi
 
-    # has secret
-    COUNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
-        SECRET=true
-    else
-        SECRET=false
-    fi
-
     # has configmap
     COUNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
     if [ "x${COUNT}" != "x0" ]; then
@@ -748,11 +740,28 @@ _remote() {
         CONFIGMAP=false
     fi
 
+    # has secret
+    COUNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+    if [ "x${COUNT}" != "x0" ]; then
+        SECRET=true
+    else
+        SECRET=false
+    fi
+
+    # has secret (aeskey)
+    COUNT=$(kubectl get secret -n ${NAMESPACE} | grep aeskey-properties | wc -l | xargs)
+    if [ "x${COUNT}" != "x0" ]; then
+        AESKEY=true
+    else
+        AESKEY=false
+    fi
+
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE} --devel \
-                    --set secret.enabled=${SECRET} \
                     --set configmap.enabled=${CONFIGMAP} \
+                    --set secret.enabled=${SECRET} \
+                    --set aeskey.enabled=${AESKEY} \
                     --set fullnameOverride=${NAME}-${NAMESPACE} \
                     --set ingress.basedomain=${BASE_DOMAIN}
 
