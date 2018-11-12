@@ -113,6 +113,7 @@ Commands:
     l, ls, list             배포된 리소스의 list 를 조회 합니다.
     d, desc                 배포된 리소스의 describe 를 조회 합니다.
     h, hpa                  배포된 리소스의 Horizontal Pod Autoscaler 를 조회 합니다.
+    s, ssh                  배포된 리소스의 Pod 에 ssh 접속을 시도 합니다.
     log, logs               배포한 리소스의 logs 를 조회 합니다.
         -N, --namespace=    지정된 namespace 를 조회 합니다.
 
@@ -217,6 +218,9 @@ _run() {
             ;;
         h|hpa)
             _hpa
+            ;;
+        s|ssh)
+            _ssh
             ;;
         log|logs)
             _logs
@@ -839,6 +843,30 @@ _hpa() {
 
     _command "kubectl describe hpa -n ${NAMESPACE} ${NAME}"
     kubectl describe hpa -n ${NAMESPACE} ${NAME}
+}
+
+_ssh() {
+    # _helm_init
+
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
+    if [ -z ${NAME} ]; then
+        LIST=/tmp/valve-hpa-ls
+
+        # get pod list
+        _command "kubectl get hpa -n ${NAMESPACE}"
+        kubectl get hpa -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
+
+        _select_one
+
+        _result "${SELECTED}"
+
+        NAME="${SELECTED}"
+    fi
+
+    _command "kubectl exec -n ${NAMESPACE} -it ${NAME} -- /bin/bash"
+    kubectl exec -n ${NAMESPACE} -it ${NAME} -- /bin/bash
 }
 
 _logs() {
