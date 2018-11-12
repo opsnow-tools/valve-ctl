@@ -42,3 +42,5 @@ configmap:
   enabled: false
 secret:
   enabled: false
+aeskey:
+  enabled: false
