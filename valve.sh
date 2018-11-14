@@ -13,12 +13,10 @@ CMD=
 NAME=
 VERSION=
 NEMESPACE=
-CLUSTER=
 
 SECRET=
 CHARTMUSEUM=
 REGISTRY=
-BASE_DOMAIN=
 
 FORCE=
 DELETE=
@@ -88,7 +86,7 @@ cat <<EOF
   \ V / (_| | |\ V /  __/ | (__| |_| |
    \_/ \__,_|_| \_/ \___|  \___|\__|_|  ${THIS_VERSION}
 ================================================================================
-Usage: `basename $0` {Command} [Arguments ..]
+Usage: `basename $0` {Command} [name] [Arguments ..]
 
 Commands:
     c, config               저장된 설정을 조회 합니다.
@@ -105,7 +103,6 @@ Commands:
         -r, --remote        Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
 
     r, remote               Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
-        -n, --name=         프로젝트 이름을 알고 있을 경우 입력합니다.
         -v, --version=      프로젝트 버전을 알고 있을 경우 입력합니다.
 
     a, all                  배포된 리소스의 전체 list 를 조회 합니다.
@@ -115,10 +112,9 @@ Commands:
     h, hpa                  배포된 리소스의 Horizontal Pod Autoscaler 를 조회 합니다.
     s, ssh                  배포된 리소스의 Pod 에 ssh 접속을 시도 합니다.
     log, logs               배포한 리소스의 logs 를 조회 합니다.
-        -N, --namespace=    지정된 namespace 를 조회 합니다.
+        -n, --namespace=    지정된 namespace 를 조회 합니다.
 
     rm, remove              배포한 프로젝트를 삭제 합니다.
-        -n, --name=         프로젝트 이름을 알고 있을 경우 입력합니다.
 
     clean                   저장된 설정을 모두 삭제 합니다.
         -d, --delete        docker 이미지도 모두 삭제 합니다.
@@ -141,26 +137,26 @@ _args() {
         fi
     fi
 
-    OPTIONS=$(getopt -l "name:,version:,namespace:,chartmuseum:,force,delete,remote,verbose" -o "n:v:N:C:fdrV" -a -- "$@")
+    options=$(getopt -l "version:,namespace:,chartmuseum:,registry:,force,delete,remote,verbose" -o "v:n:c:g:fdrV" -a -- "$@")
     eval set -- "${OPTIONS}"
 
     while true; do
         case $1 in
-        -n|--name)
-            shift
-            NAME=$1
-            ;;
         -v|--version)
             shift
             VERSION=$1
             ;;
-        -N|--namespace)
+        -n|--namespace)
             shift
             NAMESPACE=$1
             ;;
-        -C|--chartmuseum)
+        -c|--chartmuseum)
             shift
             CHARTMUSEUM=$1
+            ;;
+        -g|--registry)
+            shift
+            REGISTRY=$1
             ;;
         -f|--force)
             FORCE=1
@@ -184,6 +180,7 @@ _args() {
     done
 
     CMD=$1
+    NAME=$2
 }
 
 _run() {
@@ -348,8 +345,6 @@ _config() {
 _config_save() {
     echo "# valve config" > ${CONFIG}
     echo "SECRET=${SECRET}" >> ${CONFIG}
-    echo "CLUSTER=${CLUSTER}" >> ${CONFIG}
-    echo "BASE_DOMAIN=${BASE_DOMAIN}" >> ${CONFIG}
     echo "REGISTRY=${REGISTRY}" >> ${CONFIG}
     echo "CHARTMUSEUM=${CHARTMUSEUM}" >> ${CONFIG}
 }
@@ -616,16 +611,6 @@ _gen() {
         SECRET="${REPLACE_VAL}"
     fi
 
-    if [ -d charts ]; then
-        # Jenkinsfile CLUSTER
-        _chart_replace "Jenkinsfile" "def CLUSTER" "${CLUSTER}"
-        CLUSTER="${REPLACE_VAL}"
-
-        # Jenkinsfile BASE_DOMAIN
-        _chart_replace "Jenkinsfile" "def BASE_DOMAIN" "${BASE_DOMAIN}"
-        BASE_DOMAIN="${REPLACE_VAL}"
-    fi
-
     _config_save
 }
 
@@ -697,9 +682,6 @@ _remote() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
-    # base domain
-    BASE_DOMAIN="127.0.0.1.nip.io"
-
     LIST=/tmp/valve-charts-ls
 
     # chart name
@@ -747,6 +729,9 @@ _remote() {
     else
         SECRET=false
     fi
+
+    # base domain
+    BASE_DOMAIN="127.0.0.1.nip.io"
 
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
