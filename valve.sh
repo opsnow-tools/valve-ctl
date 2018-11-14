@@ -748,20 +748,11 @@ _remote() {
         SECRET=false
     fi
 
-    # has secret (aeskey)
-    COUNT=$(kubectl get secret -n ${NAMESPACE} | grep aeskey-properties | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
-        AESKEY=true
-    else
-        AESKEY=false
-    fi
-
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE} --devel \
                     --set configmap.enabled=${CONFIGMAP} \
                     --set secret.enabled=${SECRET} \
-                    --set aeskey.enabled=${AESKEY} \
                     --set fullnameOverride=${NAME}-${NAMESPACE} \
                     --set ingress.basedomain=${BASE_DOMAIN}
 
