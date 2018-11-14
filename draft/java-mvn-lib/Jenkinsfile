@@ -1,8 +1,6 @@
 def IMAGE_NAME = "sample"
 def REPOSITORY_URL = "https://github.com/opsnow/sample"
 def REPOSITORY_SECRET = ""
-def CLUSTER = ""
-def BASE_DOMAIN = ""
 def SLACK_TOKEN = ""
 
 @Library("github.com/opsnow-tools/valve-butler")
@@ -27,9 +25,6 @@ podTemplate(label: label, containers: [
       container("builder") {
         butler.prepare()
 
-        // if (!BASE_DOMAIN) {
-        //   BASE_DOMAIN = butler.base_domain
-        // }
         if (!SLACK_TOKEN) {
           SLACK_TOKEN = butler.slack_token
         }
