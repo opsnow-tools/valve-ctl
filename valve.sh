@@ -874,8 +874,8 @@ _logs() {
         NAME="${SELECTED}"
     fi
 
-    _command "kubectl logs -n ${NAMESPACE} ${NAME}"
-    kubectl logs -n ${NAMESPACE} ${NAME}
+    _command "kubectl logs -n ${NAMESPACE} ${NAME} -f"
+    kubectl logs -n ${NAMESPACE} ${NAME} -f
 }
 
 _remove() {
