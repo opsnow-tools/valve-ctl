@@ -86,7 +86,7 @@ cat <<EOF
   \ V / (_| | |\ V /  __/ | (__| |_| |
    \_/ \__,_|_| \_/ \___|  \___|\__|_|  ${THIS_VERSION}
 ================================================================================
-Usage: `basename $0` {Command} [name] [Arguments ..]
+Usage: `basename $0` {Command} [Name] [Arguments ..]
 
 Commands:
     c, config               저장된 설정을 조회 합니다.
@@ -137,7 +137,7 @@ _args() {
         fi
     fi
 
-    options=$(getopt -l "version:,namespace:,chartmuseum:,registry:,force,delete,remote,verbose" -o "v:n:c:g:fdrV" -a -- "$@")
+    OPTIONS=$(getopt -l "version:,namespace:,chartmuseum:,registry:,force,delete,remote,verbose" -o "v:n:c:g:fdrV" -a -- "$@")
     eval set -- "${OPTIONS}"
 
     while true; do
