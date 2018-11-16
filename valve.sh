@@ -185,13 +185,13 @@ _args() {
 
 _run() {
     case ${CMD} in
-        conf|config)
+        c|conf|config)
             _config
             ;;
-        init)
+        i|init)
             _init
             ;;
-        gen)
+        g|gen)
             _gen
             ;;
         secret)
