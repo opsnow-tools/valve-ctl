@@ -185,16 +185,19 @@ _args() {
 
 _run() {
     case ${CMD} in
-        c|conf|config)
+        conf|config)
             _config
             ;;
-        i|init)
+        init)
             _init
             ;;
-        g|gen)
+        gen)
             _gen
             ;;
-        u|up)
+        secret)
+            _secret
+            ;;
+        up)
             if [ -z ${REMOTE} ]; then
                 _up
             else
@@ -311,11 +314,9 @@ _select_one() {
     done < ${LIST}
 
     CNT=$(cat ${LIST} | wc -l | xargs)
-
     if [ "x${CNT}" == "x0" ]; then
         _error
     fi
-
     if [ "${CNT}" != "1" ]; then
         CNT="1-${CNT}"
     fi
@@ -622,8 +623,8 @@ _secret() {
         return
     fi
 
-    COUNT=$(cat .valvesecret | wc -l | xargs)
-    if [ "x${COUNT}" == "x0" ]; then
+    CNT=$(cat .valvesecret | wc -l | xargs)
+    if [ "x${CNT}" == "x0" ]; then
         return
     fi
 
@@ -640,17 +641,21 @@ _secret() {
     # secret
     SECRET="${NAME}-${NAMESPACE}"
 
+    TARGET=target/${SECRET}-secret.yaml
+
     # delete
     if [ ! -z ${DELETE} ]; then
+        rm -rf ${TARGET}
+
         _command "kubectl delete secret ${SECRET} -n ${NAMESPACE}"
         kubectl delete secret ${SECRET} -n ${NAMESPACE}
     fi
 
-    if [ -f target/secret.yaml ] && [ ! -z ${FORCE} ]; then
+    if [ -z ${FORCE} ] && [ -f ${TARGET} ]; then
         return
     fi
 
-    cat <<EOF > target/secret.yaml
+    cat <<EOF > ${TARGET}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -659,17 +664,18 @@ type: Opaque
 data:
 EOF
 
-    while read VAL; do
+    LIST=$(cat .valvesecret)
+    for VAL in ${LIST}; do
         echo
         _read "secret ${VAL} : "
 
         if [ ! -z ${ANSWER} ]; then
-            echo "  ${VAL}: $(echo ${ANSWER} | base64)" >> target/secret.yaml
+            echo "  ${VAL}: $(echo ${ANSWER} | base64)" >> ${TARGET}
         fi
-    done < .valvesecret
+    done
 
-    _command "kubectl apply -f target/secret.yaml -n ${NAMESPACE}"
-    kubectl apply -f target/secret.yaml -n ${NAMESPACE}
+    _command "kubectl apply -f ${TARGET} -n ${NAMESPACE}"
+    kubectl apply -f ${TARGET} -n ${NAMESPACE}
 }
 
 _up() {
