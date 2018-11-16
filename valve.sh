@@ -552,6 +552,9 @@ _gen() {
     if [ -f ${DIST}/${PACKAGE}/draftignore ]; then
         cp -rf ${DIST}/${PACKAGE}/draftignore .draftignore
     fi
+    if [ -f ${DIST}/${PACKAGE}/valvesecret ]; then
+        cp -rf ${DIST}/${PACKAGE}/valvesecret .valvesecret
+    fi
     if [ -f ${DIST}/${PACKAGE}/Dockerfile ]; then
         cp -rf ${DIST}/${PACKAGE}/Dockerfile Dockerfile
     fi
@@ -614,6 +617,61 @@ _gen() {
     _config_save
 }
 
+_secret() {
+    if [ ! -f .valvesecret ]; then
+        return
+    fi
+
+    COUNT=$(cat .valvesecret | wc -l | xargs)
+    if [ "x${COUNT}" == "x0" ]; then
+        return
+    fi
+
+    if [ ! -d target ]; then
+        mkdir -p target
+    fi
+
+    # name
+    NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
+
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
+    # secret
+    SECRET="${NAME}-${NAMESPACE}"
+
+    # delete
+    if [ ! -z ${DELETE} ]; then
+        _command "kubectl delete secret ${SECRET} -n ${NAMESPACE}"
+        kubectl delete secret ${SECRET} -n ${NAMESPACE}
+    fi
+
+    if [ -f target/secret.yaml ] && [ ! -z ${FORCE} ]; then
+        return
+    fi
+
+    cat <<EOF > target/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${SECRET}
+type: Opaque
+data:
+EOF
+
+    while read VAL; do
+        echo
+        _read "secret ${VAL} : "
+
+        if [ ! -z ${ANSWER} ]; then
+            echo "  ${VAL}: $(echo ${ANSWER} | base64)" >> target/secret.yaml
+        fi
+    done < .valvesecret
+
+    _command "kubectl apply -f target/secret.yaml -n ${NAMESPACE}"
+    kubectl apply -f target/secret.yaml -n ${NAMESPACE}
+}
+
 _up() {
     if [ ! -f draft.toml ]; then
         _error "Not found draft.toml"
@@ -644,6 +702,9 @@ _up() {
 
         sleep 2
     fi
+
+    # make secret
+    _secret
 
     # draft up
     _command "draft up -e ${NAMESPACE}"
