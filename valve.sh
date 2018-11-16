@@ -272,7 +272,7 @@ _waiting_pod() {
     _NM=${2}
     SEC=${3:-30}
 
-    TMP=/tmp/valve-pod-status
+    TMP=/tmp/${THIS_NAME}-pod-status
 
     _command "kubectl get pod -n ${_NS} | grep ${_NM}"
 
@@ -281,10 +281,10 @@ _waiting_pod() {
         kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > ${TMP}
         cat ${TMP}
 
-        STATUS=$(cat /tmp/valve-pod-status | awk '{print $3}')
+        STATUS=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $3}')
 
         if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "development" ]; then
-            READY=$(cat /tmp/valve-pod-status | awk '{print $2}' | cut -d'/' -f1)
+            READY=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $2}' | cut -d'/' -f1)
         else
             READY="1"
         fi
@@ -398,7 +398,7 @@ _helm_repo() {
         DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
         _read "CHARTMUSEUM [${DEFAULT}] : "
 
-        if [ -z ${ANSWER} ]; then
+        if [ "${ANSWER}" == "" ]; then
             CHARTMUSEUM="${DEFAULT}"
         else
             CHARTMUSEUM="${ANSWER}"
@@ -478,8 +478,8 @@ _draft_init() {
 _gen() {
     _result "draft package version: ${THIS_VERSION}"
 
-    DIST=/tmp/valve-draft-${THIS_VERSION}
-    LIST=/tmp/valve-draft-ls
+    DIST=/tmp/${THIS_NAME}-draft-${THIS_VERSION}
+    LIST=/tmp/${THIS_NAME}-draft-ls
 
     if [ "${THIS_VERSION}" == "v0.0.0" ]; then
         if [ ! -d ${SHELL_DIR}/draft ]; then
@@ -664,13 +664,23 @@ type: Opaque
 data:
 EOF
 
+    TMP=/tmp/${THIS_NAME}-secret
+
     LIST=$(cat .valvesecret)
     for VAL in ${LIST}; do
         echo
         _read "secret ${VAL} : "
 
-        if [ ! -z ${ANSWER} ]; then
-            echo "  ${VAL}: $(echo ${ANSWER} | base64)" >> ${TARGET}
+        if [ "${ANSWER}" != "" ]; then
+            echo -n ${ANSWER} | base64 > ${TMP}
+
+            CNT=$(cat ${TMP} | wc -l | xargs)
+            if [ "x${CNT}" == "x1" ]; then
+                echo "  ${VAL}: $(cat ${TMP})" >> ${TARGET}
+            else
+                echo "  ${VAL}: |-" >> ${TARGET}
+                sed "s/^/    /" ${TMP} >> ${TARGET}
+            fi
         fi
     done
 
@@ -716,7 +726,7 @@ _up() {
     _command "draft up -e ${NAMESPACE}"
     draft up -e ${NAMESPACE}
 
-    DRAFT_LOGS=$(mktemp /tmp/valve-draft-logs.XXXXXX)
+    DRAFT_LOGS=$(mktemp /tmp/${THIS_NAME}-draft-logs.XXXXXX)
 
     # find draft error
     draft logs | grep error > ${DRAFT_LOGS}
@@ -749,7 +759,7 @@ _remote() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
-    LIST=/tmp/valve-charts-ls
+    LIST=/tmp/${THIS_NAME}-charts-ls
 
     # chart name
     if [ -z ${NAME} ]; then
@@ -838,7 +848,7 @@ _list() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
-    LIST=/tmp/valve-helm-ls
+    LIST=/tmp/${THIS_NAME}-helm-ls
 
     _command "helm ls --all | grep ${NAMESPACE}"
     helm ls --all > ${LIST}
@@ -856,7 +866,7 @@ _describe() {
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-pod-ls
+        LIST=/tmp/${THIS_NAME}-pod-ls
 
         # get pod list
         _command "kubectl get pod -n ${NAMESPACE}"
@@ -880,7 +890,7 @@ _hpa() {
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-hpa-ls
+        LIST=/tmp/${THIS_NAME}-hpa-ls
 
         # get pod list
         _command "kubectl get hpa -n ${NAMESPACE}"
@@ -904,7 +914,7 @@ _ssh() {
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-pod-ls
+        LIST=/tmp/${THIS_NAME}-pod-ls
 
         # get pod list
         _command "kubectl get pod -n ${NAMESPACE}"
@@ -928,7 +938,7 @@ _logs() {
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-pod-ls
+        LIST=/tmp/${THIS_NAME}-pod-ls
 
         # get pod list
         _command "kubectl get pod -n ${NAMESPACE}"
@@ -949,7 +959,7 @@ _remove() {
     # _helm_init
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-helm-ls
+        LIST=/tmp/${THIS_NAME}-helm-ls
 
         # get helm list
         _command "helm ls --all"
@@ -968,9 +978,9 @@ _remove() {
 
 _clean() {
     # rm -rf ${CONFIG}
-    rm -rf /tmp/valve-*
+    rm -rf /tmp/${THIS_NAME}-*
 
-    LIST=/tmp/valve-docker-ls
+    LIST=/tmp/${THIS_NAME}-docker-ls
 
     # delete
     if [ ! -z ${DELETE} ]; then
@@ -1005,7 +1015,7 @@ _chart_replace() {
     echo
     _read "${Q}"
 
-    if [ -z ${ANSWER} ]; then
+    if [ "${ANSWER}" == "" ]; then
         REPLACE_VAL=${DEFAULT_VAL}
     else
         REPLACE_VAL=${ANSWER}
