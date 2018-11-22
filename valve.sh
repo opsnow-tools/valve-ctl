@@ -194,7 +194,10 @@ _run() {
         g|gen)
             _gen
             ;;
-        u|up)
+        secret)
+            _secret
+            ;;
+        up)
             if [ -z ${REMOTE} ]; then
                 _up
             else
@@ -269,7 +272,7 @@ _waiting_pod() {
     _NM=${2}
     SEC=${3:-30}
 
-    TMP=/tmp/valve-pod-status
+    TMP=/tmp/${THIS_NAME}-pod-status
 
     _command "kubectl get pod -n ${_NS} | grep ${_NM}"
 
@@ -278,10 +281,10 @@ _waiting_pod() {
         kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > ${TMP}
         cat ${TMP}
 
-        STATUS=$(cat /tmp/valve-pod-status | awk '{print $3}')
+        STATUS=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $3}')
 
         if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "development" ]; then
-            READY=$(cat /tmp/valve-pod-status | awk '{print $2}' | cut -d'/' -f1)
+            READY=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $2}' | cut -d'/' -f1)
         else
             READY="1"
         fi
@@ -311,11 +314,9 @@ _select_one() {
     done < ${LIST}
 
     CNT=$(cat ${LIST} | wc -l | xargs)
-
     if [ "x${CNT}" == "x0" ]; then
         _error
     fi
-
     if [ "${CNT}" != "1" ]; then
         CNT="1-${CNT}"
     fi
@@ -397,7 +398,7 @@ _helm_repo() {
         DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
         _read "CHARTMUSEUM [${DEFAULT}] : "
 
-        if [ -z ${ANSWER} ]; then
+        if [ "${ANSWER}" == "" ]; then
             CHARTMUSEUM="${DEFAULT}"
         else
             CHARTMUSEUM="${ANSWER}"
@@ -477,8 +478,8 @@ _draft_init() {
 _gen() {
     _result "draft package version: ${THIS_VERSION}"
 
-    DIST=/tmp/valve-draft-${THIS_VERSION}
-    LIST=/tmp/valve-draft-ls
+    DIST=/tmp/${THIS_NAME}-draft-${THIS_VERSION}
+    LIST=/tmp/${THIS_NAME}-draft-ls
 
     if [ "${THIS_VERSION}" == "v0.0.0" ]; then
         if [ ! -d ${SHELL_DIR}/draft ]; then
@@ -552,6 +553,9 @@ _gen() {
     if [ -f ${DIST}/${PACKAGE}/draftignore ]; then
         cp -rf ${DIST}/${PACKAGE}/draftignore .draftignore
     fi
+    if [ -f ${DIST}/${PACKAGE}/valvesecret ]; then
+        cp -rf ${DIST}/${PACKAGE}/valvesecret .valvesecret
+    fi
     if [ -f ${DIST}/${PACKAGE}/Dockerfile ]; then
         cp -rf ${DIST}/${PACKAGE}/Dockerfile Dockerfile
     fi
@@ -614,6 +618,76 @@ _gen() {
     _config_save
 }
 
+_secret() {
+    if [ ! -f .valvesecret ]; then
+        return
+    fi
+
+    CNT=$(cat .valvesecret | wc -l | xargs)
+    if [ "x${CNT}" == "x0" ]; then
+        return
+    fi
+
+    if [ ! -d target ]; then
+        mkdir -p target
+    fi
+
+    # name
+    NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
+
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
+    # secret
+    SECRET="${NAME}-${NAMESPACE}"
+
+    TARGET=target/${SECRET}-secret.yaml
+
+    # delete
+    if [ ! -z ${DELETE} ]; then
+        rm -rf ${TARGET}
+
+        _command "kubectl delete secret ${SECRET} -n ${NAMESPACE}"
+        kubectl delete secret ${SECRET} -n ${NAMESPACE}
+    fi
+
+    if [ -z ${FORCE} ] && [ -f ${TARGET} ]; then
+        return
+    fi
+
+    cat <<EOF > ${TARGET}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${SECRET}
+type: Opaque
+data:
+EOF
+
+    TMP=/tmp/${THIS_NAME}-secret
+
+    LIST=$(cat .valvesecret)
+    for VAL in ${LIST}; do
+        echo
+        _read "secret ${VAL} : "
+
+        if [ "${ANSWER}" != "" ]; then
+            echo -n ${ANSWER} | base64 > ${TMP}
+
+            CNT=$(cat ${TMP} | wc -l | xargs)
+            if [ "x${CNT}" == "x1" ]; then
+                echo "  ${VAL}: $(cat ${TMP})" >> ${TARGET}
+            else
+                echo "  ${VAL}: |-" >> ${TARGET}
+                sed "s/^/    /" ${TMP} >> ${TARGET}
+            fi
+        fi
+    done
+
+    _command "kubectl apply -f ${TARGET} -n ${NAMESPACE}"
+    kubectl apply -f ${TARGET} -n ${NAMESPACE}
+}
+
 _up() {
     if [ ! -f draft.toml ]; then
         _error "Not found draft.toml"
@@ -645,11 +719,14 @@ _up() {
         sleep 2
     fi
 
+    # make secret
+    _secret
+
     # draft up
     _command "draft up -e ${NAMESPACE}"
     draft up -e ${NAMESPACE}
 
-    DRAFT_LOGS=$(mktemp /tmp/valve-draft-logs.XXXXXX)
+    DRAFT_LOGS=$(mktemp /tmp/${THIS_NAME}-draft-logs.XXXXXX)
 
     # find draft error
     draft logs | grep error > ${DRAFT_LOGS}
@@ -682,7 +759,7 @@ _remote() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
-    LIST=/tmp/valve-charts-ls
+    LIST=/tmp/${THIS_NAME}-charts-ls
 
     # chart name
     if [ -z ${NAME} ]; then
@@ -771,7 +848,7 @@ _list() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
-    LIST=/tmp/valve-helm-ls
+    LIST=/tmp/${THIS_NAME}-helm-ls
 
     _command "helm ls --all | grep ${NAMESPACE}"
     helm ls --all > ${LIST}
@@ -789,7 +866,7 @@ _describe() {
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-pod-ls
+        LIST=/tmp/${THIS_NAME}-pod-ls
 
         # get pod list
         _command "kubectl get pod -n ${NAMESPACE}"
@@ -813,7 +890,7 @@ _hpa() {
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-hpa-ls
+        LIST=/tmp/${THIS_NAME}-hpa-ls
 
         # get pod list
         _command "kubectl get hpa -n ${NAMESPACE}"
@@ -837,7 +914,7 @@ _ssh() {
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-pod-ls
+        LIST=/tmp/${THIS_NAME}-pod-ls
 
         # get pod list
         _command "kubectl get pod -n ${NAMESPACE}"
@@ -861,7 +938,7 @@ _logs() {
     NAMESPACE="${NAMESPACE:-development}"
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-pod-ls
+        LIST=/tmp/${THIS_NAME}-pod-ls
 
         # get pod list
         _command "kubectl get pod -n ${NAMESPACE}"
@@ -882,7 +959,7 @@ _remove() {
     # _helm_init
 
     if [ -z ${NAME} ]; then
-        LIST=/tmp/valve-helm-ls
+        LIST=/tmp/${THIS_NAME}-helm-ls
 
         # get helm list
         _command "helm ls --all"
@@ -901,9 +978,9 @@ _remove() {
 
 _clean() {
     # rm -rf ${CONFIG}
-    rm -rf /tmp/valve-*
+    rm -rf /tmp/${THIS_NAME}-*
 
-    LIST=/tmp/valve-docker-ls
+    LIST=/tmp/${THIS_NAME}-docker-ls
 
     # delete
     if [ ! -z ${DELETE} ]; then
@@ -938,7 +1015,7 @@ _chart_replace() {
     echo
     _read "${Q}"
 
-    if [ -z ${ANSWER} ]; then
+    if [ "${ANSWER}" == "" ]; then
         REPLACE_VAL=${DEFAULT_VAL}
     else
         REPLACE_VAL=${ANSWER}
