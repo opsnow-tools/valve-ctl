@@ -16,4 +16,10 @@ spec:
         backend:
           serviceName: {{ template "fullname" . }}
           servicePort: {{ .Values.service.externalPort }}
+{{ if (not (empty .Values.ingress.tls)) }}
+  tls:
+  - hosts:
+    - {{ .Release.Name }}.{{ .Values.ingress.basedomain }}
+    secretName: {{ template "fullname" . }}
+{{ end }}
 {{ end }}
