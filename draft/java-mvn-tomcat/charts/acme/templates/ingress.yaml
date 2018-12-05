@@ -20,6 +20,6 @@ spec:
   tls:
   - hosts:
     - {{ .Release.Name }}.{{ .Values.ingress.basedomain }}
-    secretName: {{ template "fullname" . }}
+    secretName: {{ template "fullname" . }}-tls
 {{ end }}
 {{ end }}
