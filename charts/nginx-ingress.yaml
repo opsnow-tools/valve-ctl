@@ -7,3 +7,6 @@ controller:
   replicaCount: 1
   service:
     type: NodePort
+    targetPorts:
+      http: http
+      https: http
