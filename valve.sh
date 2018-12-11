@@ -356,6 +356,9 @@ _init() {
 
     # kubernetes-dashboard url
     _result "kubernetes-dashboard: https://localhost:30443/"
+
+    # namespace
+    _namespace "development"
 }
 
 _helm_init() {
@@ -376,6 +379,7 @@ _helm_init() {
         _helm_delete "docker-registry"
         _helm_delete "kubernetes-dashboard"
         _helm_delete "metrics-server"
+        _helm_delete "heapster"
     fi
 
     # namespace
@@ -385,6 +389,7 @@ _helm_init() {
     _helm_install "${NAMESPACE}" "docker-registry"
     _helm_install "${NAMESPACE}" "kubernetes-dashboard"
     _helm_install "${NAMESPACE}" "metrics-server"
+    _helm_install "${NAMESPACE}" "heapster"
 
     _waiting_pod "${NAMESPACE}" "docker-registry"
     _waiting_pod "${NAMESPACE}" "nginx-ingress"
@@ -473,6 +478,22 @@ _draft_init() {
     fi
 
     _config_save
+}
+
+_namespace() {
+    NAMESPACE=$1
+
+    CHECK=
+
+    _command "kubectl get ns ${NAMESPACE}"
+    kubectl get ns ${NAMESPACE} > /dev/null 2>&1 || export CHECK=CREATE
+
+    if [ "${CHECK}" == "CREATE" ]; then
+        _result "${NAMESPACE}"
+
+        _command "kubectl create ns ${NAMESPACE}"
+        kubectl create ns ${NAMESPACE}
+    fi
 }
 
 _gen() {
@@ -704,19 +725,26 @@ _up() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
+    # helm check FAILED
+    COUNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
+    if [ "x${COUNT}" != "x0" ]; then
+        DELETE=true
+    fi
+
+    # helm delete
+    if [ ! -z ${DELETE} ]; then
+        _command "helm delete ${NAME}-${NAMESPACE} --purge"
+        helm delete ${NAME}-${NAMESPACE} --purge
+    fi
+
+    # make secret
+    _secret
+
     # charts/${NAME}/values.yaml
     if [ -z ${REGISTRY} ]; then
         _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
     else
         _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
-    fi
-
-    # delete
-    if [ ! -z ${DELETE} ]; then
-        _command "helm delete ${NAME}-${NAMESPACE} --purge"
-        helm delete ${NAME}-${NAMESPACE} --purge
-
-        sleep 2
     fi
 
     # make secret
