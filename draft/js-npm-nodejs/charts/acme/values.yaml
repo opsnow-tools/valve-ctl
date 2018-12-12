@@ -31,6 +31,8 @@ livenessProbe:
 ingress:
   enabled: true
   basedomain: 127.0.0.1.nip.io
+  hosts:
+    - acme.opsnow.com
 hpa:
   enabled: true
   min: 1
