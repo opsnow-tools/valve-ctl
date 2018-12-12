@@ -609,21 +609,21 @@ _gen() {
     fi
 
     if [ -d charts ] && [ ! -z ${NAME} ]; then
-        # charts name
+        # chart name
         _replace "s|name: .*|name: ${NAME}|" charts/${NAME}/Chart.yaml
 
-        # charts version
+        # chart version
         _replace "s|version: .*|version: ${THIS_VERSION}|" charts/${NAME}/Chart.yaml
 
-        # charts repository
+        # values repository
         if [ -z ${REGISTRY} ]; then
             _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
         else
             _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
         fi
 
-        # charts path
-        # mv charts/acme charts/${NAME}
+        # values host
+        _replace "s|- acme|- ${NAME}|" charts/${NAME}/values.yaml
     fi
 
     if [ -f Jenkinsfile ]; then
