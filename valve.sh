@@ -661,10 +661,12 @@ _secret() {
         kubectl delete secret ${SECRET} -n ${NAMESPACE}
     fi
 
-    # has secret
-    COUNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
-        return
+    if [ -z ${FORCE} ]; then
+        # has secret
+        CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+        if [ "x${CNT}" != "x0" ]; then
+            return
+        fi
     fi
 
     TARGET=/tmp/${SECRET}-secret.yaml
@@ -722,8 +724,8 @@ _up() {
     _secret "${NAME}" "${NAMESPACE}"
 
     # helm check FAILED
-    COUNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
+    CNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         DELETE=true
     fi
 
@@ -810,16 +812,16 @@ _remote() {
     fi
 
     # has configmap
-    COUNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
+    CNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         CONFIGMAP=true
     else
         CONFIGMAP=false
     fi
 
     # has secret
-    COUNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
+    CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         SECRET=true
     else
         SECRET=false
