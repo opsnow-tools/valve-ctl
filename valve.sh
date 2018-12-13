@@ -194,9 +194,6 @@ _run() {
         g|gen)
             _gen
             ;;
-        secret)
-            _secret
-            ;;
         up)
             if [ -z ${REMOTE} ]; then
                 _up
@@ -649,32 +646,30 @@ _secret() {
         return
     fi
 
-    if [ ! -d target ]; then
-        mkdir -p target
-    fi
-
     # name
-    NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
+    NAME="${1:-secret}"
 
     # namespace
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${2:-development}"
 
     # secret
     SECRET="${NAME}-${NAMESPACE}"
 
-    TARGET=target/${SECRET}-secret.yaml
-
     # delete
     if [ ! -z ${DELETE} ]; then
-        rm -rf ${TARGET}
-
         _command "kubectl delete secret ${SECRET} -n ${NAMESPACE}"
         kubectl delete secret ${SECRET} -n ${NAMESPACE}
     fi
 
-    if [ -z ${FORCE} ] && [ -f ${TARGET} ]; then
-        return
+    if [ -z ${FORCE} ]; then
+        # has secret
+        CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+        if [ "x${CNT}" != "x0" ]; then
+            return
+        fi
     fi
+
+    TARGET=/tmp/${SECRET}-secret.yaml
 
     cat <<EOF > ${TARGET}
 apiVersion: v1
@@ -725,9 +720,12 @@ _up() {
     # namespace
     NAMESPACE="${NAMESPACE:-development}"
 
+    # make secret
+    _secret "${NAME}" "${NAMESPACE}"
+
     # helm check FAILED
-    COUNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
+    CNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         DELETE=true
     fi
 
@@ -737,18 +735,12 @@ _up() {
         helm delete ${NAME}-${NAMESPACE} --purge
     fi
 
-    # make secret
-    _secret
-
     # charts/${NAME}/values.yaml
     if [ -z ${REGISTRY} ]; then
         _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
     else
         _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
     fi
-
-    # make secret
-    _secret
 
     # draft up
     _command "draft up -e ${NAMESPACE}"
@@ -820,16 +812,16 @@ _remote() {
     fi
 
     # has configmap
-    COUNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
+    CNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         CONFIGMAP=true
     else
         CONFIGMAP=false
     fi
 
     # has secret
-    COUNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
+    CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         SECRET=true
     else
         SECRET=false
