@@ -684,9 +684,9 @@ _secret() {
         _error
     fi
 
-    # coruscant-env
-    POS1=$(grep -n "coruscant-env -- start" ${CHART} | cut -d':' -f1)
-    POS2=$(grep -n "coruscant-env -- end" ${CHART} | cut -d':' -f1)
+    # valve-env
+    POS1=$(grep -n "valve-env -- start" ${CHART} | cut -d':' -f1)
+    POS2=$(grep -n "valve-env -- end" ${CHART} | cut -d':' -f1)
 
     if [ "${POS1}" == "" ] || [ "${POS2}" == "" ]; then
         _error

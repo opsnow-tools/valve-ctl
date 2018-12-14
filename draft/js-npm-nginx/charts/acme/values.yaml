@@ -40,7 +40,3 @@ hpa:
   cpu: 80
   mem: 80
 profile: default
-configmap:
-  enabled: false
-secret:
-  enabled: false
