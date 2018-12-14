@@ -194,6 +194,9 @@ _run() {
         g|gen)
             _gen
             ;;
+        secret)
+            _secret ${NAME} ${NAMESPACE}
+            ;;
         up)
             if [ -z ${REMOTE} ]; then
                 _up
@@ -669,8 +672,27 @@ _secret() {
         fi
     fi
 
-    TARGET=/tmp/${SECRET}-secret.yaml
+    TMP=/tmp/${THIS_NAME}-secret.yaml
 
+    TARGET=/tmp/${SECRET}-secret.yaml
+    VALUES=/tmp/${SECRET}-values.yaml
+
+    # deployment
+    CHART=charts/${NAME}/templates/deployment.yaml
+
+    if [ ! -f ${CHART} ]; then
+        _error
+    fi
+
+    # coruscant-env
+    POS1=$(grep -n "coruscant-env -- start" ${CHART} | cut -d':' -f1)
+    POS2=$(grep -n "coruscant-env -- end" ${CHART} | cut -d':' -f1)
+
+    if [ "${POS1}" == "" ] || [ "${POS2}" == "" ]; then
+        _error
+    fi
+
+    # secret
     cat <<EOF > ${TARGET}
 apiVersion: v1
 kind: Secret
@@ -680,7 +702,8 @@ type: Opaque
 data:
 EOF
 
-    TMP=/tmp/${THIS_NAME}-secret
+    # deployment
+    sed "${POS1}q" ${CHART} > ${VALUES}
 
     LIST=$(cat .valvesecret)
     for VAL in ${LIST}; do
@@ -697,11 +720,23 @@ EOF
                 echo "  ${VAL}: |-" >> ${TARGET}
                 sed "s/^/    /" ${TMP} >> ${TARGET}
             fi
+
+            echo "          - name: ${VAL}" >> ${VALUES}
+            echo "            valueFrom:" >> ${VALUES}
+            echo "              secretKeyRef:" >> ${VALUES}
+            echo "                name: {{ template \"fullname\" . }}" >> ${VALUES}
+            echo "                key: ${VAL}" >> ${VALUES}
         fi
     done
 
+    tail -n+${POS2} ${CHART} >> ${VALUES}
+
+    # apply secret
     _command "kubectl apply -f ${TARGET} -n ${NAMESPACE}"
     kubectl apply -f ${TARGET} -n ${NAMESPACE}
+
+    # copy deployment
+    cp ${VALUES} ${CHART}
 }
 
 _up() {

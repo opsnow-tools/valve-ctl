@@ -34,6 +34,8 @@ spec:
         env:
           - name: PROFILE
             value: {{ .Values.profile }}
+  # -- coruscant-env -- start -- #
+  # -- coruscant-env -- end -- #
 {{ if or .Values.configmap.enabled .Values.secret.enabled }}
         envFrom:
 {{ end }}
