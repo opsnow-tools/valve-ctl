@@ -355,7 +355,7 @@ _init() {
     _draft_init
 
     # kubernetes-dashboard url
-    _result "kubernetes-dashboard: https://localhost:30443/"
+    _result "kubernetes-dashboard: http://kubernetes-dashboard.127.0.0.1.nip.io/"
 
     # namespace
     _namespace "development"
