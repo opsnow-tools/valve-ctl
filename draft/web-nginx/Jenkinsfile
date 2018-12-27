@@ -38,7 +38,7 @@ podTemplate(label: label, containers: [
             git(url: REPOSITORY_URL, branch: BRANCH_NAME)
           }
         } catch (e) {
-          failure(SLACK_TOKEN, "Checkout", IMAGE_NAME)
+          butler.failure(SLACK_TOKEN, "Checkout", IMAGE_NAME)
           throw e
         }
 
@@ -57,7 +57,7 @@ podTemplate(label: label, containers: [
               try {
                 butler.build_image(IMAGE_NAME, VERSION)
               } catch (e) {
-                failure(SLACK_TOKEN, "Build Docker", IMAGE_NAME)
+                butler.failure(SLACK_TOKEN, "Build Docker", IMAGE_NAME)
                 throw e
               }
             }
@@ -67,7 +67,7 @@ podTemplate(label: label, containers: [
               try {
                 butler.build_chart(IMAGE_NAME, VERSION)
               } catch (e) {
-                failure(SLACK_TOKEN, "Build Charts", IMAGE_NAME)
+                butler.failure(SLACK_TOKEN, "Build Charts", IMAGE_NAME)
                 throw e
               }
             }
@@ -78,16 +78,16 @@ podTemplate(label: label, containers: [
         container("builder") {
           try {
             butler.helm_install(IMAGE_NAME, VERSION, "dev", "dev.opsnow.com", "dev")
-            success(SLACK_TOKEN, "Deploy DEV", IMAGE_NAME, VERSION, "dev", "dev.opsnow.com")
+            butler.success(SLACK_TOKEN, "Deploy DEV", IMAGE_NAME, VERSION, "dev", "dev.opsnow.com")
           } catch (e) {
-            failure(SLACK_TOKEN, "Deploy DEV", IMAGE_NAME)
+            butler.failure(SLACK_TOKEN, "Deploy DEV", IMAGE_NAME)
             throw e
           }
         }
       }
       stage("Proceed STAGE") {
         container("builder") {
-          proceed(SLACK_TOKEN, "Deploy STAGE", IMAGE_NAME, VERSION, "stage")
+          butler.proceed(SLACK_TOKEN, "Deploy STAGE", IMAGE_NAME, VERSION, "stage")
           timeout(time: 60, unit: "MINUTES") {
             input(message: "$IMAGE_NAME $VERSION to stage")
           }
@@ -97,43 +97,13 @@ podTemplate(label: label, containers: [
         container("builder") {
           try {
             butler.helm_install(IMAGE_NAME, VERSION, "stage", "dev.opsnow.com", "dev")
-            success(SLACK_TOKEN, "Deploy STAGE", IMAGE_NAME, VERSION, "stage", "dev.opsnow.com")
+            butler.success(SLACK_TOKEN, "Deploy STAGE", IMAGE_NAME, VERSION, "stage", "dev.opsnow.com")
           } catch (e) {
-            failure(SLACK_TOKEN, "Deploy STAGE", IMAGE_NAME)
+            butler.failure(SLACK_TOKEN, "Deploy STAGE", IMAGE_NAME)
             throw e
           }
         }
       }
     }
-  }
-}
-def failure(token = "", type = "", name = "") {
-  slack("$token", "danger", "$type Failure", "`$name`", "$JOB_NAME <$RUN_DISPLAY_URL|#$BUILD_NUMBER>")
-}
-def success(token = "", type = "", name = "", version = "", namespace = "", base_domain = "", cluster = "") {
-  if (cluster) {
-    def link = "https://$name-$namespace.$base_domain"
-    slack("$token", "good", "$type Success", "`$name` `$version` :satellite: `$namespace` :earth_asia: `$cluster`", "$JOB_NAME <$RUN_DISPLAY_URL|#$BUILD_NUMBER> : <$link|$name-$namespace>")
-  } else if (base_domain) {
-    def link = "https://$name-$namespace.$base_domain"
-    slack("$token", "good", "$type Success", "`$name` `$version` :satellite: `$namespace`", "$JOB_NAME <$RUN_DISPLAY_URL|#$BUILD_NUMBER> : <$link|$name-$namespace>")
-  } else if (namespace) {
-    slack("$token", "good", "$type Success", "`$name` `$version` :rocket: `$namespace`", "$JOB_NAME <$RUN_DISPLAY_URL|#$BUILD_NUMBER>")
-  } else {
-    slack("$token", "good", "$type Success", "`$name` `$version` :heavy_check_mark:", "$JOB_NAME <$RUN_DISPLAY_URL|#$BUILD_NUMBER>")
-  }
-}
-def proceed(token = "", type = "", name = "", version = "", namespace = "") {
-  slack("$token", "warning", "$type Proceed?", "`$name` `$version` :rocket: `$namespace`", "$JOB_NAME <$RUN_DISPLAY_URL|#$BUILD_NUMBER>")
-}
-def slack(token = "", color = "", title = "", message = "", footer = "") {
-  try {
-    // butler.slack("$token", "$color", "$title", "$message", "$footer")
-    sh """
-      curl -sL repo.opsnow.io/valve-ctl/slack | bash -s -- --token='$token' \
-        --footer='$footer' --footer_icon='https://jenkins.io/sites/default/files/jenkins_favicon.ico' \
-        --color='$color' --title='$title' '$message'
-    """
-  } catch (ignored) {
   }
 }
