@@ -39,10 +39,20 @@ _echo() {
 }
 
 _read() {
-    if [ -z ${TPUT} ]; then
-        read -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
+    echo
+    if [ "${2}" == "" ]; then
+        if [ -z ${TPUT} ]; then
+            read -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
+        else
+            read -p "$1" ANSWER
+        fi
     else
-        read -p "$1" ANSWER
+        if [ -z ${TPUT} ]; then
+            read -s -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
+        else
+            read -s -p "$1" ANSWER
+        fi
+        echo
     fi
 }
 
@@ -194,6 +204,9 @@ _run() {
         g|gen)
             _gen
             ;;
+        guard)
+            _guard
+            ;;
         secret)
             _secret ${NAME} ${NAMESPACE}
             ;;
@@ -321,7 +334,6 @@ _select_one() {
         CNT="1-${CNT}"
     fi
 
-    echo
     _read "Please select one. (${CNT}) : "
 
     SELECTED=
@@ -399,7 +411,6 @@ _helm_repo() {
     CNT=$(helm repo list | grep chartmuseum | wc -l | xargs)
 
     if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
-        echo
         DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
         _read "CHARTMUSEUM [${DEFAULT}] : "
 
@@ -494,6 +505,18 @@ _namespace() {
         _command "kubectl create ns ${NAMESPACE}"
         kubectl create ns ${NAMESPACE}
     fi
+}
+
+_guard() {
+    _read "USERNAME : "
+    USERNAME=${ANSWER}
+
+    _read "PASSWORD : " s
+    PASSWORD=${ANSWER}
+
+    _result "dev: https://kubernetes-dashboard-kube-system.dev.opsnow.com/"
+
+    _result "token : $(echo -n "${USERNAME}:${PASSWORD}" | base64)"
 }
 
 _gen() {
@@ -675,22 +698,6 @@ _secret() {
     TMP=/tmp/${THIS_NAME}-secret.yaml
 
     TARGET=/tmp/${SECRET}-secret.yaml
-    VALUES=/tmp/${SECRET}-values.yaml
-
-    # deployment
-    CHART=charts/${NAME}/templates/deployment.yaml
-
-    if [ ! -f ${CHART} ]; then
-        _error
-    fi
-
-    # valve-env
-    POS1=$(grep -n "valve-env -- start" ${CHART} | cut -d':' -f1)
-    POS2=$(grep -n "valve-env -- end" ${CHART} | cut -d':' -f1)
-
-    if [ "${POS1}" == "" ] || [ "${POS2}" == "" ]; then
-        _error
-    fi
 
     # secret
     cat <<EOF > ${TARGET}
@@ -702,12 +709,8 @@ type: Opaque
 data:
 EOF
 
-    # deployment
-    sed "${POS1}q" ${CHART} > ${VALUES}
-
     LIST=$(cat .valvesecret)
     for VAL in ${LIST}; do
-        echo
         _read "secret ${VAL} : "
 
         if [ "${ANSWER}" != "" ]; then
@@ -720,23 +723,12 @@ EOF
                 echo "  ${VAL}: |-" >> ${TARGET}
                 sed "s/^/    /" ${TMP} >> ${TARGET}
             fi
-
-            echo "          - name: ${VAL}" >> ${VALUES}
-            echo "            valueFrom:" >> ${VALUES}
-            echo "              secretKeyRef:" >> ${VALUES}
-            echo "                name: {{ template \"fullname\" . }}" >> ${VALUES}
-            echo "                key: ${VAL}" >> ${VALUES}
         fi
     done
-
-    tail -n+${POS2} ${CHART} >> ${VALUES}
 
     # apply secret
     _command "kubectl apply -f ${TARGET} -n ${NAMESPACE}"
     kubectl apply -f ${TARGET} -n ${NAMESPACE}
-
-    # copy deployment
-    cp ${VALUES} ${CHART}
 }
 
 _up() {
@@ -1067,7 +1059,6 @@ _chart_replace() {
         Q="${REPLACE_KEY} [${DEFAULT_VAL}] : "
     fi
 
-    echo
     _read "${Q}"
 
     if [ "${ANSWER}" == "" ]; then
