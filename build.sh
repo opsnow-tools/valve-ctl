@@ -99,6 +99,8 @@ _gen_version() {
         if [ "${PR_NUM}" == "" ]; then
             if [ "${PR_URL}" != "" ]; then
                 PR_NUM=$(echo $PR_URL | cut -d'/' -f7)
+            else
+                PR_NUM=${CIRCLE_BUILD_NUM}
             fi
         fi
 
@@ -152,6 +154,9 @@ _cf_reset() {
 }
 
 _publish() {
+    if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
+        _error
+    fi
     if [ -f ${SHELL_DIR}/target/PRE ]; then
         return
     fi
@@ -162,6 +167,9 @@ _publish() {
 }
 
 _release() {
+    if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
+        _error
+    fi
     if [ -f ${SHELL_DIR}/target/PRE ]; then
         GHR_PARAM="-delete -prerelease"
     else
@@ -185,6 +193,9 @@ _release() {
 }
 
 _slack() {
+    if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
+        _error
+    fi
     if [ -f ${SHELL_DIR}/target/PRE ]; then
         TITLE="${REPONAME} pull requested"
     else
