@@ -99,8 +99,6 @@ _gen_version() {
         if [ "${PR_NUM}" == "" ]; then
             if [ "${PR_URL}" != "" ]; then
                 PR_NUM=$(echo $PR_URL | cut -d'/' -f7)
-            # else
-            #     PR_NUM=${CIRCLE_BUILD_NUM}
             fi
         fi
 
