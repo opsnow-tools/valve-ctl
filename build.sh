@@ -125,7 +125,7 @@ _package() {
 
     _result "VERSION=${VERSION}"
 
-    # replace version
+    # replace
     if [ "${OS_NAME}" == "linux" ]; then
         sed -i -e "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/" ${SHELL_DIR}/target/dist/valve
     elif [ "${OS_NAME}" == "darwin" ]; then
