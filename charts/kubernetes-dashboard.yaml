@@ -3,15 +3,10 @@
 
 nameOverride: kubernetes-dashboard
 
-# extraArgs:
-#   - --enable-insecure-login=true
-#   - --insecure-bind-address=0.0.0.0
-#   - --insecure-port=9090
+enableInsecureLogin: true
 
 service:
-  type: NodePort
-  externalPort: 443
-  nodePort: 30443
+  externalPort: 9090
 
 ingress:
   enabled: true

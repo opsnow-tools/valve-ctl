@@ -39,10 +39,20 @@ _echo() {
 }
 
 _read() {
-    if [ -z ${TPUT} ]; then
-        read -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
+    echo
+    if [ "${2}" == "" ]; then
+        if [ -z ${TPUT} ]; then
+            read -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
+        else
+            read -p "$1" ANSWER
+        fi
     else
-        read -p "$1" ANSWER
+        if [ -z ${TPUT} ]; then
+            read -s -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
+        else
+            read -s -p "$1" ANSWER
+        fi
+        echo
     fi
 }
 
@@ -194,6 +204,12 @@ _run() {
         g|gen)
             _gen
             ;;
+        guard)
+            _guard
+            ;;
+        secret)
+            _secret ${NAME} ${NAMESPACE}
+            ;;
         up)
             if [ -z ${REMOTE} ]; then
                 _up
@@ -318,7 +334,6 @@ _select_one() {
         CNT="1-${CNT}"
     fi
 
-    echo
     _read "Please select one. (${CNT}) : "
 
     SELECTED=
@@ -352,7 +367,7 @@ _init() {
     _draft_init
 
     # kubernetes-dashboard url
-    _result "kubernetes-dashboard: https://localhost:30443/"
+    _result "kubernetes-dashboard: http://kubernetes-dashboard.127.0.0.1.nip.io/"
 
     # namespace
     _namespace "development"
@@ -396,7 +411,6 @@ _helm_repo() {
     CNT=$(helm repo list | grep chartmuseum | wc -l | xargs)
 
     if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
-        echo
         DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
         _read "CHARTMUSEUM [${DEFAULT}] : "
 
@@ -491,6 +505,18 @@ _namespace() {
         _command "kubectl create ns ${NAMESPACE}"
         kubectl create ns ${NAMESPACE}
     fi
+}
+
+_guard() {
+    _read "USERNAME : "
+    USERNAME=${ANSWER}
+
+    _read "PASSWORD : " s
+    PASSWORD=${ANSWER}
+
+    _result "dev: https://kubernetes-dashboard-kube-system.dev.opsnow.com/"
+
+    _result "token : $(echo -n "${USERNAME}:${PASSWORD}" | base64)"
 }
 
 _gen() {
@@ -669,8 +695,11 @@ _secret() {
         fi
     fi
 
+    TMP=/tmp/${THIS_NAME}-secret.yaml
+
     TARGET=/tmp/${SECRET}-secret.yaml
 
+    # secret
     cat <<EOF > ${TARGET}
 apiVersion: v1
 kind: Secret
@@ -680,11 +709,8 @@ type: Opaque
 data:
 EOF
 
-    TMP=/tmp/${THIS_NAME}-secret
-
     LIST=$(cat .valvesecret)
     for VAL in ${LIST}; do
-        echo
         _read "secret ${VAL} : "
 
         if [ "${ANSWER}" != "" ]; then
@@ -700,6 +726,7 @@ EOF
         fi
     done
 
+    # apply secret
     _command "kubectl apply -f ${TARGET} -n ${NAMESPACE}"
     kubectl apply -f ${TARGET} -n ${NAMESPACE}
 }
@@ -1032,7 +1059,6 @@ _chart_replace() {
         Q="${REPLACE_KEY} [${DEFAULT_VAL}] : "
     fi
 
-    echo
     _read "${Q}"
 
     if [ "${ANSWER}" == "" ]; then
