@@ -265,7 +265,7 @@ _tools() {
 
 _update() {
     _echo "# version: ${THIS_VERSION}" 3
-    curl -sL repo.opsnow.io/${THIS_NAME}/install | bash
+    curl -sL repo.opsnow.io/${THIS_NAME}/install | bash -s ${NAME}
     exit 0
 }
 

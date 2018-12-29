@@ -9,6 +9,9 @@ CMD=${1:-${CIRCLE_JOB}}
 USERNAME=${CIRCLE_PROJECT_USERNAME:-opsnow-tools}
 REPONAME=${CIRCLE_PROJECT_REPONAME:-valve-ctl}
 
+PR_NUM=${CIRCLE_PR_NUMBER}
+PR_URL=${CIRCLE_PULL_REQUEST}
+
 ################################################################################
 
 # command -v tput > /dev/null || TPUT=false
@@ -54,11 +57,15 @@ _prepare() {
 }
 
 _get_version() {
-    # previous versions
+    # latest versions
     VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4 | xargs)
 
+    if [ -z ${VERSION} ]; then
+        VERSION=$(curl -sL repo.opsnow.io/${REPONAME}/VERSION | xargs)
+    fi
+
     if [ ! -f ${SHELL_DIR}/VERSION ]; then
-        echo "v0.0.0" > ${SHELL_DIR}/VERSION
+        printf "v0.0.0" > ${SHELL_DIR}/VERSION
     fi
 
     if [ -z ${VERSION} ]; then
@@ -80,10 +87,28 @@ _gen_version() {
         VERSION=$(cat ${SHELL_DIR}/VERSION | xargs)
     fi
 
-    # add build version
-    VERSION=$(echo ${VERSION} | perl -pe 's/^(([v\d]+\.)*)(\d+)(.*)$/$1.($3+1).$4/e')
+    _result "CIRCLE_BRANCH=${CIRCLE_BRANCH}"
+    _result "PR_NUM=${PR_NUM}"
+    _result "PR_URL=${PR_URL}"
 
-    echo "${VERSION}" > ${SHELL_DIR}/target/VERSION
+    # version
+    if [ "${CIRCLE_BRANCH}" == "master" ]; then
+        VERSION=$(echo ${VERSION} | perl -pe 's/^(([v\d]+\.)*)(\d+)(.*)$/$1.($3+1).$4/e')
+        printf "${VERSION}" > ${SHELL_DIR}/target/VERSION
+    else
+        if [ "${PR_NUM}" == "" ]; then
+            if [ "${PR_URL}" != "" ]; then
+                PR_NUM=$(echo $PR_URL | cut -d'/' -f7)
+            else
+                PR_NUM=${CIRCLE_BUILD_NUM}
+            fi
+        fi
+
+        printf "${PR_NUM}" > ${SHELL_DIR}/target/PRE
+
+        VERSION="${VERSION}-${PR_NUM}"
+        printf "${VERSION}" > ${SHELL_DIR}/target/VERSION
+    fi
 }
 
 _package() {
@@ -100,7 +125,7 @@ _package() {
 
     _result "VERSION=${VERSION}"
 
-    # replace version
+    # replace
     if [ "${OS_NAME}" == "linux" ]; then
         sed -i -e "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/" ${SHELL_DIR}/target/dist/valve
     elif [ "${OS_NAME}" == "darwin" ]; then
@@ -116,18 +141,39 @@ _package() {
     cp -rf ${SHELL_DIR}/charts/* ${SHELL_DIR}/target/charts/
 }
 
+_s3_sync() {
+    _command "aws s3 sync ${1} s3://${2}/ --acl public-read"
+    aws s3 sync ${1} s3://${2}/ --acl public-read
+}
+
+_cf_reset() {
+    CFID=$(aws cloudfront list-distributions --query "DistributionList.Items[].{Id:Id, DomainName: DomainName, OriginDomainName: Origins.Items[0].DomainName}[?contains(OriginDomainName, '${1}')] | [0]" | jq -r '.Id')
+    if [ "${CFID}" != "" ]; then
+        aws cloudfront create-invalidation --distribution-id ${CFID} --paths "/*"
+    fi
+}
+
 _publish() {
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
-        exit 1
+        _error
+    fi
+    if [ -f ${SHELL_DIR}/target/PRE ]; then
+        return
     fi
 
-    _command "aws s3 sync ${SHELL_DIR}/target/ s3://repo.opsnow.io/${REPONAME}/ --acl public-read"
-    aws s3 sync ${SHELL_DIR}/target/ s3://repo.opsnow.io/${REPONAME}/ --acl public-read
+    _s3_sync "${SHELL_DIR}/target/" "repo.opsnow.io/${REPONAME}"
+
+    _cf_reset "repo.opsnow.io"
 }
 
 _release() {
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
-        exit 1
+        _error
+    fi
+    if [ -f ${SHELL_DIR}/target/PRE ]; then
+        GHR_PARAM="-delete -prerelease"
+    else
+        GHR_PARAM="-delete"
     fi
 
     VERSION=$(cat ${SHELL_DIR}/target/VERSION | xargs)
@@ -142,21 +188,30 @@ _release() {
         -u ${USERNAME} \
         -r ${REPONAME} \
         -c ${CIRCLE_SHA1} \
-        -delete \
+        ${GHR_PARAM} \
         ${VERSION} ${SHELL_DIR}/target/dist/
 }
 
 _slack() {
+    if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
+        _error
+    fi
+    if [ -f ${SHELL_DIR}/target/PRE ]; then
+        TITLE="${REPONAME} pull requested"
+    else
+        TITLE="${REPONAME} updated"
+    fi
+
     VERSION=$(cat ${SHELL_DIR}/target/VERSION | xargs)
 
     _result "VERSION=${VERSION}"
 
-    FOOTER="<https://github.com/${USERNAME}/${REPONAME}|${USERNAME}/${REPONAME}>"
+    FOOTER="<https://github.com/${USERNAME}/${REPONAME}/releases/tag/${VERSION}|${USERNAME}/${REPONAME}>"
 
     ${SHELL_DIR}/target/slack --token="${SLACK_TOKEN}" --channel="tools" \
         --emoji=":construction_worker:" --username="valve" \
         --footer="${FOOTER}" --footer_icon="https://assets-cdn.github.com/favicon.ico" \
-        --color="good" --title="${REPONAME} updated" "\`${VERSION}\`"
+        --color="good" --title="${TITLE}" "\`${VERSION}\`"
 }
 
 _prepare
