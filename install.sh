@@ -30,9 +30,20 @@ _error() {
 
 ################################################################################
 
+USERNAME="opsnow-tools"
+REPONAME="valve-ctl"
+
 NAME="valve"
 
-VERSION=$(curl -s https://api.github.com/repos/opsnow-tools/valve-ctl/releases/latest | grep tag_name | cut -d'"' -f4)
+VERSION=${1}
+
+if [ -z ${VERSION} ]; then
+    VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4)
+
+    if [ -z ${VERSION} ]; then
+        VERSION=$(curl -sL repo.opsnow.io/${REPONAME}/VERSION | xargs)
+    fi
+fi
 
 _result "version: ${VERSION}"
 
@@ -45,7 +56,7 @@ DIST=/tmp/${NAME}-${VERSION}
 rm -rf ${DIST}
 
 # download
-curl -sL -o ${DIST} https://github.com/opsnow-tools/valve-ctl/releases/download/${VERSION}/valve
+curl -sL -o ${DIST} https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}
 chmod +x ${DIST}
 
 # copy
