@@ -176,13 +176,14 @@ _release() {
         GHR_PARAM="-delete"
     fi
 
-    # result
-    ls -al ${SHELL_DIR}/target/
-    ls -al ${SHELL_DIR}/target/dist/
-
     VERSION=$(cat ${SHELL_DIR}/target/VERSION | xargs)
 
     _result "VERSION=${VERSION}"
+
+    _result "USERNAME=${USERNAME}"
+    _result "REPONAME=${REPONAME}"
+    _result "GHR_PARAM=${GHR_PARAM}"
+    _result "CIRCLE_SHA1=${CIRCLE_SHA1}"
 
     _command "go get github.com/tcnksm/ghr"
     go get github.com/tcnksm/ghr
