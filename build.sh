@@ -139,10 +139,6 @@ _package() {
 
     # target/charts/
     cp -rf ${SHELL_DIR}/charts/* ${SHELL_DIR}/target/charts/
-
-    # result
-    ls ${SHELL_DIR}/target/
-    ls ${SHELL_DIR}/target/dist/
 }
 
 _s3_sync() {
@@ -179,6 +175,10 @@ _release() {
     else
         GHR_PARAM="-delete"
     fi
+
+    # result
+    ls -al ${SHELL_DIR}/target/
+    ls -al ${SHELL_DIR}/target/dist/
 
     VERSION=$(cat ${SHELL_DIR}/target/VERSION | xargs)
 
