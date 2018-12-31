@@ -53,8 +53,10 @@ jobs:
             chmod 755 ./works/build.sh
             ./works/build.sh slack
 
-# Build forked pull requests
-# Only build pull requests
+# Advanced Settings
+# - Build forked pull requests
+# - Pass secrets to builds from forked pull requests
+# - Only build pull requests
 
 workflows:
   version: 2

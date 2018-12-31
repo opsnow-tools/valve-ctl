@@ -144,28 +144,7 @@ else
     fi
 fi
 
-kubectl version --client --short | xargs | awk '{print $3}'
-
-# kops
-echo "================================================================================"
-_result "install kops..."
-
-if [ "${OS_TYPE}" == "brew" ]; then
-    command -v kops > /dev/null || brew install kops
-else
-    VERSION=$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | jq -r '.tag_name')
-
-    if [ "${KOPS}" != "${VERSION}" ] || [ "$(command -v kops)" == "" ]; then
-        _result " ${KOPS} >> ${VERSION}"
-
-        curl -LO https://github.com/kubernetes/kops/releases/download/${VERSION}/kops-${OS_NAME}-amd64
-        chmod +x kops-${OS_NAME}-amd64 && sudo mv kops-${OS_NAME}-amd64 /usr/local/bin/kops
-
-        KOPS="${VERSION}"
-    fi
-fi
-
-kops version 2>&1 | grep Version | xargs | awk '{print $2}'
+kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1
 
 # helm
 echo "================================================================================"
@@ -186,7 +165,7 @@ else
     fi
 fi
 
-helm version --client --short | xargs | awk '{print $2}'
+helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1
 
 # draft
 echo "================================================================================"
@@ -207,7 +186,7 @@ _result "install draft..."
     fi
 #fi
 
-draft version --short | xargs
+draft version --short | xargs | cut -d'+' -f1
 
 # guard
 echo "================================================================================"
@@ -246,7 +225,6 @@ cat << EOF > ${CONFIG}
 # version
 DATE="${DATE}"
 KUBECTL="${KUBECTL}"
-KOPS="${KOPS}"
 HELM="${HELM}"
 DRAFT="${DRAFT}"
 GUARD="${GUARD}"
