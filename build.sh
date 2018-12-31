@@ -180,13 +180,11 @@ _release() {
 
     _result "VERSION=${VERSION}"
 
-    _result "GITHUB_TOKEN=${GITHUB_TOKEN:1:5}"
-
     _command "go get github.com/tcnksm/ghr"
     go get github.com/tcnksm/ghr
 
     _command "ghr ${VERSION} ${SHELL_DIR}/target/dist/"
-    ghr -t ${GITHUB_TOKEN} \
+    ghr -t ${GITHUB_TOKEN:-EMPTY} \
         -u ${USERNAME} \
         -r ${REPONAME} \
         -c ${CIRCLE_SHA1} \

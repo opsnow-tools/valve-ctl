@@ -55,6 +55,7 @@ jobs:
 
 # Advanced Settings
 # - Build forked pull requests
+# - Pass secrets to builds from forked pull requests
 # - Only build pull requests
 
 workflows:
