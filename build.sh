@@ -180,10 +180,7 @@ _release() {
 
     _result "VERSION=${VERSION}"
 
-    _result "USERNAME=${USERNAME}"
-    _result "REPONAME=${REPONAME}"
-    _result "GHR_PARAM=${GHR_PARAM}"
-    _result "CIRCLE_SHA1=${CIRCLE_SHA1}"
+    _result "GITHUB_TOKEN=${GITHUB_TOKEN:1:5}"
 
     _command "go get github.com/tcnksm/ghr"
     go get github.com/tcnksm/ghr
