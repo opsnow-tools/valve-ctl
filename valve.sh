@@ -270,17 +270,17 @@ _update() {
 }
 
 _version() {
-    _command "kubectl version --client"
+    _command "kubectl version"
     kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1
 
-    _command "helm version --client"
+    _command "helm version"
     helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1
 
     _command "draft version"
     draft version --short | xargs | cut -d'+' -f1
 
     _command "valve version"
-    _echo "# version: ${THIS_VERSION}" 4
+    _echo "${THIS_VERSION}"
 }
 
 _waiting_pod() {
