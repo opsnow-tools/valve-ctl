@@ -139,6 +139,10 @@ _package() {
 
     # target/charts/
     cp -rf ${SHELL_DIR}/charts/* ${SHELL_DIR}/target/charts/
+
+    # result
+    ls ${SHELL_DIR}/target/
+    ls ${SHELL_DIR}/target/dist/
 }
 
 _s3_sync() {
