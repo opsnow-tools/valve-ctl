@@ -9,6 +9,8 @@ CMD=${1:-${CIRCLE_JOB}}
 USERNAME=${CIRCLE_PROJECT_USERNAME:-opsnow-tools}
 REPONAME=${CIRCLE_PROJECT_REPONAME:-valve-ctl}
 
+BUCKET="repo.opsnow.io"
+
 PR_NUM=${CIRCLE_PR_NUMBER}
 PR_URL=${CIRCLE_PULL_REQUEST}
 
@@ -61,7 +63,7 @@ _get_version() {
     VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4 | xargs)
 
     if [ -z ${VERSION} ]; then
-        VERSION=$(curl -sL repo.opsnow.io/${REPONAME}/VERSION | xargs)
+        VERSION=$(curl -sL ${BUCKET}/${REPONAME}/VERSION | xargs)
     fi
 
     if [ ! -f ${SHELL_DIR}/VERSION ]; then
@@ -111,6 +113,18 @@ _gen_version() {
     fi
 }
 
+_s3_sync() {
+    _command "aws s3 sync ${1} s3://${2}/ --acl public-read"
+    aws s3 sync ${1} s3://${2}/ --acl public-read
+}
+
+_cf_reset() {
+    CFID=$(aws cloudfront list-distributions --query "DistributionList.Items[].{Id:Id, DomainName: DomainName, OriginDomainName: Origins.Items[0].DomainName}[?contains(OriginDomainName, '${1}')] | [0]" | jq -r '.Id')
+    if [ "${CFID}" != "" ]; then
+        aws cloudfront create-invalidation --distribution-id ${CFID} --paths "/*"
+    fi
+}
+
 _package() {
     # target/
     cp -rf ${SHELL_DIR}/install.sh ${SHELL_DIR}/target/install
@@ -141,34 +155,22 @@ _package() {
     cp -rf ${SHELL_DIR}/charts/* ${SHELL_DIR}/target/charts/
 }
 
-_s3_sync() {
-    _command "aws s3 sync ${1} s3://${2}/ --acl public-read"
-    aws s3 sync ${1} s3://${2}/ --acl public-read
-}
-
-_cf_reset() {
-    CFID=$(aws cloudfront list-distributions --query "DistributionList.Items[].{Id:Id, DomainName: DomainName, OriginDomainName: Origins.Items[0].DomainName}[?contains(OriginDomainName, '${1}')] | [0]" | jq -r '.Id')
-    if [ "${CFID}" != "" ]; then
-        aws cloudfront create-invalidation --distribution-id ${CFID} --paths "/*"
-    fi
-}
-
 _publish() {
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
-        _error
+        return
     fi
     if [ -f ${SHELL_DIR}/target/PRE ]; then
         return
     fi
 
-    _s3_sync "${SHELL_DIR}/target/" "repo.opsnow.io/${REPONAME}"
+    _s3_sync "${SHELL_DIR}/target/" "${BUCKET}/${REPONAME}"
 
-    _cf_reset "repo.opsnow.io"
+    _cf_reset "${BUCKET}"
 }
 
 _release() {
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
-        _error
+        return
     fi
     if [ -f ${SHELL_DIR}/target/PRE ]; then
         GHR_PARAM="-delete -prerelease"
@@ -194,7 +196,7 @@ _release() {
 
 _slack() {
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
-        _error
+        return
     fi
     if [ -f ${SHELL_DIR}/target/PRE ]; then
         TITLE="${REPONAME} pull requested"
