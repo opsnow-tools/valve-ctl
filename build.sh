@@ -113,6 +113,18 @@ _gen_version() {
     fi
 }
 
+_s3_sync() {
+    _command "aws s3 sync ${1} s3://${2}/ --acl public-read"
+    aws s3 sync ${1} s3://${2}/ --acl public-read
+}
+
+_cf_reset() {
+    CFID=$(aws cloudfront list-distributions --query "DistributionList.Items[].{Id:Id, DomainName: DomainName, OriginDomainName: Origins.Items[0].DomainName}[?contains(OriginDomainName, '${1}')] | [0]" | jq -r '.Id')
+    if [ "${CFID}" != "" ]; then
+        aws cloudfront create-invalidation --distribution-id ${CFID} --paths "/*"
+    fi
+}
+
 _package() {
     # target/
     cp -rf ${SHELL_DIR}/install.sh ${SHELL_DIR}/target/install
@@ -141,18 +153,6 @@ _package() {
 
     # target/charts/
     cp -rf ${SHELL_DIR}/charts/* ${SHELL_DIR}/target/charts/
-}
-
-_s3_sync() {
-    _command "aws s3 sync ${1} s3://${2}/ --acl public-read"
-    aws s3 sync ${1} s3://${2}/ --acl public-read
-}
-
-_cf_reset() {
-    CFID=$(aws cloudfront list-distributions --query "DistributionList.Items[].{Id:Id, DomainName: DomainName, OriginDomainName: Origins.Items[0].DomainName}[?contains(OriginDomainName, '${1}')] | [0]" | jq -r '.Id')
-    if [ "${CFID}" != "" ]; then
-        aws cloudfront create-invalidation --distribution-id ${CFID} --paths "/*"
-    fi
 }
 
 _publish() {
