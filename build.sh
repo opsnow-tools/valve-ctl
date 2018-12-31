@@ -157,7 +157,7 @@ _package() {
 
 _publish() {
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
-        _error
+        return
     fi
     if [ -f ${SHELL_DIR}/target/PRE ]; then
         return
@@ -170,7 +170,7 @@ _publish() {
 
 _release() {
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
-        _error
+        return
     fi
     if [ -f ${SHELL_DIR}/target/PRE ]; then
         GHR_PARAM="-delete -prerelease"
@@ -196,7 +196,7 @@ _release() {
 
 _slack() {
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
-        _error
+        return
     fi
     if [ -f ${SHELL_DIR}/target/PRE ]; then
         TITLE="${REPONAME} pull requested"
