@@ -588,7 +588,7 @@ _gen() {
         fi
     fi
     if [ "${NAME}" == "" ] || [ "${NAME}" == "-" ]; then
-        NAME=$(basename $(pwd))
+        NAME=$(echo $(basename $(pwd)) | sed 's/\./-/g')
         SERVICE_GROUP=$(echo $NAME | cut -d- -f1)
         SERVICE_NAME=$(echo $NAME | cut -d- -f2)
     fi
