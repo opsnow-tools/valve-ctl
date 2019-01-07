@@ -6,7 +6,7 @@ def REPOSITORY_SECRET = ""
 def SLACK_TOKEN_DEV = ""
 def SLACK_TOKEN_DQA = ""
 
-@Library("github.com/nalbam/valve-butler")
+@Library("github.com/opsnow-tools/valve-butler")
 def butler = new com.opsnow.valve.v7.Butler()
 def label = "worker-${UUID.randomUUID().toString()}"
 
