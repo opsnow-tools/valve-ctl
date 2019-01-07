@@ -12,6 +12,7 @@ service:
   labels: {}
 ingress:
   enabled: true
+  subdomain: acme
   basedomain: 127.0.0.1.nip.io
   hosts:
     - acme.opsnow.com
