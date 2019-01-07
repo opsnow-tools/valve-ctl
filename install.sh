@@ -51,9 +51,11 @@ if [ -z ${VERSION} ]; then
     _error
 fi
 
+# rm tmp
+rm -rf /tmp/${NAME}-*
+
 # dist
 DIST=/tmp/${NAME}-${VERSION}
-rm -rf ${DIST}
 
 # download
 curl -sL -o ${DIST} https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}
