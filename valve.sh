@@ -649,6 +649,7 @@ _gen() {
         fi
 
         # values host
+        _replace "s|subdomain: .*|subdomain: ${NAME}|" charts/${NAME}/values.yaml
         _replace "s|- acme|- ${NAME}|" charts/${NAME}/values.yaml
     fi
 
@@ -857,16 +858,18 @@ _remote() {
         SECRET=false
     fi
 
-    # base domain
+    # domain
+    SUB_DOMAIN="${NAME}-${NAMESPACE}"
     BASE_DOMAIN="127.0.0.1.nip.io"
 
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE} --devel \
-                    --set configmap.enabled=${CONFIGMAP} \
-                    --set secret.enabled=${SECRET} \
                     --set fullnameOverride=${NAME}-${NAMESPACE} \
-                    --set ingress.basedomain=${BASE_DOMAIN}
+                    --set ingress.basedomain=${BASE_DOMAIN} \
+                    --set ingress.subdomain=${SUB_DOMAIN} \
+                    --set configmap.enabled=${CONFIGMAP} \
+                    --set secret.enabled=${SECRET}
 
     _command "helm ls ${NAME}-${NAMESPACE}"
     helm ls ${NAME}-${NAMESPACE}
