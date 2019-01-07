@@ -40,7 +40,7 @@ podTemplate(label: label, containers: [
           throw e
         }
 
-        butler.scan("nodejs")
+        butler.scan("java")
       }
     }
     stage("Build") {
