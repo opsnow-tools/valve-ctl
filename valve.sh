@@ -570,17 +570,27 @@ _gen() {
         PACKAGE="${SELECTED}"
     fi
 
+    SERVICE_GROUP=
+    SERVICE_NAME=
+
     # default
     if [ -f Jenkinsfile ]; then
         if [ -z ${NAME} ]; then
-            NAME=$(cat Jenkinsfile | grep "def IMAGE_NAME = " | cut -d'"' -f2)
+            SERVICE_GROUP=$(cat Jenkinsfile | grep "def SERVICE_GROUP = " | cut -d'"' -f2)
+            SERVICE_NAME=$(cat Jenkinsfile | grep "def SERVICE_NAME = " | cut -d'"' -f2)
+            NAME="${SERVICE_GROUP}-${SERVICE_NAME}"
         fi
         if [ -z ${REPOSITORY_URL} ]; then
             REPOSITORY_URL=$(cat Jenkinsfile | grep "def REPOSITORY_URL = " | cut -d'"' -f2)
         fi
+        if [ -z ${SECRET} ]; then
+            SECRET=$(cat Jenkinsfile | grep "def REPOSITORY_SECRET = " | cut -d'"' -f2)
+        fi
     fi
     if [ -z ${NAME} ]; then
         NAME=$(basename $(pwd))
+        SERVICE_GROUP=$(echo $NAME | cut -d- -f1)
+        SERVICE_NAME=$(echo $NAME | cut -d- -f2)
     fi
     if [ -z ${REPOSITORY_URL} ]; then
         if [ -d .git ]; then
@@ -594,13 +604,13 @@ _gen() {
     fi
 
     # copy
-    if [ -f ${DIST}/${PACKAGE}/dockerignore ]; then
+    if [ -f ${DIST}/${PACKAGE}/dockerignore ] && [ ! -f .dockerignore ]; then
         cp -rf ${DIST}/${PACKAGE}/dockerignore .dockerignore
     fi
-    if [ -f ${DIST}/${PACKAGE}/draftignore ]; then
+    if [ -f ${DIST}/${PACKAGE}/draftignore ] && [ ! -f .draftignore ]; then
         cp -rf ${DIST}/${PACKAGE}/draftignore .draftignore
     fi
-    if [ -f ${DIST}/${PACKAGE}/valvesecret ]; then
+    if [ -f ${DIST}/${PACKAGE}/valvesecret ] && [ ! -f .valvesecret ]; then
         cp -rf ${DIST}/${PACKAGE}/valvesecret .valvesecret
     fi
     if [ -f ${DIST}/${PACKAGE}/Dockerfile ]; then
@@ -614,9 +624,15 @@ _gen() {
     fi
 
     if [ -f Jenkinsfile ]; then
-        # Jenkinsfile IMAGE_NAME
-        _chart_replace "Jenkinsfile" "def IMAGE_NAME" "${NAME}"
-        NAME="${REPLACE_VAL}"
+        # Jenkinsfile SERVICE_GROUP
+        _chart_replace "Jenkinsfile" "def SERVICE_GROUP" "${SERVICE_GROUP}" true
+        SERVICE_GROUP="${REPLACE_VAL}"
+
+        # Jenkinsfile SERVICE_NAME
+        _chart_replace "Jenkinsfile" "def SERVICE_NAME" "${SERVICE_NAME}" true
+        SERVICE_NAME="${REPLACE_VAL}"
+
+        NAME="${SERVICE_GROUP}-${SERVICE_NAME}"
     fi
 
     # cp charts/acme/ to charts/${NAME}/
@@ -655,7 +671,7 @@ _gen() {
 
     if [ -f Jenkinsfile ]; then
         # Jenkinsfile REPOSITORY_URL
-        _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${REPOSITORY_URL}"
+        _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${REPOSITORY_URL}" true
         REPOSITORY_URL="${REPLACE_VAL}"
 
         # Jenkinsfile REPOSITORY_SECRET
@@ -1057,7 +1073,7 @@ _chart_replace() {
     REPLACE_FILE=$1
     REPLACE_KEY=$2
     DEFAULT_VAL=$3
-    REPLACE_TYPE=$4
+    REQUIRED=$4
 
     if [ "${DEFAULT_VAL}" == "" ]; then
         Q="${REPLACE_KEY} : "
@@ -1067,10 +1083,10 @@ _chart_replace() {
 
     _read "${Q}"
 
-    if [ "${ANSWER}" == "" ]; then
-        REPLACE_VAL=${DEFAULT_VAL}
-    else
-        REPLACE_VAL=${ANSWER}
+    REPLACE_VAL=${ANSWER:-${DEFAULT_VAL}}
+
+    if [ "${REQUIRED}" == "true" ] && [ "${REPLACE_VAL}" == "" ]; then
+        _error "Required: ${REPLACE_KEY}"
     fi
 
     if [ "${REPLACE_TYPE}" == "yaml" ]; then
