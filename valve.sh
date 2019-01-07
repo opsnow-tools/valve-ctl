@@ -587,12 +587,12 @@ _gen() {
             SECRET=$(cat Jenkinsfile | grep "def REPOSITORY_SECRET = " | cut -d'"' -f2)
         fi
     fi
-    if [ -z ${NAME} ]; then
+    if [ "${NAME}" == "" ] || [ "${NAME}" == "-" ]; then
         NAME=$(basename $(pwd))
         SERVICE_GROUP=$(echo $NAME | cut -d- -f1)
         SERVICE_NAME=$(echo $NAME | cut -d- -f2)
     fi
-    if [ -z ${REPOSITORY_URL} ]; then
+    if [ "${REPOSITORY_URL}" == "" ]; then
         if [ -d .git ]; then
             REPOSITORY_URL=$(git config --get remote.origin.url | head -1 | xargs)
         fi
