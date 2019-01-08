@@ -360,7 +360,6 @@ _config() {
 
 _config_save() {
     echo "# valve config" > ${CONFIG}
-    echo "SECRET=${SECRET}" >> ${CONFIG}
     echo "REGISTRY=${REGISTRY}" >> ${CONFIG}
     echo "CHARTMUSEUM=${CHARTMUSEUM}" >> ${CONFIG}
 }
