@@ -1,14 +1,15 @@
-def IMAGE_NAME = "sample"
-def REPOSITORY_URL = "https://github.com/opsnow/sample"
+def SERVICE_GROUP = ""
+def SERVICE_NAME = ""
+def IMAGE_NAME = "${SERVICE_GROUP}-${SERVICE_NAME}"
+def REPOSITORY_URL = ""
 def REPOSITORY_SECRET = ""
-def SLACK_TOKEN = ""
+def SLACK_TOKEN_DEV = ""
+def SLACK_TOKEN_DQA = ""
 
 @Library("github.com/opsnow-tools/valve-butler")
-def butler = new com.opsnow.valve.Butler()
+def butler = new com.opsnow.valve.v7.Butler()
 def label = "worker-${UUID.randomUUID().toString()}"
-def VERSION = ""
-def SOURCE_LANG = ""
-def SOURCE_ROOT = ""
+
 properties([
   buildDiscarder(logRotator(daysToKeepStr: "60", numToKeepStr: "30"))
 ])
@@ -23,11 +24,7 @@ podTemplate(label: label, containers: [
   node(label) {
     stage("Prepare") {
       container("builder") {
-        butler.prepare()
-
-        if (!SLACK_TOKEN) {
-          SLACK_TOKEN = butler.slack_token
-        }
+        butler.prepare(IMAGE_NAME)
       }
     }
     stage("Checkout") {
@@ -39,24 +36,20 @@ podTemplate(label: label, containers: [
             git(url: REPOSITORY_URL, branch: BRANCH_NAME)
           }
         } catch (e) {
-          butler.failure(SLACK_TOKEN, "Checkout", IMAGE_NAME)
+          butler.failure(SLACK_TOKEN_DEV, "Checkout")
           throw e
         }
 
-        butler.scan(IMAGE_NAME, BRANCH_NAME, "java")
-
-        VERSION = butler.version
-        // SOURCE_LANG = butler.source_lang
-        // SOURCE_ROOT = butler.source_root
+        butler.scan("java")
       }
     }
     stage("Build") {
       container("maven") {
         try {
           butler.mvn_build()
-          butler.success(SLACK_TOKEN, "Build", IMAGE_NAME, VERSION)
+          butler.success(SLACK_TOKEN_DEV, "Build")
         } catch (e) {
-          butler.failure(SLACK_TOKEN, "Build", IMAGE_NAME)
+          butler.failure(SLACK_TOKEN_DEV, "Build")
           throw e
         }
       }
@@ -66,7 +59,7 @@ podTemplate(label: label, containers: [
         try {
           butler.mvn_test()
         } catch (e) {
-          butler.failure(SLACK_TOKEN, "Tests", IMAGE_NAME)
+          butler.failure(SLACK_TOKEN_DEV, "Tests")
           throw e
         }
       }
@@ -76,7 +69,7 @@ podTemplate(label: label, containers: [
         try {
           butler.mvn_sonar()
         } catch (e) {
-          butler.failure(SLACK_TOKEN, "Code Analysis", IMAGE_NAME)
+          butler.failure(SLACK_TOKEN_DEV, "Code Analysis")
           throw e
         }
       }
@@ -86,9 +79,9 @@ podTemplate(label: label, containers: [
         container("maven") {
           try {
             butler.mvn_deploy()
-            butler.success(SLACK_TOKEN, "Deploy", IMAGE_NAME, VERSION)
+            butler.success(SLACK_TOKEN_DEV, "Deploy")
           } catch (e) {
-            butler.failure(SLACK_TOKEN, "Deploy", IMAGE_NAME)
+            butler.failure(SLACK_TOKEN_DEV, "Deploy")
             throw e
           }
         }
