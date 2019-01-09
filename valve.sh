@@ -321,13 +321,9 @@ _waiting_pod() {
 }
 
 _select_one() {
-    echo
+    OPT=$1
 
-    IDX=0
-    while read VAL; do
-        IDX=$(( ${IDX} + 1 ))
-        printf "%3s. %s\n" "${IDX}" "${VAL}";
-    done < ${LIST}
+    SELECTED=
 
     CNT=$(cat ${LIST} | wc -l | xargs)
     if [ "x${CNT}" == "x0" ]; then
@@ -337,9 +333,20 @@ _select_one() {
         CNT="1-${CNT}"
     fi
 
-    _read "Please select one. (${CNT}) : "
+    if [ "${OPT}" != "" ] && [ "x${CNT}" == "x1" ]; then
+        ANSWER="1"
+    else
+        echo
 
-    SELECTED=
+        IDX=0
+        while read VAL; do
+            IDX=$(( ${IDX} + 1 ))
+            printf "%3s. %s\n" "${IDX}" "${VAL}";
+        done < ${LIST}
+
+        _read "Please select one. (${CNT}) : "
+    fi
+
     if [ "${ANSWER}" == "" ]; then
         _error
     fi
@@ -1014,9 +1021,16 @@ _logs() {
 
         _select_one
 
-        _result "${SELECTED}"
-
         NAME="${SELECTED}"
+
+        # get pod containers
+        kubectl get pod ${NAME} -n ${NAMESPACE} -o json | jq '.spec.containers[].name' -r > ${LIST}
+
+        _select_one true
+
+        NAME="${NAME} ${SELECTED}"
+
+        _result "${NAME}"
     fi
 
     _command "kubectl logs -n ${NAMESPACE} ${NAME} -f"
