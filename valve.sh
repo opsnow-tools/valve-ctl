@@ -660,9 +660,6 @@ _gen() {
         # chart name
         _replace "s|name: .*|name: ${NAME}|" charts/${NAME}/Chart.yaml
 
-        # chart version
-        _replace "s|version: .*|version: ${THIS_VERSION}|" charts/${NAME}/Chart.yaml
-
         # values repository
         if [ -z ${REGISTRY} ]; then
             _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
