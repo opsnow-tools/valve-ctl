@@ -28,10 +28,11 @@ touch ${CONFIG} && . ${CONFIG}
 
 ################################################################################
 
-command -v tput > /dev/null || TPUT=false
+command -v fzf > /dev/null && FZF=true
+command -v tput > /dev/null && TPUT=true
 
 _echo() {
-    if [ -z ${TPUT} ] && [ ! -z $2 ]; then
+    if [ -n ${TPUT} ] && [ ! -z $2 ]; then
         echo -e "$(tput setaf $2)$1$(tput sgr0)"
     else
         echo -e "$1"
@@ -41,13 +42,13 @@ _echo() {
 _read() {
     echo
     if [ "${2}" == "" ]; then
-        if [ -z ${TPUT} ]; then
+        if [ -n ${TPUT} ]; then
             read -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
         else
             read -p "$1" ANSWER
         fi
     else
-        if [ -z ${TPUT} ]; then
+        if [ -n ${TPUT} ]; then
             read -s -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
         else
             read -s -p "$1" ANSWER
@@ -327,36 +328,39 @@ _select_one() {
 
     CNT=$(cat ${LIST} | wc -l | xargs)
     if [ "x${CNT}" == "x0" ]; then
-        _error
-    fi
-    if [ "${CNT}" != "1" ]; then
-        CNT="1-${CNT}"
+        return
     fi
 
     if [ "${OPT}" != "" ] && [ "x${CNT}" == "x1" ]; then
-        ANSWER="1"
+        SELECTED="$(cat ${LIST} | xargs)"
     else
-        echo
+        if [ -n ${FZF} ]; then
+            SELECTED=$(cat ${LIST} | fzf --reverse --no-mouse --height=10 --bind=left:page-up,right:page-down)
+        else
+            echo
 
-        IDX=0
-        while read VAL; do
-            IDX=$(( ${IDX} + 1 ))
-            printf "%3s. %s\n" "${IDX}" "${VAL}";
-        done < ${LIST}
+            IDX=0
+            while read VAL; do
+                IDX=$(( ${IDX} + 1 ))
+                printf "%3s. %s\n" "${IDX}" "${VAL}"
+            done < ${LIST}
 
-        _read "Please select one. (${CNT}) : "
-    fi
+            if [ "${CNT}" != "1" ]; then
+                CNT="1-${CNT}"
+            fi
 
-    if [ "${ANSWER}" == "" ]; then
-        _error
-    fi
-    TEST='^[0-9]+$'
-    if ! [[ ${ANSWER} =~ ${TEST} ]]; then
-        _error
-    fi
-    SELECTED=$(sed -n ${ANSWER}p ${LIST})
-    if [ -z ${SELECTED} ]; then
-        _error
+            echo
+            _read "Please select one. (1-${CNT}) : "
+
+            if [ -z ${ANSWER} ]; then
+                return
+            fi
+            TEST='^[0-9]+$'
+            if ! [[ ${ANSWER} =~ ${TEST} ]]; then
+                return
+            fi
+            SELECTED=$(sed -n ${ANSWER}p ${LIST})
+        fi
     fi
 }
 
@@ -567,6 +571,9 @@ _gen() {
 
         _select_one
 
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
         if [ ! -d ${DIST}/${SELECTED} ]; then
             _error
         fi
@@ -837,6 +844,10 @@ _remote() {
 
         _select_one
 
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
+
         _result "${SELECTED}"
 
         NAME="${SELECTED}"
@@ -847,6 +858,10 @@ _remote() {
         curl -sL ${CHARTMUSEUM}/api/charts/${NAME} | jq '.[] | {version} | .version' -r | sort -r | head -9 > ${LIST}
 
         _select_one
+
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
 
         _result "${SELECTED}"
 
@@ -946,6 +961,10 @@ _describe() {
 
         _select_one
 
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
+
         _result "${SELECTED}"
 
         NAME="${SELECTED}"
@@ -969,6 +988,10 @@ _hpa() {
         kubectl get hpa -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
 
         _select_one
+
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
 
         _result "${SELECTED}"
 
@@ -994,6 +1017,10 @@ _ssh() {
 
         _select_one
 
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
+
         _result "${SELECTED}"
 
         NAME="${SELECTED}"
@@ -1018,12 +1045,20 @@ _logs() {
 
         _select_one
 
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
+
         NAME="${SELECTED}"
 
         # get pod containers
         kubectl get pod ${NAME} -n ${NAMESPACE} -o json | jq '.spec.containers[].name' -r > ${LIST}
 
         _select_one true
+
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
 
         NAME="${NAME} ${SELECTED}"
 
@@ -1045,6 +1080,10 @@ _remove() {
         helm ls --all | grep -v "NAME" | awk '{print $1}' > ${LIST}
 
         _select_one
+
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
 
         _result "${SELECTED}"
 
