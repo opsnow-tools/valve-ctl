@@ -32,7 +32,7 @@ command -v fzf > /dev/null && FZF=true
 command -v tput > /dev/null && TPUT=true
 
 _echo() {
-    if [ -n ${TPUT} ] && [ ! -z $2 ]; then
+    if [ -n ${TPUT} ] && [ -n $2 ]; then
         echo -e "$(tput setaf $2)$1$(tput sgr0)"
     else
         echo -e "$1"
