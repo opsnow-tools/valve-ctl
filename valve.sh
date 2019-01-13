@@ -42,13 +42,13 @@ _echo() {
 _read() {
     echo
     if [ "${2}" == "" ]; then
-        if [ -n ${TPUT} ]; then
+        if [ "${TPUT}" != "" ]; then
             read -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
         else
             read -p "$1" ANSWER
         fi
     else
-        if [ -n ${TPUT} ]; then
+        if [ "${TPUT}" != "" ]; then
             read -s -p "$(tput setaf 6)$1$(tput sgr0)" ANSWER
         else
             read -s -p "$1" ANSWER
