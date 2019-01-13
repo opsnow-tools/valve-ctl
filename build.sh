@@ -16,7 +16,7 @@ PR_URL=${CIRCLE_PULL_REQUEST}
 
 ################################################################################
 
-# command -v tput > /dev/null || TPUT=true
+# command -v tput > /dev/null && TPUT=true
 TPUT=
 
 _echo() {
