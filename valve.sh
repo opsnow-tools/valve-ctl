@@ -222,7 +222,7 @@ _run() {
             _remote
             ;;
         ctx|context)
-            _all
+            _context
             ;;
         a|all)
             _all
