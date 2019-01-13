@@ -221,6 +221,9 @@ _run() {
         r|remote)
             _remote
             ;;
+        ctx|context)
+            _all
+            ;;
         a|all)
             _all
             ;;
@@ -917,6 +920,25 @@ _remote() {
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
+}
+
+_context() {
+    LIST=/tmp/${THIS_NAME}-ctx-ls
+
+    if [ -z ${NAME} ]; then
+        echo "$(kubectl config view -o json | jq '.contexts[].name' -r)" > ${LIST}
+
+        _select_one
+
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
+
+        NAME="${SELECTED}"
+    fi
+
+    _command "kubectl config use-context ${NAME}"
+    kubectl config use-context ${NAME}
 }
 
 _all() {
