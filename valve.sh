@@ -352,8 +352,7 @@ _select_one() {
                 CNT="1-${CNT}"
             fi
 
-            echo
-            _read "Please select one. (1-${CNT}) : "
+            _read "Please select one. (${CNT}) : "
 
             if [ -z ${ANSWER} ]; then
                 return
