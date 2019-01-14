@@ -16,11 +16,11 @@ PR_URL=${CIRCLE_PULL_REQUEST}
 
 ################################################################################
 
-# command -v tput > /dev/null || TPUT=false
-TPUT=false
+# command -v tput > /dev/null && TPUT=true
+TPUT=
 
 _echo() {
-    if [ -z ${TPUT} ] && [ ! -z $2 ]; then
+    if [ "${TPUT}" != "" ] && [ "$2" != "" ]; then
         echo -e "$(tput setaf $2)$1$(tput sgr0)"
     else
         echo -e "$1"
