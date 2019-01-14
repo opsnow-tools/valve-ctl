@@ -337,7 +337,7 @@ _select_one() {
     if [ "${OPT}" != "" ] && [ "x${CNT}" == "x1" ]; then
         SELECTED="$(cat ${LIST} | xargs)"
     else
-        if [ -n ${FZF} ]; then
+        if [ "${FZF}" != "" ]; then
             SELECTED=$(cat ${LIST} | fzf --reverse --no-mouse --height=10 --bind=left:page-up,right:page-down)
         else
             echo
