@@ -31,8 +31,8 @@ resources:
     cpu: 500m
     memory: 1024Mi
   limits:
-    cpu: 1000m
-    memory: 2048Mi
+    cpu: 600m
+    memory: 2252Mi
 readinessProbe:
   httpGet:
     path: /
