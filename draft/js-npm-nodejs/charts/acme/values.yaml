@@ -55,7 +55,7 @@ livenessProbe:
 # livenessProbe:
 #   tcpSocket:
 #     port: 3000
-#   initialDelaySeconds: 30
+#   initialDelaySeconds: 5
 #   periodSeconds: 10
 configmap:
   enabled: false
