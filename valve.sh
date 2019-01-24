@@ -192,6 +192,9 @@ _args() {
 
     CMD=$1
     NAME=$2
+
+    shift && shift
+    EXTRA=$@
 }
 
 _run() {
@@ -241,6 +244,9 @@ _run() {
             ;;
         log|logs)
             _logs
+            ;;
+        exe|exec)
+            _exec
             ;;
         rm|remove)
             _remove
@@ -986,9 +992,9 @@ _describe() {
             _error
         fi
 
-        _result "${SELECTED}"
-
         NAME="${SELECTED}"
+
+        _result "${NAME}"
     fi
 
     _command "kubectl describe pod -n ${NAMESPACE} ${NAME}"
@@ -1014,9 +1020,9 @@ _hpa() {
             _error
         fi
 
-        _result "${SELECTED}"
-
         NAME="${SELECTED}"
+
+        _result "${NAME}"
     fi
 
     _command "kubectl describe hpa -n ${NAMESPACE} ${NAME}"
@@ -1042,9 +1048,9 @@ _ssh() {
             _error
         fi
 
-        _result "${SELECTED}"
-
         NAME="${SELECTED}"
+
+        _result "${NAME}"
     fi
 
     _command "kubectl exec -n ${NAMESPACE} -it ${NAME} -- /bin/bash"
@@ -1088,6 +1094,46 @@ _logs() {
 
     _command "kubectl logs -n ${NAMESPACE} ${NAME} -f"
     kubectl logs -n ${NAMESPACE} ${NAME} -f
+}
+
+_exec() {
+    # _helm_init
+
+    # namespace
+    NAMESPACE="${NAMESPACE:-development}"
+
+    LIST=/tmp/${THIS_NAME}-pod-ls
+
+    # get pod list
+    _command "kubectl get pod -n ${NAMESPACE}"
+    kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | awk '{print $1}' > ${LIST}
+
+    HAS_NAME=false
+    while read VAL; do
+        if [ "${VAL}" == "${NAME}" ]; then
+            HAS_NAME=true
+        fi
+    done < ${LIST}
+
+    if [ "${HAS_NAME}" == "false" ]; then
+        EXTRA="${NAME} ${EXTRA}"
+        NAME=
+    fi
+
+    if [ -z ${NAME} ]; then
+        _select_one
+
+        if [ -z ${SELECTED} ]; then
+            _error
+        fi
+
+        NAME="${SELECTED}"
+
+        _result "${NAME}"
+    fi
+
+    _command "kubectl exec -n ${NAMESPACE} ${NAME} -- ${EXTRA}"
+    kubectl exec -n ${NAMESPACE} ${NAME} -- ${EXTRA}
 }
 
 _remove() {
