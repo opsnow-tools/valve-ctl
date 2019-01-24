@@ -31,22 +31,32 @@ resources:
     cpu: 100m
     memory: 128Mi
   limits:
-    cpu: 200m
-    memory: 256Mi
+    cpu: 120m
+    memory: 153Mi
 readinessProbe:
   httpGet:
     path: /
     port: 80
   initialDelaySeconds: 5
-  periodSeconds: 15
-  failureThreshold: 6
+  periodSeconds: 10
 livenessProbe:
   httpGet:
     path: /
     port: 80
   initialDelaySeconds: 5
-  periodSeconds: 15
-  failureThreshold: 6
+  periodSeconds: 10
+# livenessProbe:
+#   exec:
+#     command:
+#     - cat
+#     - /tmp/healthy
+#   initialDelaySeconds: 5
+#   periodSeconds: 10
+# livenessProbe:
+#   tcpSocket:
+#     port: 80
+#   initialDelaySeconds: 5
+#   periodSeconds: 10
 configmap:
   enabled: false
 secret:
