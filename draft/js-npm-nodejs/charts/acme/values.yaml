@@ -4,6 +4,9 @@ image:
   repository: acme
   tag: latest
   pullPolicy: Always
+pod:
+  annotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
 service:
   type: ClusterIP
   externalPort: 80
