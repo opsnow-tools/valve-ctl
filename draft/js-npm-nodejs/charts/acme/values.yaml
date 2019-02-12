@@ -4,7 +4,10 @@ image:
   repository: acme
   tag: latest
   pullPolicy: Always
+labels: {}
+annotations: {}
 pod:
+  labels: {}
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
 service:
