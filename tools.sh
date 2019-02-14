@@ -172,7 +172,7 @@ echo "==========================================================================
 _result "install draft..."
 
 #if [ "${OS_TYPE}" == "brew" ]; then
-#    command -v draft > /dev/null || brew install draft
+#    command -v draft > /dev/null || brew tap azure/draft && brew install azure/draft/draft
 #else
     VERSION=$(curl -s https://api.github.com/repos/Azure/draft/releases/latest | jq -r '.tag_name')
 
