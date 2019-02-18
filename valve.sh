@@ -596,19 +596,27 @@ _gen() {
 
     # default
     if [ -f Jenkinsfile ]; then
-        if [ -z ${NAME} ]; then
+        if [ "${NAME}" == "" ]; then
             SERVICE_GROUP=$(cat Jenkinsfile | grep "def SERVICE_GROUP = " | cut -d'"' -f2)
             SERVICE_NAME=$(cat Jenkinsfile | grep "def SERVICE_NAME = " | cut -d'"' -f2)
-            NAME="${SERVICE_GROUP}-${SERVICE_NAME}"
+            if [ "${SERVICE_GROUP}" != "" ] && [ "${SERVICE_NAME}" != "" ]; then
+                NAME="${SERVICE_GROUP}-${SERVICE_NAME}"
+            fi
         fi
-        if [ -z ${REPOSITORY_URL} ]; then
+        if [ "${REPOSITORY_URL}" == "" ]; then
             REPOSITORY_URL=$(cat Jenkinsfile | grep "def REPOSITORY_URL = " | cut -d'"' -f2)
         fi
-        if [ -z ${SECRET} ]; then
-            SECRET=$(cat Jenkinsfile | grep "def REPOSITORY_SECRET = " | cut -d'"' -f2)
+        if [ "${REPOSITORY_SECRET}" == "" ]; then
+            REPOSITORY_SECRET=$(cat Jenkinsfile | grep "def REPOSITORY_SECRET = " | cut -d'"' -f2)
+        fi
+        if [ "${SLACK_TOKEN_DEV}" == "" ]; then
+            SLACK_TOKEN_DEV=$(cat Jenkinsfile | grep "def SLACK_TOKEN_DEV = " | cut -d'"' -f2)
+        fi
+        if [ "${SLACK_TOKEN_DQA}" == "" ]; then
+            SLACK_TOKEN_DQA=$(cat Jenkinsfile | grep "def SLACK_TOKEN_DQA = " | cut -d'"' -f2)
         fi
     fi
-    if [ "${NAME}" == "" ] || [ "${NAME}" == "-" ]; then
+    if [ "${NAME}" == "" ]; then
         NAME=$(echo $(basename $(pwd)) | sed 's/\./-/g')
         SERVICE_GROUP=$(echo $NAME | cut -d- -f1)
         SERVICE_NAME=$(echo $NAME | cut -d- -f2)
@@ -653,7 +661,9 @@ _gen() {
         _chart_replace "Jenkinsfile" "def SERVICE_NAME" "${SERVICE_NAME}" true
         SERVICE_NAME="${REPLACE_VAL}"
 
-        NAME="${SERVICE_GROUP}-${SERVICE_NAME}"
+        if [ "${SERVICE_GROUP}" != "" ] && [ "${SERVICE_NAME}" != "" ]; then
+            NAME="${SERVICE_GROUP}-${SERVICE_NAME}"
+        fi
     fi
 
     # cp charts/acme/ to charts/${NAME}/
@@ -662,10 +672,10 @@ _gen() {
         cp -rf ${DIST}/${PACKAGE}/charts/acme/* charts/${NAME}/
     fi
 
-    # namespace
-    NAMESPACE="${NAMESPACE:-development}"
-
     if [ -f draft.toml ] && [ ! -z ${NAME} ]; then
+        # namespace
+        NAMESPACE="${NAMESPACE:-development}"
+
         # draft.toml NAME
         _replace "s|NAMESPACE|${NAMESPACE}|" draft.toml
         _replace "s|NAME|${NAME}-${NAMESPACE}|" draft.toml
@@ -688,13 +698,18 @@ _gen() {
     fi
 
     if [ -f Jenkinsfile ]; then
-        # Jenkinsfile REPOSITORY_URL
-        _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${REPOSITORY_URL}" true
-        REPOSITORY_URL="${REPLACE_VAL}"
-
-        # Jenkinsfile REPOSITORY_SECRET
-        _chart_replace "Jenkinsfile" "def REPOSITORY_SECRET" "${SECRET}"
-        SECRET="${REPLACE_VAL}"
+        if [ "${REPOSITORY_URL}" != "" ]; then
+            _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${REPOSITORY_URL}" true
+        fi
+        if [ "${REPOSITORY_SECRET}" != "" ]; then
+            _chart_replace "Jenkinsfile" "def REPOSITORY_SECRET" "${REPOSITORY_SECRET}"
+        fi
+        if [ "${SLACK_TOKEN_DEV}" != "" ]; then
+            _chart_replace "Jenkinsfile" "def SLACK_TOKEN_DEV" "${SLACK_TOKEN_DEV}"
+        fi
+        if [ "${SLACK_TOKEN_DQA}" != "" ]; then
+            _chart_replace "Jenkinsfile" "def SLACK_TOKEN_DQA" "${SLACK_TOKEN_DQA}"
+        fi
     fi
 
     _config_save
