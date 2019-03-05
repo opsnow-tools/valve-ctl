@@ -20,8 +20,9 @@ ingress:
   enabled: true
   subdomain: acme
   basedomain: 127.0.0.1.nip.io
-  hosts:
-    - acme.opsnow.com
+  hosts: {}
+  # hosts:
+  #   - acme.opsnow.com
   annotations:
     kubernetes.io/ingress.class: nginx
     # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
