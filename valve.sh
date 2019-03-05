@@ -915,16 +915,11 @@ _remote() {
         SECRET=false
     fi
 
-    # domain
-    SUB_DOMAIN="${NAME}-${NAMESPACE}"
-    BASE_DOMAIN="127.0.0.1.nip.io"
-
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE} --devel \
                     --set fullnameOverride=${NAME}-${NAMESPACE} \
-                    --set ingress.basedomain=${BASE_DOMAIN} \
-                    --set ingress.subdomain=${SUB_DOMAIN} \
+                    --set ingress.subdomain=${NAME}-${NAMESPACE} \
                     --set configmap.enabled=${CONFIGMAP} \
                     --set secret.enabled=${SECRET}
 
