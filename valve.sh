@@ -87,6 +87,50 @@ _replace() {
     fi
 }
 
+_select_one() {
+    OPT=$1
+
+    SELECTED=
+
+    CNT=$(cat ${LIST} | wc -l | xargs)
+    if [ "x${CNT}" == "x0" ]; then
+        return
+    fi
+
+    if [ "${OPT}" != "" ] && [ "x${CNT}" == "x1" ]; then
+        SELECTED="$(cat ${LIST} | xargs)"
+    else
+        if [ "${FZF}" != "" ]; then
+            SELECTED=$(cat ${LIST} | fzf --reverse --no-mouse --height=10 --bind=left:page-up,right:page-down)
+        else
+            echo
+
+            IDX=0
+            while read VAL; do
+                IDX=$(( ${IDX} + 1 ))
+                printf "%3s. %s\n" "${IDX}" "${VAL}"
+            done < ${LIST}
+
+            if [ "${CNT}" != "1" ]; then
+                CNT="1-${CNT}"
+            fi
+
+            _read "Please select one. (${CNT}) : "
+
+            if [ -z ${ANSWER} ]; then
+                return
+            fi
+            TEST='^[0-9]+$'
+            if ! [[ ${ANSWER} =~ ${TEST} ]]; then
+                return
+            fi
+            SELECTED=$(sed -n ${ANSWER}p ${LIST})
+        fi
+    fi
+}
+
+################################################################################
+
 _usage() {
     #figlet valve ctl
 cat <<EOF
@@ -328,48 +372,6 @@ _waiting_pod() {
         IDX=$(( ${IDX} + 1 ))
         sleep 2
     done
-}
-
-_select_one() {
-    OPT=$1
-
-    SELECTED=
-
-    CNT=$(cat ${LIST} | wc -l | xargs)
-    if [ "x${CNT}" == "x0" ]; then
-        return
-    fi
-
-    if [ "${OPT}" != "" ] && [ "x${CNT}" == "x1" ]; then
-        SELECTED="$(cat ${LIST} | xargs)"
-    else
-        if [ "${FZF}" != "" ]; then
-            SELECTED=$(cat ${LIST} | fzf --reverse --no-mouse --height=10 --bind=left:page-up,right:page-down)
-        else
-            echo
-
-            IDX=0
-            while read VAL; do
-                IDX=$(( ${IDX} + 1 ))
-                printf "%3s. %s\n" "${IDX}" "${VAL}"
-            done < ${LIST}
-
-            if [ "${CNT}" != "1" ]; then
-                CNT="1-${CNT}"
-            fi
-
-            _read "Please select one. (${CNT}) : "
-
-            if [ -z ${ANSWER} ]; then
-                return
-            fi
-            TEST='^[0-9]+$'
-            if ! [[ ${ANSWER} =~ ${TEST} ]]; then
-                return
-            fi
-            SELECTED=$(sed -n ${ANSWER}p ${LIST})
-        fi
-    fi
 }
 
 _config() {
