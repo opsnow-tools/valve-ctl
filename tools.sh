@@ -229,5 +229,3 @@ HELM="${HELM}"
 DRAFT="${DRAFT}"
 GUARD="${GUARD}"
 EOF
-
-_success "done."

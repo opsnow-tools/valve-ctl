@@ -1240,5 +1240,3 @@ _get_yaml() {
 _args $*
 
 _run
-
-_success "done."

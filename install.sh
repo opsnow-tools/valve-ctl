@@ -77,6 +77,3 @@ fi
 
 mkdir -p ${COPY_PATH}
 mv -f ${DIST} ${COPY_PATH}/${NAME}
-
-# done
-_success "done."
