@@ -128,7 +128,6 @@ _cf_reset() {
 _package() {
     # target/
     cp -rf ${SHELL_DIR}/install.sh ${SHELL_DIR}/target/install
-    cp -rf ${SHELL_DIR}/slack.sh   ${SHELL_DIR}/target/slack
     cp -rf ${SHELL_DIR}/tools.sh   ${SHELL_DIR}/target/tools
 
     # target/dist/
