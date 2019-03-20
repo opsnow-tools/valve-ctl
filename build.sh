@@ -195,6 +195,10 @@ _release() {
 }
 
 _slack() {
+    if [ -z ${SLACK_TOKEN} ]; then
+        return
+    fi
+
     if [ ! -f ${SHELL_DIR}/target/VERSION ]; then
         return
     fi
@@ -210,9 +214,9 @@ _slack() {
 
     FOOTER="<https://github.com/${USERNAME}/${REPONAME}/releases/tag/${VERSION}|${USERNAME}/${REPONAME}>"
 
-    ${SHELL_DIR}/target/slack --token="${SLACK_TOKEN}" --channel="tools" \
-        --emoji=":construction_worker:" --username="valve" \
-        --footer="${FOOTER}" --footer_icon="https://assets-cdn.github.com/favicon.ico" \
+    curl -sL repo.opsnow.io/valve-ctl/slack | bash -s -- \
+        --token="${SLACK_TOKEN}" --emoji=":construction_worker:" --username="valve" \
+        --footer="${FOOTER}" --footer_icon="https://repo.opspresso.com/favicon/github.png" \
         --color="good" --title="${TITLE}" "\`${VERSION}\`"
 }
 
