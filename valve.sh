@@ -393,7 +393,7 @@ _init() {
     _result "kubernetes-dashboard: http://kubernetes-dashboard.127.0.0.1.nip.io/"
 
     # namespace
-    _namespace "development"
+    _namespace "development" true
 }
 
 _helm_init() {
@@ -516,6 +516,7 @@ _draft_init() {
 
 _namespace() {
     NAMESPACE=$1
+    DEFAULT=$2
 
     CHECK=
 
@@ -527,6 +528,10 @@ _namespace() {
 
         _command "kubectl create ns ${NAMESPACE}"
         kubectl create ns ${NAMESPACE}
+    fi
+
+    if [ "${DEFAULT}" == "true" ]; then
+        kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
     fi
 }
 
