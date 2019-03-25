@@ -947,6 +947,9 @@ _remote() {
 _context() {
     LIST=/tmp/${THIS_NAME}-ctx-ls
 
+    _command "kubectl config current-context"
+    kubectl config current-context
+
     if [ -z ${NAME} ]; then
         echo "$(kubectl config view -o json | jq '.contexts[].name' -r)" > ${LIST}
 
