@@ -436,12 +436,8 @@ _helm_repo() {
     if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
         _read "CHARTMUSEUM [${DEFAULT}] : "
+        CHARTMUSEUM="${ANSWER:-$DEFAULT}"
 
-        if [ "${ANSWER}" == "" ]; then
-            CHARTMUSEUM="${DEFAULT}"
-        else
-            CHARTMUSEUM="${ANSWER}"
-        fi
         if [ -z ${CHARTMUSEUM} ]; then
             _error
         fi
