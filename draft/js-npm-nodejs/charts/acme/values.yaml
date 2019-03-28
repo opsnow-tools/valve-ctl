@@ -1,21 +1,28 @@
 replicaCount: 1
+
 profile: default
+
 image:
   repository: acme
   tag: latest
   pullPolicy: Always
+
 labels: {}
 annotations: {}
+
 pod:
   labels: {}
   annotations: {}
+
 pdb: {}
+
 service:
   type: ClusterIP
   externalPort: 80
   internalPort: 3000
   annotations: {}
   labels: {}
+
 ingress:
   enabled: true
   subdomain: acme
@@ -27,12 +34,14 @@ ingress:
     kubernetes.io/ingress.class: nginx
     # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
   labels: {}
+
 hpa:
   enabled: true
   min: 1
   max: 5
   cpu: 80
   mem: 80
+
 resources:
   requests:
     cpu: 100m
@@ -40,12 +49,14 @@ resources:
   limits:
     cpu: 120m
     memory: 153Mi
+
 readinessProbe:
   httpGet:
     path: /
     port: 3000
   initialDelaySeconds: 3
   periodSeconds: 10
+
 livenessProbe:
   httpGet:
     path: /
@@ -64,7 +75,15 @@ livenessProbe:
 #     port: 3000
 #   initialDelaySeconds: 3
 #   periodSeconds: 10
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
 configmap:
   enabled: false
+
 secret:
   enabled: false
