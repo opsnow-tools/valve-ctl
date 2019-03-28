@@ -393,7 +393,7 @@ _init() {
     _result "kubernetes-dashboard: http://kubernetes-dashboard.127.0.0.1.nip.io/"
 
     # namespace
-    _namespace "development"
+    _namespace "development" true
 }
 
 _helm_init() {
@@ -436,12 +436,8 @@ _helm_repo() {
     if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         DEFAULT="${CHARTMUSEUM:-chartmuseum-devops.demo.opsnow.com}"
         _read "CHARTMUSEUM [${DEFAULT}] : "
+        CHARTMUSEUM="${ANSWER:-$DEFAULT}"
 
-        if [ "${ANSWER}" == "" ]; then
-            CHARTMUSEUM="${DEFAULT}"
-        else
-            CHARTMUSEUM="${ANSWER}"
-        fi
         if [ -z ${CHARTMUSEUM} ]; then
             _error
         fi
@@ -516,6 +512,7 @@ _draft_init() {
 
 _namespace() {
     NAMESPACE=$1
+    DEFAULT=$2
 
     CHECK=
 
@@ -527,6 +524,10 @@ _namespace() {
 
         _command "kubectl create ns ${NAMESPACE}"
         kubectl create ns ${NAMESPACE}
+    fi
+
+    if [ "${DEFAULT}" == "true" ]; then
+        kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
     fi
 }
 
@@ -941,6 +942,9 @@ _remote() {
 
 _context() {
     LIST=/tmp/${THIS_NAME}-ctx-ls
+
+    _command "kubectl config current-context"
+    kubectl config current-context
 
     if [ -z ${NAME} ]; then
         echo "$(kubectl config view -o json | jq '.contexts[].name' -r)" > ${LIST}
