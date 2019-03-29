@@ -17,8 +17,12 @@ spec:
   minReplicas: {{ .Values.hpa.min }}
   maxReplicas: {{ .Values.hpa.max }}
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      targetAverageUtilization: {{ .Values.hpa.cpu }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.hpa.cpu }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.hpa.mem }}
 {{ end }}
