@@ -56,6 +56,7 @@ readinessProbe:
     port: 8080
   initialDelaySeconds: 15
   periodSeconds: 10
+  failureThreshold: 3
 
 livenessProbe:
   httpGet:
@@ -63,6 +64,7 @@ livenessProbe:
     port: 8080
   initialDelaySeconds: 15
   periodSeconds: 10
+  failureThreshold: 3
 # livenessProbe:
 #   exec:
 #     command:
