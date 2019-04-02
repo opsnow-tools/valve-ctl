@@ -45,8 +45,8 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
-        hostNetwork: true
-        dnsPolicy: ClusterFirstWithHostNet
+        hostNetwork: {{ .Values.hostNetwork }}
+        dnsPolicy: {{ .Values.dnsPolicy }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         readinessProbe:
