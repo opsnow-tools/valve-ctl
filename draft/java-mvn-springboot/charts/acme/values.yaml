@@ -78,8 +78,8 @@ livenessProbe:
 #   initialDelaySeconds: 15
 #   periodSeconds: 10
 
-hostNetwork: true
-dnsPolicy: ClusterFirstWithHostNet
+# hostNetwork: true
+# dnsPolicy: ClusterFirstWithHostNet
 
 nodeSelector: {}
 
