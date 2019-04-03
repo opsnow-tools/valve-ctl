@@ -14,7 +14,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "fullname" . }}
-  minReplicas: {{ .Values.hpautoscalinga.min }}
+  minReplicas: {{ .Values.autoscaling.min }}
   maxReplicas: {{ .Values.autoscaling.max }}
   metrics:
     - type: Resource
