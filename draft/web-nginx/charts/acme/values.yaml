@@ -79,7 +79,7 @@ livenessProbe:
 #   periodSeconds: 10
 
 # hostNetwork: true
-# dnsPolicy: ClusterFirstWithHostNet
+# dnsPolicy: Default
 
 nodeSelector: {}
 
