@@ -35,7 +35,7 @@ ingress:
     # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
   labels: {}
 
-hpa:
+autoscaling:
   enabled: true
   min: 1
   max: 5
@@ -77,6 +77,9 @@ livenessProbe:
 #     port: 8080
 #   initialDelaySeconds: 15
 #   periodSeconds: 10
+
+# hostNetwork: true
+# dnsPolicy: Default
 
 nodeSelector: {}
 

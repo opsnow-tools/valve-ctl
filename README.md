@@ -1,5 +1,7 @@
 # valve-ctl
 
+[![GitHub release](https://img.shields.io/github/release/opsnow-tools/valve-ctl.svg)](https://github.com/opsnow-tools/valve-ctl/releases)
+
 ## install
 
 ```bash
