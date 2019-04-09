@@ -197,7 +197,7 @@ _args() {
         fi
     fi
 
-    OPTIONS=$(getopt -l "version:,namespace:,chartmuseum:,registry:,force,delete,remote,verbose,chart,all,stable" -o "v:n:c:g:fdrV" -a -- "$@")
+    OPTIONS=$(getopt -l "version:,namespace:,chartmuseum:,registry:,force,delete,remote,verbose,all,stable" -o "v:n:c:g:fdrV" -a -- "$@")
     eval set -- "${OPTIONS}"
 
     while true; do
