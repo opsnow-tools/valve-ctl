@@ -23,6 +23,11 @@ DELETE=
 REMOTE=
 VERVOSE=
 
+CMD2=
+CMD3=
+CHART=
+RELEASE=
+
 CONFIG=${HOME}/.valve-ctl
 touch ${CONFIG} && . ${CONFIG}
 
@@ -192,7 +197,7 @@ _args() {
         fi
     fi
 
-    OPTIONS=$(getopt -l "version:,namespace:,chartmuseum:,registry:,force,delete,remote,verbose" -o "v:n:c:g:fdrV" -a -- "$@")
+    OPTIONS=$(getopt -l "version:,namespace:,chartmuseum:,registry:,force,delete,remote,verbose,all,stable" -o "v:n:c:g:fdrVas" -a -- "$@")
     eval set -- "${OPTIONS}"
 
     while true; do
@@ -212,6 +217,12 @@ _args() {
         -g|--registry)
             shift
             REGISTRY=$1
+            ;;
+        -a|--all)
+            ALL=1
+            ;;
+        -s|--stable)
+            STABLE=1
             ;;
         -f|--force)
             FORCE=1
@@ -239,6 +250,21 @@ _args() {
 
     shift && shift
     EXTRA=$@
+
+    if [ "${CMD}" == "chart" ]; then
+        CMD2="${NAME}"
+        if [ "${CMD2}" == "release" ]; then
+            CMD3=$1
+            if [ "${CMD3}" == "list" ]; then
+                CHART=$2 
+            else
+                CHART=$2
+                RELEASE=$3
+            fi
+        fi
+    fi
+
+
 }
 
 _run() {
@@ -298,6 +324,9 @@ _run() {
         clean)
             _clean
             ;;
+        chart)
+            _chart
+            ;;
         tools)
             _tools
             ;;
@@ -335,6 +364,117 @@ _version() {
 
     _command "valve version"
     _echo "${THIS_VERSION}"
+}
+
+_chart() {
+    _command "helm repo update chartmuseum"
+    helm repo update chartmuseum
+
+    case ${CMD2} in
+        l|ls|list)
+            _chart_list
+            ;;
+        release)
+            _chart_release
+            ;;
+        *)
+            _chart_usage
+    esac
+}
+
+_chart_usage() {
+cat <<EOF
+Usage: `basename $0` chart {Command} [Arguments ..]
+
+Commands:
+    l, ls, list              차트 list 를 조회 합니다.
+    r, rel, release          차트 릴리즈 명령을 수행 합니다.
+EOF
+    _success
+}
+
+_chart_list() {
+    _command "curl -s ${CHARTMUSEUM}/api/charts | jq -r 'keys[]'"
+    curl -s ${CHARTMUSEUM}/api/charts | jq -r 'keys[]'
+}
+
+_chart_release() {
+    case ${CMD3} in
+        l|ls|list)
+            _chart_release_list
+            ;;
+        mark)
+            _chart_release_mark
+            ;;
+        unmark)
+            _chart_release_unmark
+            ;;
+        *)
+            _chart_release_usage
+    esac
+}
+
+_chart_release_usage() {
+cat <<EOF
+Usage: `basename $0` chart release {Command} {Chart} [{Release}] [Arguments ..]
+
+Commands:
+    l, ls, list             차트 릴리즈 list 를 조회 합니다.
+        {Chart}             조회할 차트명 입니다.
+        -a, --all           전체 차트 릴리즈 list 를 조회 합니다. (default)
+        -s, --stable        차트 릴리즈의 stable 버전 list 를 조회합니다.
+    mark                    차트 릴리즈를 대상으로 stable 버전을 생성합니다.
+        {Chart}             Stable 버전으로 만들 차트명 입니다.
+        {Release}           Stable 버전으로 만들 릴리즈명 입니다.
+    unmark                  차트 릴리즈의 stable 버전을 제거합니다.
+        {Chart}             Stable 버전을 삭제할 차트명 입니다.
+        {Release}           Stable 버전을 삭제할 릴리즈명 입니다.        
+EOF
+    _success
+}
+
+_chart_release_list() {
+    if [ -z ${STABLE} ]; then
+        _command "curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version'"
+        curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version'       
+    else
+        _command "curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version' | grep stable"
+        curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version' | grep stable
+    fi
+}
+
+_chart_release_mark() {
+    TMP=/tmp
+
+    if [[ "${RELEASE}" =~ -stable$ ]]; then
+        echo "Can't create a stable version from a stable version."
+        exit 0
+    fi
+
+    _command "helm fetch chartmuseum/${CHART} --version=${RELEASE} -d ${TMP}"
+    helm fetch chartmuseum/${CHART} --version=${RELEASE} -d ${TMP}
+
+    if [ ! -f ${TMP}/${CHART}-${RELEASE}.tgz ]; then
+        echo "Not found the chart(${CHART}-${RELEASE})."
+        exit 0
+    fi 
+
+    _command "helm push ${TMP}/${CHART}-${RELEASE}.tgz chartmuseum --version=${RELEASE}-stable"
+    helm push ${TMP}/${CHART}-${RELEASE}.tgz chartmuseum --version="${RELEASE}-stable"
+
+    _command "rm ${TMP}/${CHART}-${RELEASE}.tgz"
+    rm ${TMP}/${CHART}-${RELEASE}.tgz
+}
+
+_chart_release_unmark() {
+    RELEASE_TMP=$(curl -s ${CHARTMUSEUM}/api/charts/${CHART}/${RELEASE}-stable | jq -r '.version')
+
+    if [ "${RELEASE_TMP}" == "${RELEASE}-stable" ]; then
+        _command "curl -s -X DELETE ${CHARTMUSEUM}/api/charts/${CHART}/${RELEASE}-stable"
+        curl -s -X DELETE ${CHARTMUSEUM}/api/charts/${CHART}/${RELEASE}-stable | jq -r .
+    else
+        _error "Not found ${RELEASE}-stable."
+    fi
 }
 
 _waiting_pod() {
