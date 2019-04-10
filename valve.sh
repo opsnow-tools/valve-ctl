@@ -179,6 +179,10 @@ Commands:
     clean                   저장된 설정을 모두 삭제 합니다.
         -d, --delete        docker 이미지도 모두 삭제 합니다.
 
+    chart                   Helm 차트와 차트 릴리즈 목록을 확인하고 stable 버전을 생성, 삭제 합니다.
+        list                차트 목록을 조회합니다.
+        release             차트 릴리즈를 관리합니다.
+
     tools                   개발에 필요한 툴을 설치 합니다. (MacOS, Ubuntu 만 지원)
     update                  valve 를 최신버전으로 업데이트 합니다.
     v, version              valve 버전을 확인 합니다.
@@ -253,15 +257,6 @@ _args() {
 
     if [ "${CMD}" == "chart" ]; then
         CMD2="${NAME}"
-        if [ "${CMD2}" == "release" ]; then
-            CMD3=$1
-            if [ "${CMD3}" == "list" ]; then
-                CHART=$2 
-            else
-                CHART=$2
-                RELEASE=$3
-            fi
-        fi
     fi
 
 
@@ -325,7 +320,7 @@ _run() {
             _clean
             ;;
         chart)
-            _chart
+            _chart ${EXTRA}
             ;;
         tools)
             _tools
@@ -367,8 +362,15 @@ _version() {
 }
 
 _chart() {
-    _command "helm repo update chartmuseum"
-    helm repo update chartmuseum
+    if [ "${CMD2}" == "release" ]; then
+        CMD3=$1
+        if [ "${CMD3}" == "list" ]; then
+            CHART=$2 
+        else
+            CHART=$2
+            RELEASE=$3
+        fi
+    fi
 
     case ${CMD2} in
         l|ls|list)
@@ -394,6 +396,9 @@ EOF
 }
 
 _chart_list() {
+    _command "helm repo update chartmuseum"
+    helm repo update chartmuseum
+
     _command "curl -s ${CHARTMUSEUM}/api/charts | jq -r 'keys[]'"
     curl -s ${CHARTMUSEUM}/api/charts | jq -r 'keys[]'
 }
@@ -434,6 +439,14 @@ EOF
 }
 
 _chart_release_list() {
+
+    _command "helm repo update chartmuseum"
+    helm repo update chartmuseum
+
+    if [ -z ${CHART} ]; then
+        _error "Required string parameter 'Chart' is not present."
+    fi
+
     if [ -z ${STABLE} ]; then
         _command "curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version'"
         curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version'       
@@ -446,17 +459,26 @@ _chart_release_list() {
 _chart_release_mark() {
     TMP=/tmp
 
+    _command "helm repo update chartmuseum"
+    helm repo update chartmuseum
+
+    if [ -z ${CHART} ]; then
+        _error "Required string parameter 'Chart' is not present."
+    fi
+
+    if [ -z ${RELEASE} ]; then
+        _error "Required string parameter 'Release' is not present."
+    fi
+
     if [[ "${RELEASE}" =~ -stable$ ]]; then
-        echo "Can't create a stable version from a stable version."
-        exit 0
+        _error "Can't create a stable version from a stable version."
     fi
 
     _command "helm fetch chartmuseum/${CHART} --version=${RELEASE} -d ${TMP}"
     helm fetch chartmuseum/${CHART} --version=${RELEASE} -d ${TMP}
 
     if [ ! -f ${TMP}/${CHART}-${RELEASE}.tgz ]; then
-        echo "Not found the chart(${CHART}-${RELEASE})."
-        exit 0
+        _error "Not found the chart(${CHART}-${RELEASE})."
     fi 
 
     _command "helm push ${TMP}/${CHART}-${RELEASE}.tgz chartmuseum --version=${RELEASE}-stable"
@@ -467,6 +489,18 @@ _chart_release_mark() {
 }
 
 _chart_release_unmark() {
+
+    _command "helm repo update chartmuseum"
+    helm repo update chartmuseum
+
+    if [ -z ${CHART} ]; then
+        _error "Required string parameter 'Chart' is not present."
+    fi
+
+    if [ -z ${RELEASE} ]; then
+        _error "Required string parameter 'Release' is not present."
+    fi
+
     RELEASE_TMP=$(curl -s ${CHARTMUSEUM}/api/charts/${CHART}/${RELEASE}-stable | jq -r '.version')
 
     if [ "${RELEASE_TMP}" == "${RELEASE}-stable" ]; then
