@@ -925,6 +925,7 @@ _remote() {
                     --set ingress.subdomain=${NAME}-${NAMESPACE} \
                     --set configmap.enabled=${CONFIGMAP} \
                     --set secret.enabled=${SECRET}
+                    --set namespace=${NAMESPACE}
 
     _command "helm ls ${NAME}-${NAMESPACE}"
     helm ls ${NAME}-${NAMESPACE}
