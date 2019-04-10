@@ -218,11 +218,10 @@ _slack() {
 
     _result "VERSION=${VERSION}"
 
-    FOOTER="<https://github.com/${USERNAME}/${REPONAME}/releases/tag/${VERSION}|${USERNAME}/${REPONAME}>"
-
     curl -sL repo.opsnow.io/valve-ctl/slack | bash -s -- \
-        --token="${SLACK_TOKEN}" --emoji=":construction_worker:" --username="valve" \
-        --footer="${FOOTER}" --footer_icon="https://repo.opsnow.io/img/github.png" \
+        --token="${SLACK_TOKEN}" --username="valve" \
+        --footer="<https://github.com/${USERNAME}/${REPONAME}/releases/tag/${VERSION}|${USERNAME}/${REPONAME}>" \
+        --footer_icon="https://repo.opsnow.io/img/github.png" \
         --color="good" --title="${TITLE}" "\`${VERSION}\`"
 }
 
