@@ -594,6 +594,8 @@ _gen() {
         PACKAGE="${SELECTED}"
     fi
 
+    NAMESPACE="${NAMESPACE:-development}"
+
     SERVICE_GROUP=
     SERVICE_NAME=
 
@@ -676,9 +678,6 @@ _gen() {
     fi
 
     if [ -f draft.toml ] && [ ! -z ${NAME} ]; then
-        # namespace
-        NAMESPACE="${NAMESPACE:-development}"
-
         # draft.toml NAME
         _replace "s|NAMESPACE|${NAMESPACE}|" draft.toml
         _replace "s|NAME|${NAME}-${NAMESPACE}|" draft.toml
@@ -687,6 +686,9 @@ _gen() {
     if [ -d charts ] && [ ! -z ${NAME} ]; then
         # chart name
         _replace "s|name: .*|name: ${NAME}|" charts/${NAME}/Chart.yaml
+
+        # values namespace
+        _replace "s|namespace: .*|namespace: ${NAMESPACE}|" charts/${NAME}/values.yaml
 
         # values repository
         if [ -z ${REGISTRY} ]; then
