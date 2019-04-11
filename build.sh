@@ -9,10 +9,12 @@ CMD=${1:-${CIRCLE_JOB}}
 USERNAME=${CIRCLE_PROJECT_USERNAME:-opsnow-tools}
 REPONAME=${CIRCLE_PROJECT_REPONAME:-valve-ctl}
 
-BUCKET="repo.opsnow.io"
+BRANCH=${CIRCLE_BRANCH:-master}
 
 PR_NUM=${CIRCLE_PR_NUMBER}
 PR_URL=${CIRCLE_PULL_REQUEST}
+
+BUCKET="repo.opsnow.io"
 
 ################################################################################
 
@@ -47,6 +49,14 @@ _error() {
     echo
     _echo "- $@" 1
     exit 1
+}
+
+_replace() {
+    if [ "${OS_NAME}" == "darwin" ]; then
+        sed -i "" -e "$1" $2
+    else
+        sed -i -e "$1" $2
+    fi
 }
 
 _prepare() {
@@ -89,12 +99,12 @@ _gen_version() {
         VERSION=$(cat ${SHELL_DIR}/VERSION | xargs)
     fi
 
-    _result "CIRCLE_BRANCH=${CIRCLE_BRANCH}"
+    _result "BRANCH=${BRANCH}"
     _result "PR_NUM=${PR_NUM}"
     _result "PR_URL=${PR_URL}"
 
     # version
-    if [ "${CIRCLE_BRANCH}" == "master" ]; then
+    if [ "${BRANCH}" == "master" ]; then
         VERSION=$(echo ${VERSION} | perl -pe 's/^(([v\d]+\.)*)(\d+)(.*)$/$1.($3+1).$4/e')
         printf "${VERSION}" > ${SHELL_DIR}/target/VERSION
     else
@@ -140,11 +150,7 @@ _package() {
     _result "VERSION=${VERSION}"
 
     # replace
-    if [ "${OS_NAME}" == "linux" ]; then
-        sed -i -e "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/" ${SHELL_DIR}/target/dist/valve
-    elif [ "${OS_NAME}" == "darwin" ]; then
-        sed -i "" -e "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/" ${SHELL_DIR}/target/dist/valve
-    fi
+    _replace "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/g" ${SHELL_DIR}/target/dist/valve
 
     # target/dist/draft.tar.gz
     pushd ${SHELL_DIR}/draft
@@ -212,11 +218,10 @@ _slack() {
 
     _result "VERSION=${VERSION}"
 
-    FOOTER="<https://github.com/${USERNAME}/${REPONAME}/releases/tag/${VERSION}|${USERNAME}/${REPONAME}>"
-
     curl -sL repo.opsnow.io/valve-ctl/slack | bash -s -- \
-        --token="${SLACK_TOKEN}" --emoji=":construction_worker:" --username="valve" \
-        --footer="${FOOTER}" --footer_icon="https://repo.opsnow.io/img/github.png" \
+        --token="${SLACK_TOKEN}" --username="valve" \
+        --footer="<https://github.com/${USERNAME}/${REPONAME}/releases/tag/${VERSION}|${USERNAME}/${REPONAME}>" \
+        --footer_icon="https://repo.opsnow.io/img/github.png" \
         --color="good" --title="${TITLE}" "\`${VERSION}\`"
 }
 
