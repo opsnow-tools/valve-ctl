@@ -564,6 +564,7 @@ _init() {
     # kubernetes-dashboard
     _result "kubernetes-dashboard: http://kubernetes-dashboard.127.0.0.1.nip.io/"
 
+    # kubernetes-dashboard token
     create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
 
     # namespace
@@ -681,6 +682,7 @@ create_cluster_role_binding() {
     _ROLE=$1
     _NAMESPACE=$2
     _ACCOUNT=${3:-default}
+    _TOKEN=${4:-false}
 
     create_service_account ${_NAMESPACE} ${_ACCOUNT}
 
