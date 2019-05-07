@@ -564,7 +564,7 @@ _init() {
     # kubernetes-dashboard
     _result "kubernetes-dashboard: http://kubernetes-dashboard.127.0.0.1.nip.io/"
 
-    create_cluster_role_binding admin ${_NS} ${_NM}-admin true
+    create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
 
     # namespace
     _namespace "development" true
