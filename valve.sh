@@ -699,6 +699,7 @@ create_cluster_role_binding() {
     fi
 
     if [ "${_TOKEN}" == "true" ]; then
+        _command "kubectl get secret -n ${_NAMESPACE} | grep ${_ACCOUNT}-token"
         SECRET=$(kubectl get secret -n ${_NAMESPACE} | grep ${_ACCOUNT}-token | awk '{print $1}')
         kubectl describe secret ${SECRET} -n ${_NAMESPACE} | grep 'token:'
     fi
