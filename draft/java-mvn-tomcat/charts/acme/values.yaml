@@ -1,3 +1,5 @@
+fullnameOverride: acme
+
 replicaCount: 1
 
 profile: default
