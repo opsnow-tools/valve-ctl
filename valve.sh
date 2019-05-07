@@ -907,6 +907,9 @@ _gen() {
         # chart name
         _replace "s|name: .*|name: ${NAME}|" charts/${NAME}/Chart.yaml
 
+        # values fullnameOverride
+        _replace "s|fullnameOverride: .*|fullnameOverride: ${NAME}|" charts/${NAME}/values.yaml
+
         # values namespace
         _replace "s|namespace: .*|namespace: ${NAMESPACE}|" charts/${NAME}/values.yaml
 
