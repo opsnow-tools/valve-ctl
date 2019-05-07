@@ -258,8 +258,6 @@ _args() {
     if [ "${CMD}" == "chart" ]; then
         CMD2="${NAME}"
     fi
-
-
 }
 
 _run() {
