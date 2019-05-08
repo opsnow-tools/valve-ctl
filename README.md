@@ -1,6 +1,7 @@
 # valve-ctl
 
 [![GitHub release](https://img.shields.io/github/release/opsnow-tools/valve-ctl.svg)](https://github.com/opsnow-tools/valve-ctl/releases)
+[![CircleCI](https://circleci.com/gh/opsnow-tools/valve-ctl.svg?style=svg)](https://circleci.com/gh/opsnow-tools/valve-ctl)
 
 ## install
 

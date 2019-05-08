@@ -258,8 +258,6 @@ _args() {
     if [ "${CMD}" == "chart" ]; then
         CMD2="${NAME}"
     fi
-
-
 }
 
 _run() {
@@ -365,7 +363,7 @@ _chart() {
     if [ "${CMD2}" == "release" ]; then
         CMD3=$1
         if [ "${CMD3}" == "list" ]; then
-            CHART=$2 
+            CHART=$2
         else
             CHART=$2
             RELEASE=$3
@@ -433,13 +431,12 @@ Commands:
         {Release}           Stable 버전으로 만들 릴리즈명 입니다.
     unmark                  차트 릴리즈의 stable 버전을 제거합니다.
         {Chart}             Stable 버전을 삭제할 차트명 입니다.
-        {Release}           Stable 버전을 삭제할 릴리즈명 입니다.        
+        {Release}           Stable 버전을 삭제할 릴리즈명 입니다.
 EOF
     _success
 }
 
 _chart_release_list() {
-
     _command "helm repo update chartmuseum"
     helm repo update chartmuseum
 
@@ -449,7 +446,7 @@ _chart_release_list() {
 
     if [ -z ${STABLE} ]; then
         _command "curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version'"
-        curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version'       
+        curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version'
     else
         _command "curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version' | grep stable"
         curl -s ${CHARTMUSEUM}/api/charts/${CHART} | jq -r '.[].version' | grep stable
@@ -479,7 +476,7 @@ _chart_release_mark() {
 
     if [ ! -f ${TMP}/${CHART}-${RELEASE}.tgz ]; then
         _error "Not found the chart(${CHART}-${RELEASE})."
-    fi 
+    fi
 
     _command "helm push ${TMP}/${CHART}-${RELEASE}.tgz chartmuseum --version=${RELEASE}-stable"
     helm push ${TMP}/${CHART}-${RELEASE}.tgz chartmuseum --version="${RELEASE}-stable"
@@ -489,7 +486,6 @@ _chart_release_mark() {
 }
 
 _chart_release_unmark() {
-
     _command "helm repo update chartmuseum"
     helm repo update chartmuseum
 
@@ -563,8 +559,11 @@ _init() {
     _helm_init
     _draft_init
 
-    # kubernetes-dashboard url
+    # kubernetes-dashboard
     _result "kubernetes-dashboard: http://kubernetes-dashboard.127.0.0.1.nip.io/"
+
+    # kubernetes-dashboard token
+    create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
 
     # namespace
     _namespace "development" true
@@ -657,6 +656,51 @@ _helm_install() {
             _command "helm upgrade --install ${_NM} stable/${_NM} --version ${CHART_VERSION}"
             helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}
         fi
+    fi
+}
+
+create_service_account() {
+    _NAMESPACE=$1
+    _ACCOUNT=$2
+
+    CHECK=
+
+    _command "kubectl get sa ${_ACCOUNT} -n ${_NAMESPACE}"
+    kubectl get sa ${_ACCOUNT} -n ${_NAMESPACE} > /dev/null 2>&1 || export CHECK=CREATE
+
+    if [ "${CHECK}" == "CREATE" ]; then
+        _result "${_NAMESPACE}:${_ACCOUNT}"
+
+        _command "kubectl create sa ${_ACCOUNT} -n ${_NAMESPACE}"
+        kubectl create sa ${_ACCOUNT} -n ${_NAMESPACE}
+    fi
+}
+
+create_cluster_role_binding() {
+    _ROLE=$1
+    _NAMESPACE=$2
+    _ACCOUNT=${3:-default}
+    _TOKEN=${4:-false}
+
+    create_service_account ${_NAMESPACE} ${_ACCOUNT}
+
+    CHECK=
+
+    _command "kubectl get clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT}"
+    kubectl get clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} > /dev/null 2>&1 || export CHECK=CREATE
+
+    if [ "${CHECK}" == "CREATE" ]; then
+        _result "${_ROLE}:${_NAMESPACE}:${_ACCOUNT}"
+
+        _command "kubectl create clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} --clusterrole=${_ROLE} --serviceaccount=${_NAMESPACE}:${_ACCOUNT}"
+        kubectl create clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} --clusterrole=${_ROLE} --serviceaccount=${_NAMESPACE}:${_ACCOUNT}
+    fi
+
+    if [ "${_TOKEN}" == "true" ]; then
+        SECRET=$(kubectl get secret -n ${_NAMESPACE} | grep ${_ACCOUNT}-token | awk '{print $1}')
+
+        _command "kubectl describe secret ${SECRET} -n ${_NAMESPACE}"
+        kubectl describe secret ${SECRET} -n ${_NAMESPACE} | grep 'token:'
     fi
 }
 
@@ -860,6 +904,9 @@ _gen() {
     if [ -d charts ] && [ ! -z ${NAME} ]; then
         # chart name
         _replace "s|name: .*|name: ${NAME}|" charts/${NAME}/Chart.yaml
+
+        # values fullnameOverride
+        _replace "s|fullnameOverride: .*|fullnameOverride: ${NAME}|" charts/${NAME}/values.yaml
 
         # values namespace
         _replace "s|namespace: .*|namespace: ${NAMESPACE}|" charts/${NAME}/values.yaml
