@@ -523,7 +523,7 @@ _waiting_pod() {
 
         STATUS=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $3}')
 
-        if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "development" ]; then
+        if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "default" ]; then
             READY=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $2}' | cut -d'/' -f1)
         else
             READY="1"
@@ -566,7 +566,7 @@ _init() {
     create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
 
     # namespace
-    _namespace "development" true
+    _namespace "default" true
 }
 
 _helm_init() {
@@ -812,7 +812,7 @@ _gen() {
         PACKAGE="${SELECTED}"
     fi
 
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${NAMESPACE:-default}"
 
     SERVICE_GROUP=
     SERVICE_NAME=
@@ -955,7 +955,7 @@ _secret() {
     NAME="${1:-secret}"
 
     # namespace
-    NAMESPACE="${2:-development}"
+    NAMESPACE="${2:-default}"
 
     # secret
     SECRET="${NAME}-${NAMESPACE}"
@@ -1024,7 +1024,7 @@ _up() {
     NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
 
     # namespace
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${NAMESPACE:-default}"
 
     # make secret
     _secret "${NAME}" "${NAMESPACE}"
@@ -1083,7 +1083,7 @@ _remote() {
     _helm_repo
 
     # namespace
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${NAMESPACE:-default}"
 
     LIST=/tmp/${THIS_NAME}-charts-ls
 
@@ -1200,7 +1200,7 @@ _list() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${NAMESPACE:-default}"
 
     LIST=/tmp/${THIS_NAME}-helm-ls
 
@@ -1217,7 +1217,7 @@ _describe() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${NAMESPACE:-default}"
 
     if [ -z ${NAME} ]; then
         LIST=/tmp/${THIS_NAME}-pod-ls
@@ -1245,7 +1245,7 @@ _hpa() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${NAMESPACE:-default}"
 
     if [ -z ${NAME} ]; then
         LIST=/tmp/${THIS_NAME}-hpa-ls
@@ -1273,7 +1273,7 @@ _ssh() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${NAMESPACE:-default}"
 
     if [ -z ${NAME} ]; then
         LIST=/tmp/${THIS_NAME}-pod-ls
@@ -1301,7 +1301,7 @@ _logs() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${NAMESPACE:-default}"
 
     if [ -z ${NAME} ]; then
         LIST=/tmp/${THIS_NAME}-pod-ls
@@ -1340,7 +1340,7 @@ _exec() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-development}"
+    NAMESPACE="${NAMESPACE:-default}"
 
     LIST=/tmp/${THIS_NAME}-pod-ls
 
