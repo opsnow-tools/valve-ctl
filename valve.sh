@@ -1071,7 +1071,7 @@ _up() {
         _error
     fi
 
-    _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
+    _waiting_pod "${NAMESPACE}" "${NAME}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
@@ -1158,7 +1158,7 @@ _remote() {
         _error
     fi
 
-    _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
+    _waiting_pod "${NAMESPACE}" "${NAME}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
