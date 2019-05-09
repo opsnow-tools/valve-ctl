@@ -564,6 +564,9 @@ _init() {
 
     # kubernetes-dashboard token
     create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
+
+    # namespace
+    _namespace "development" true
 }
 
 _helm_init() {
