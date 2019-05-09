@@ -532,7 +532,7 @@ _waiting_pod() {
 
         STATUS=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $3}')
 
-        if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "development" ]; then
+        if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "default" ] && [ "${_NS}" != "development" ]; then
             READY=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $2}' | cut -d'/' -f1)
         else
             READY="1"
@@ -573,9 +573,6 @@ _init() {
 
     # kubernetes-dashboard token
     create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
-
-    # namespace
-    _namespace "development" true
 }
 
 _helm_init() {
