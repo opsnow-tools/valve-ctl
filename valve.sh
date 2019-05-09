@@ -560,10 +560,14 @@ _init() {
     _draft_init
 
     # kubernetes-dashboard
-    _result "kubernetes-dashboard: http://kubernetes-dashboard.127.0.0.1.nip.io/"
+    DASHBOARD="$(kubectl get ing -n kube-system | grep kubernetes-dashboard | awk '{print $2}' | xargs)"
 
-    # kubernetes-dashboard token
-    create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
+    if [ "${DASHBOARD}" != "" ]; then
+        _result "kubernetes-dashboard: http://${DASHBOARD}/"
+
+        # kubernetes-dashboard token
+        create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
+    fi
 
     # namespace
     _namespace "development" true
