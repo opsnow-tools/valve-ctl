@@ -261,6 +261,8 @@ _args() {
 }
 
 _run() {
+    _prepare
+
     case ${CMD} in
         c|conf|config)
             _config
@@ -357,6 +359,13 @@ _version() {
 
     _command "valve version"
     _echo "${THIS_VERSION}"
+}
+
+_prepare() {
+    if [ -f draft.toml ]; then
+        DEFAULT_NAMESPACE=$(cat draft.toml | grep namespace | cut -d'"' -f2)
+    fi
+    DEFAULT_NAMESPACE="${DEFAULT_NAMESPACE:-default}"
 }
 
 _chart() {
@@ -523,7 +532,7 @@ _waiting_pod() {
 
         STATUS=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $3}')
 
-        if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "default" ]; then
+        if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "development" ]; then
             READY=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $2}' | cut -d'/' -f1)
         else
             READY="1"
@@ -566,7 +575,7 @@ _init() {
     create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
 
     # namespace
-    _namespace "default" true
+    _namespace "development" true
 }
 
 _helm_init() {
@@ -812,7 +821,7 @@ _gen() {
         PACKAGE="${SELECTED}"
     fi
 
-    NAMESPACE="${NAMESPACE:-default}"
+    NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
 
     SERVICE_GROUP=
     SERVICE_NAME=
@@ -955,7 +964,7 @@ _secret() {
     NAME="${1:-secret}"
 
     # namespace
-    NAMESPACE="${2:-default}"
+    NAMESPACE="${2:-$DEFAULT_NAMESPACE}"
 
     # secret
     SECRET="${NAME}-${NAMESPACE}"
@@ -1024,7 +1033,7 @@ _up() {
     NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
 
     # namespace
-    NAMESPACE="${NAMESPACE:-default}"
+    NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
 
     # make secret
     _secret "${NAME}" "${NAMESPACE}"
@@ -1071,7 +1080,7 @@ _up() {
         _error
     fi
 
-    _waiting_pod "${NAMESPACE}" "${NAME}"
+    _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
@@ -1083,7 +1092,7 @@ _remote() {
     _helm_repo
 
     # namespace
-    NAMESPACE="${NAMESPACE:-default}"
+    NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
 
     LIST=/tmp/${THIS_NAME}-charts-ls
 
@@ -1158,7 +1167,7 @@ _remote() {
         _error
     fi
 
-    _waiting_pod "${NAMESPACE}" "${NAME}"
+    _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
@@ -1200,7 +1209,7 @@ _list() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-default}"
+    NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
 
     LIST=/tmp/${THIS_NAME}-helm-ls
 
@@ -1217,7 +1226,7 @@ _describe() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-default}"
+    NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
 
     if [ -z ${NAME} ]; then
         LIST=/tmp/${THIS_NAME}-pod-ls
@@ -1245,7 +1254,7 @@ _hpa() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-default}"
+    NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
 
     if [ -z ${NAME} ]; then
         LIST=/tmp/${THIS_NAME}-hpa-ls
@@ -1273,7 +1282,7 @@ _ssh() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-default}"
+    NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
 
     if [ -z ${NAME} ]; then
         LIST=/tmp/${THIS_NAME}-pod-ls
@@ -1301,7 +1310,7 @@ _logs() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-default}"
+    NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
 
     if [ -z ${NAME} ]; then
         LIST=/tmp/${THIS_NAME}-pod-ls
@@ -1340,7 +1349,7 @@ _exec() {
     # _helm_init
 
     # namespace
-    NAMESPACE="${NAMESPACE:-default}"
+    NAMESPACE="${NAMESPACE:-$DEFAULT_NAMESPACE}"
 
     LIST=/tmp/${THIS_NAME}-pod-ls
 
