@@ -12,13 +12,13 @@ jobs:
       - run:
           name: Package
           command: |
-            chmod 755 ./build.sh
-            ./build.sh package
+            bash ./builder.sh package
+            bash ./build.sh
       - persist_to_workspace:
           root: /tmp/works
           paths:
             - target/*
-            - build.sh
+            - builder.sh
   publish:
     docker:
       - image: opspresso/awscli
@@ -28,8 +28,7 @@ jobs:
       - run:
           name: Publish
           command: |
-            chmod 755 ./works/build.sh
-            ./works/build.sh publish
+            bash ./works/builder.sh publish ./works
   release:
     docker:
       - image: circleci/golang
@@ -39,8 +38,7 @@ jobs:
       - run:
           name: Release
           command: |
-            chmod 755 ./works/build.sh
-            ./works/build.sh release
+            bash ./works/builder.sh release ./works
   slack:
     docker:
       - image: circleci/python
@@ -50,23 +48,13 @@ jobs:
       - run:
           name: Slack
           command: |
-            chmod 755 ./works/build.sh
-            ./works/build.sh slack
-
-# Advanced Settings
-# - Build forked pull requests
-# - Pass secrets to builds from forked pull requests
-# - Only build pull requests
+            bash ./works/builder.sh slack ./works
 
 workflows:
   version: 2
   apply:
     jobs:
       - package
-      # - approval:
-      #     type: approval
-      #     requires:
-      #       - package
       - publish:
           requires:
             - package
