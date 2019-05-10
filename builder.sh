@@ -84,7 +84,7 @@ _package() {
     MINOR=$(cat ${RUN_PATH}/VERSION | xargs | cut -d'.' -f2)
     BUILD=$(cat ${RUN_PATH}/VERSION | xargs | cut -d'.' -f3)
 
-    if [ "x${BUILD}" != "x0" ]; then
+    if [ "${BUILD}" != "x" ]; then
         VERSION="${MAJOR}.${MINOR}.${BUILD}"
         printf "${VERSION}" > ${RUN_PATH}/target/VERSION
     else
