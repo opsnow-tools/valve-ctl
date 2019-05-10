@@ -106,7 +106,7 @@ _select_one() {
         SELECTED="$(cat ${LIST} | xargs)"
     else
         if [ "${FZF}" != "" ]; then
-            SELECTED=$(cat ${LIST} | fzf --reverse --no-mouse --height=10 --bind=left:page-up,right:page-down)
+            SELECTED=$(cat ${LIST} | fzf --reverse --no-mouse --height=15 --bind=left:page-up,right:page-down)
         else
             echo
 
