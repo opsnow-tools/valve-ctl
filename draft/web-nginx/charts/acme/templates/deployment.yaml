@@ -68,6 +68,10 @@ spec:
 {{ toYaml . | indent 10 }}
 {{- end }}
 {{ if or .Values.configmap.enabled .Values.secret.enabled }}
+          - name: CONFIGMAP_HASH
+            value: {{ .Values.configmap.hash }}
+          - name: SECRET_HASH
+            value: {{ .Values.secret.hash }}
         envFrom:
 {{ end }}
 {{ if .Values.configmap.enabled }}

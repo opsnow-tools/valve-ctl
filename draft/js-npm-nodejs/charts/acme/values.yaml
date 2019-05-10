@@ -94,6 +94,8 @@ affinity: {}
 
 configmap:
   enabled: false
+  hash: ""
 
 secret:
   enabled: false
+  hash: ""
