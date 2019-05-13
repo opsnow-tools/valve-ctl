@@ -787,12 +787,12 @@ _mfa() {
     _read "TOKEN_CODE : "
     TOKEN_CODE=${ANSWER}
 
-    _aws_credentials "${ACCOUNT_ID}" "${USERNAME}" "${TOKEN_CODE}"
+    _aws_sts_token "${ACCOUNT_ID}" "${USERNAME}" "${TOKEN_CODE}"
 
     _config_save
 }
 
-_aws_credentials() {
+_aws_sts_token() {
     ACCOUNT_ID=${1}
     USERNAME=${2}
     TOKEN_CODE=${3}
