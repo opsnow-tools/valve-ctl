@@ -17,6 +17,7 @@ NEMESPACE=
 SECRET=
 CHARTMUSEUM=
 REGISTRY=
+USERNAME=
 
 FORCE=
 DELETE=
@@ -106,7 +107,7 @@ _select_one() {
         SELECTED="$(cat ${LIST} | xargs)"
     else
         if [ "${FZF}" != "" ]; then
-            SELECTED=$(cat ${LIST} | fzf --reverse --no-mouse --height=10 --bind=left:page-up,right:page-down)
+            SELECTED=$(cat ${LIST} | fzf --reverse --no-mouse --height=15 --bind=left:page-up,right:page-down)
         else
             echo
 
@@ -273,6 +274,9 @@ _run() {
             ;;
         guard)
             _guard
+            ;;
+        mfa)
+            _mfa
             ;;
         secret)
             _secret ${NAME} ${NAMESPACE}
@@ -553,6 +557,7 @@ _config_save() {
     echo "# valve config" > ${CONFIG}
     echo "REGISTRY=${REGISTRY}" >> ${CONFIG}
     echo "CHARTMUSEUM=${CHARTMUSEUM}" >> ${CONFIG}
+    echo "USERNAME=${USERNAME}" >> ${CONFIG}
 }
 
 _init() {
@@ -560,10 +565,14 @@ _init() {
     _draft_init
 
     # kubernetes-dashboard
-    _result "kubernetes-dashboard: http://kubernetes-dashboard.127.0.0.1.nip.io/"
+    DASHBOARD="$(kubectl get ing -n kube-system | grep kubernetes-dashboard | awk '{print $2}' | xargs)"
 
-    # kubernetes-dashboard token
-    create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
+    if [ "${DASHBOARD}" != "" ]; then
+        _result "kubernetes-dashboard: http://${DASHBOARD}/"
+
+        # kubernetes-dashboard token
+        create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
+    fi
 
     # namespace
     _namespace "development" true
@@ -750,8 +759,8 @@ _namespace() {
 }
 
 _guard() {
-    _read "USERNAME : "
-    USERNAME=${ANSWER}
+    _read "USERNAME [${USERNAME}]: "
+    USERNAME=${ANSWER:-$USERNAME}
 
     _read "PASSWORD : " s
     PASSWORD=${ANSWER}
@@ -759,6 +768,64 @@ _guard() {
     _result "dev: https://kubernetes-dashboard-kube-system.dev.opsnow.com/"
 
     _result "token : $(echo -n "${USERNAME}:${PASSWORD}" | base64)"
+
+    _config_save
+}
+
+_mfa() {
+    ACCOUNT_ID=$(aws sts get-caller-identity | grep "Account" | cut -d'"' -f 4)
+
+    if [ "${ACCOUNT_ID}" == "" ]; then
+        _error
+    fi
+
+    _result "${ACCOUNT_ID}"
+
+    _read "USERNAME [${USERNAME}]: "
+    USERNAME=${ANSWER:-$USERNAME}
+
+    _read "TOKEN_CODE : "
+    TOKEN_CODE=${ANSWER}
+
+    _aws_sts_token "${ACCOUNT_ID}" "${USERNAME}" "${TOKEN_CODE}"
+
+    _config_save
+}
+
+_aws_sts_token() {
+    ACCOUNT_ID=${1}
+    USERNAME=${2}
+    TOKEN_CODE=${3}
+
+    TMP=/tmp/${THIS_NAME}-sts-result
+
+    # echo "[default]" > ~/.aws/credentials
+    # echo "region=ap-northeast-2" >> ~/.aws/credentials
+
+    if [ "${TOKEN_CODE}" == "" ]; then
+        aws sts get-session-token > ${TMP}
+    else
+        aws sts get-session-token \
+            --serial-number arn:aws:iam::${ACCOUNT_ID}:mfa/${USERNAME} \
+            --token-code ${TOKEN_CODE} > ${TMP}
+    fi
+
+    ACCESS_KEY=$(cat ${TMP} | grep AccessKeyId | cut -d'"' -f4)
+    SECRET_KEY=$(cat ${TMP} | grep SecretAccessKey | cut -d'"' -f4)
+
+    if [ "${ACCESS_KEY}" == "" ] || [ "${SECRET_KEY}" == "" ]; then
+        _error "Cannot call GetSessionToken."
+    fi
+
+    SESSION_TOKEN=$(cat ${TMP} | grep SessionToken | cut -d'"' -f4)
+
+    echo "[default]" > ~/.aws/credentials
+    echo "aws_access_key_id=${ACCESS_KEY}" >> ~/.aws/credentials
+    echo "aws_secret_access_key=${SECRET_KEY}" >> ~/.aws/credentials
+
+    if [ "${SESSION_TOKEN}" != "" ]; then
+        echo "aws_session_token=${SESSION_TOKEN}" >> ~/.aws/credentials
+    fi
 }
 
 _gen() {
@@ -1071,7 +1138,7 @@ _up() {
         _error
     fi
 
-    _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
+    _waiting_pod "${NAMESPACE}" "${NAME}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
@@ -1158,7 +1225,7 @@ _remote() {
         _error
     fi
 
-    _waiting_pod "${NAMESPACE}" "${NAME}-${NAMESPACE}"
+    _waiting_pod "${NAMESPACE}" "${NAME}"
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}

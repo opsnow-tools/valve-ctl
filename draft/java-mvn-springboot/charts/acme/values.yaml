@@ -58,7 +58,7 @@ readinessProbe:
   httpGet:
     path: /
     port: 8080
-  initialDelaySeconds: 45
+  initialDelaySeconds: 60
   periodSeconds: 10
   failureThreshold: 3
 
@@ -66,7 +66,7 @@ livenessProbe:
   httpGet:
     path: /
     port: 8080
-  initialDelaySeconds: 45
+  initialDelaySeconds: 60
   periodSeconds: 10
   failureThreshold: 3
 
@@ -94,6 +94,8 @@ affinity: {}
 
 configmap:
   enabled: false
+  hash: ""
 
 secret:
   enabled: false
+  hash: ""
