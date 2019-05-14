@@ -6,49 +6,53 @@ jobs:
   package:
     docker:
       - image: circleci/python
-    working_directory: /tmp/works
+    working_directory: ~/works
     steps:
       - checkout
       - run:
           name: Package
           command: |
-            bash ./builder.sh package
+            mkdir target
+            cp ./builder.sh target/builder.sh
+            bash ./target/builder.sh package
             bash ./build.sh
       - persist_to_workspace:
-          root: /tmp/works
+          root: ~/works
           paths:
-            - target/*
-            - builder.sh
+            - target
   publish:
     docker:
       - image: opspresso/awscli
+    working_directory: ~/works
     steps:
       - attach_workspace:
-          at: works
+          at: ~/works
       - run:
           name: Publish
           command: |
-            bash ./works/builder.sh publish ./works
+            bash ./target/builder.sh publish
   release:
     docker:
       - image: circleci/golang
+    working_directory: ~/works
     steps:
       - attach_workspace:
-          at: works
+          at: ~/works
       - run:
           name: Release
           command: |
-            bash ./works/builder.sh release ./works
+            bash ./target/builder.sh release
   slack:
     docker:
       - image: circleci/python
+    working_directory: ~/works
     steps:
       - attach_workspace:
-          at: works
+          at: ~/works
       - run:
           name: Slack
           command: |
-            bash ./works/builder.sh slack ./works
+            bash ./target/builder.sh slack
 
 workflows:
   version: 2
