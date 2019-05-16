@@ -92,10 +92,16 @@ tolerations: []
 
 affinity: {}
 
+env: {}
+  # - name: MESSAGE
+  #   value: "hello world"
+
 configmap:
   enabled: false
-  hash: ""
+  data: {}
+    # MESSAGE: "hello world"
 
 secret:
   enabled: false
-  hash: ""
+  data: {}
+    # SECRET: c2VjcmV0IHdvcmxkCg==
