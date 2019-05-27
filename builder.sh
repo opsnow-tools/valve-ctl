@@ -17,6 +17,7 @@ BRANCH=${CIRCLE_BRANCH:-master}
 
 DOCKER_USER=${DOCKER_USER:-$USERNAME}
 DOCKER_PASS=${DOCKER_PASS}
+DOCKER_IMAGE="${DOCKER_IMAGE:-$DOCKER_USER/$REPONAME}"
 
 CIRCLE_BUILDER=${CIRCLE_BUILDER}
 
@@ -217,11 +218,11 @@ _docker() {
     _command "docker login -u $DOCKER_USER"
     docker login -u $DOCKER_USER -p $DOCKER_PASS
 
-    _command "docker build -t ${USERNAME}/${REPONAME}:${VERSION} ."
-    docker build -f ${PARAM:-Dockerfile} -t ${USERNAME}/${REPONAME}:${VERSION} .
+    _command "docker build -t ${DOCKER_IMAGE}:${VERSION} ."
+    docker build -f ${PARAM:-Dockerfile} -t ${DOCKER_IMAGE}:${VERSION} .
 
-    _command "docker push ${USERNAME}/${REPONAME}:${VERSION}"
-    docker push ${USERNAME}/${REPONAME}:${VERSION}
+    _command "docker push ${DOCKER_IMAGE}:${VERSION}"
+    docker push ${DOCKER_IMAGE}:${VERSION}
 
     _command "docker logout"
     docker logout
