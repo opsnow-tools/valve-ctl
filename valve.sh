@@ -351,13 +351,13 @@ _update() {
 
 _version() {
     _command "kubectl version"
-    kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1
+    kubectl version
 
     _command "helm version"
-    helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1
+    helm version
 
     _command "draft version"
-    draft version --short | xargs | cut -d'+' -f1
+    draft version
 
     _command "valve version"
     _echo "${THIS_VERSION}"
