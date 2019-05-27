@@ -4,16 +4,27 @@ OS_NAME="$(uname | awk '{print tolower($0)}')"
 
 SHELL_DIR=$(dirname $0)
 
+RUN_PATH="."
+
 CMD=${1:-$CIRCLE_JOB}
 
-RUN_PATH=${2:-.}
+PARAM=${2}
 
 USERNAME=${CIRCLE_PROJECT_USERNAME}
 REPONAME=${CIRCLE_PROJECT_REPONAME}
 
 BRANCH=${CIRCLE_BRANCH:-master}
 
+DOCKER_USER=${DOCKER_USER:-$USERNAME}
+DOCKER_PASS=${DOCKER_PASS}
+
+CIRCLE_BUILDER=${CIRCLE_BUILDER}
+
+# CIRCLE_BUILDER=
+# DOCKER_USER=
+# DOCKER_PASS=
 # GITHUB_TOKEN=
+# PERSONAL_TOKEN=
 # PUBLISH_PATH=
 # SLACK_TOKEN=
 
@@ -192,6 +203,58 @@ _release() {
         ${VERSION} ${RUN_PATH}/target/release/
 }
 
+_docker() {
+    if [ -z ${DOCKER_PASS} ]; then
+        return
+    fi
+    if [ ! -f ${RUN_PATH}/target/VERSION ]; then
+        return
+    fi
+
+    VERSION=$(cat ${RUN_PATH}/target/VERSION | xargs)
+    _result "VERSION=${VERSION}"
+
+    _command "docker login -u $DOCKER_USER"
+    docker login -u $DOCKER_USER -p $DOCKER_PASS
+
+    _command "docker build -t ${USERNAME}/${REPONAME}:${VERSION} ."
+    docker build -f ${PARAM:-Dockerfile} -t ${USERNAME}/${REPONAME}:${VERSION} .
+
+    _command "docker push ${USERNAME}/${REPONAME}:${VERSION}"
+    docker push ${USERNAME}/${REPONAME}:${VERSION}
+
+    _command "docker logout"
+    docker logout
+}
+
+_trigger() {
+    if [ -z ${CIRCLE_BUILDER} ]; then
+        return
+    fi
+    if [ -z ${PERSONAL_TOKEN} ]; then
+        return
+    fi
+    if [ ! -f ${RUN_PATH}/target/VERSION ]; then
+        return
+    fi
+
+    VERSION=$(cat ${RUN_PATH}/target/VERSION | xargs)
+    _result "VERSION=${VERSION}"
+
+    CIRCLE_API="https://circleci.com/api/v1.1/project/github/${CIRCLE_BUILDER}"
+    CIRCLE_URL="${CIRCLE_API}?circle-token=${PERSONAL_TOKEN}"
+
+    PAYLOAD="{\"build_parameters\":{"
+    PAYLOAD="${PAYLOAD}\"TG_USERNAME\":\"${USERNAME}\","
+    PAYLOAD="${PAYLOAD}\"TG_PROJECT\":\"${REPONAME}\","
+    PAYLOAD="${PAYLOAD}\"TG_VERSION\":\"${VERSION}\""
+    PAYLOAD="${PAYLOAD}}}"
+
+    curl -X POST \
+        -H "Content-Type: application/json" \
+        -d "${PAYLOAD}" "${CIRCLE_URL}"
+}
+
 _slack() {
     if [ -z ${SLACK_TOKEN} ]; then
         return
@@ -216,7 +279,7 @@ _slack() {
 _prepare
 
 case ${CMD} in
-    package)
+    build|package)
         _package
         ;;
     publish)
@@ -224,6 +287,12 @@ case ${CMD} in
         ;;
     release)
         _release
+        ;;
+    docker)
+        _docker
+        ;;
+    trigger)
+        _trigger
         ;;
     slack)
         _slack
