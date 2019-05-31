@@ -1126,19 +1126,19 @@ _up() {
     docker push ${REGISTRY}/${NAME}:latest
 
     # has configmap
-    CNT=$(kubectl get configmap ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
-    if [ "x${CNT}" == "x2" ]; then
+    CNT=$(kubectl get configmap -n ${NAMESPACE} | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         CONFIGMAP=true
-        _result "configmap=${SECRET}"
+        _result "configmap.enabled=${CONFIGMAP}"
     else
         CONFIGMAP=false
     fi
 
     # has secret
-    CNT=$(kubectl get secret ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
-    if [ "x${CNT}" == "x2" ]; then
+    CNT=$(kubectl get secret -n ${NAMESPACE} | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         SECRET=true
-        _result "secret=${SECRET}"
+        _result "secret.enabled=${SECRET}"
     else
         SECRET=false
     fi
@@ -1235,19 +1235,19 @@ _remote() {
     fi
 
     # has configmap
-    CNT=$(kubectl get configmap ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
-    if [ "x${CNT}" == "x2" ]; then
+    CNT=$(kubectl get configmap -n ${NAMESPACE} | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         CONFIGMAP=true
-        _result "configmap=${SECRET}"
+        _result "configmap.enabled=${CONFIGMAP}"
     else
         CONFIGMAP=false
     fi
 
     # has secret
-    CNT=$(kubectl get secret ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
-    if [ "x${CNT}" == "x2" ]; then
+    CNT=$(kubectl get secret -n ${NAMESPACE} | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
         SECRET=true
-        _result "secret=${SECRET}"
+        _result "secret.enabled=${SECRET}"
     else
         SECRET=false
     fi
