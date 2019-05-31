@@ -1145,7 +1145,7 @@ _up() {
 
     # has local values
     if [ -f charts/${NAME}/values-local.yaml ]; then
-        LOCAL_VALUES=" --values charts/${NAME}/values-local.yaml "
+        LOCAL_VALUES="--values charts/${NAME}/values-local.yaml"
     else
         LOCAL_VALUES=""
     fi
