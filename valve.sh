@@ -1123,10 +1123,29 @@ _up() {
     _command "docker push ${REGISTRY}/${NAME}:latest"
     docker push ${REGISTRY}/${NAME}:latest
 
+    # has configmap
+    CNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
+        CONFIGMAP=true
+    else
+        CONFIGMAP=false
+    fi
+
+    # has secret
+    CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
+        SECRET=true
+    else
+        SECRET=false
+    fi
+
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} --devel \
                     --set fullnameOverride=${NAME} \
+                    --set ingress.subdomain=${NAME}-${NAMESPACE} \
+                    --set configmap.enabled=${CONFIGMAP} \
+                    --set secret.enabled=${SECRET} \
                     --set namespace=${NAMESPACE}
 
     # # draft up
