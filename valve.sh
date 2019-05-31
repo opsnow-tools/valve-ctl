@@ -1025,7 +1025,7 @@ _secret() {
     NAMESPACE="${2:-development}"
 
     # secret
-    SECRET="${NAME}-${NAMESPACE}"
+    SECRET="${NAME}"
 
     # delete
     if [ ! -z ${DELETE} ]; then
@@ -1035,7 +1035,7 @@ _secret() {
 
     if [ -z ${FORCE} ]; then
         # has secret
-        CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+        CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
         if [ "x${CNT}" != "x0" ]; then
             return
         fi
@@ -1193,7 +1193,7 @@ _remote() {
     fi
 
     # has configmap
-    CNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+    CNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
         CONFIGMAP=true
     else
@@ -1201,7 +1201,7 @@ _remote() {
     fi
 
     # has secret
-    CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME}-${NAMESPACE} | wc -l | xargs)
+    CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
         SECRET=true
     else
@@ -1211,7 +1211,7 @@ _remote() {
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE} --devel \
-                    --set fullnameOverride=${NAME}-${NAMESPACE} \
+                    --set fullnameOverride=${NAME} \
                     --set ingress.subdomain=${NAME}-${NAMESPACE} \
                     --set configmap.enabled=${CONFIGMAP} \
                     --set secret.enabled=${SECRET} \
