@@ -1126,7 +1126,7 @@ _up() {
     docker push ${REGISTRY}/${NAME}:latest
 
     # has configmap
-    CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
+    CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
         CONFIGMAP="true"
         _result "configmap.enabled=${CONFIGMAP}"
@@ -1135,7 +1135,7 @@ _up() {
     fi
 
     # has secret
-    CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
+    CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
         SECRET="true"
         _result "secret.enabled=${SECRET}"
@@ -1180,7 +1180,7 @@ _up() {
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
 
-    if [ "${CONFIGMAP}" == "true" ] || [ "${SECRET}" == "true" ]; then
+    if [ "x${CONFIGMAP}" == "xtrue" ] || [ "x${SECRET}" == "xtrue" ]; then
         _command "kubectl get cm,secret -n ${NAMESPACE}"
         kubectl get cm,secret -n ${NAMESPACE}
     fi
@@ -1235,7 +1235,7 @@ _remote() {
     fi
 
     # has configmap
-    CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
+    CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
         CONFIGMAP="true"
         _result "configmap.enabled=${CONFIGMAP}"
@@ -1244,7 +1244,7 @@ _remote() {
     fi
 
     # has secret
-    CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
+    CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
         SECRET="true"
         _result "secret.enabled=${SECRET}"
@@ -1274,7 +1274,7 @@ _remote() {
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
 
-    if [ "${CONFIGMAP}" == "true" ] || [ "${SECRET}" == "true" ]; then
+    if [ "x${CONFIGMAP}" == "xtrue" ] || [ "x${SECRET}" == "xtrue" ]; then
         _command "kubectl get cm,secret -n ${NAMESPACE}"
         kubectl get cm,secret -n ${NAMESPACE}
     fi
