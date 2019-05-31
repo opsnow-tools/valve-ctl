@@ -168,26 +168,26 @@ fi
 
 helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1
 
-# draft
-echo "================================================================================"
-_result "install draft..."
+# # draft
+# echo "================================================================================"
+# _result "install draft..."
 
-if [ "${OS_TYPE}" == "brew" ]; then
-   command -v draft > /dev/null || brew tap azure/draft && brew install azure/draft/draft
-else
-    VERSION=$(curl -s https://api.github.com/repos/Azure/draft/releases/latest | jq -r '.tag_name')
+# if [ "${OS_TYPE}" == "brew" ]; then
+#    command -v draft > /dev/null || brew tap azure/draft && brew install azure/draft/draft
+# else
+#     VERSION=$(curl -s https://api.github.com/repos/Azure/draft/releases/latest | jq -r '.tag_name')
 
-    if [ "${DRAFT}" != "${VERSION}" ] || [ "$(command -v draft)" == "" ]; then
-        _result " ${DRAFT} >> ${VERSION}"
+#     if [ "${DRAFT}" != "${VERSION}" ] || [ "$(command -v draft)" == "" ]; then
+#         _result " ${DRAFT} >> ${VERSION}"
 
-        curl -L https://azuredraft.blob.core.windows.net/draft/draft-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz
-        sudo mv ${OS_NAME}-amd64/draft /usr/local/bin/draft && rm -rf ${OS_NAME}-amd64
+#         curl -L https://azuredraft.blob.core.windows.net/draft/draft-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz
+#         sudo mv ${OS_NAME}-amd64/draft /usr/local/bin/draft && rm -rf ${OS_NAME}-amd64
 
-        DRAFT="${VERSION}"
-    fi
-fi
+#         DRAFT="${VERSION}"
+#     fi
+# fi
 
-draft version --short | xargs | cut -d'+' -f1
+# draft version --short | xargs | cut -d'+' -f1
 
 # guard
 echo "================================================================================"
