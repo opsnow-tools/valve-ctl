@@ -153,7 +153,8 @@ _result "install helm..."
 if [ "${OS_TYPE}" == "brew" ]; then
     command -v helm > /dev/null || brew install kubernetes-helm
 else
-    VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq -r '.tag_name')
+    # VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq -r '.tag_name')
+    VERSION="v2.13.1"
 
     if [ "${HELM}" != "${VERSION}" ] || [ "$(command -v helm)" == "" ]; then
         _result " ${HELM} >> ${VERSION}"
@@ -193,7 +194,7 @@ echo "==========================================================================
 _result "install guard..."
 
 # VERSION=$(curl -s https://api.github.com/repos/appscode/guard/releases/latest | jq -r '.tag_name')
-VERSION=0.1.2
+VERSION="0.1.2"
 
 if [ "${GUARD}" != "${VERSION}" ]; then
     _result " ${GUARD} >> ${VERSION}"

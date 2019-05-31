@@ -1115,8 +1115,12 @@ _up() {
         _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
     fi
 
-    # docker
+    # docker build
+    _command "docker build -t ${REGISTRY}/${NAME}:latest ."
     docker build -t ${REGISTRY}/${NAME}:latest .
+
+    # docker push
+    _command "docker push ${REGISTRY}/${NAME}:latest"
     docker push ${REGISTRY}/${NAME}:latest
 
     # helm install
