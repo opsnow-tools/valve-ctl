@@ -1146,15 +1146,15 @@ _up() {
     # has local values
     CNT=$(ls charts/sample-web/ | grep 'values-local.yaml' | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
-        LOCAL=" --values charts/sample-web/values-local.yaml "
+        LOCAL_VALUES=" --values charts/sample-web/values-local.yaml "
     else
-        LOCAL=""
+        LOCAL_VALUES=""
     fi
 
     # helm install
-    _command "helm install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE}"
+    _command "helm install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} ${LOCAL_VALUES}"
     helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} \
-                    --devel ${LOCAL} \
+                    --devel ${LOCAL_VALUES} \
                     --set fullnameOverride=${NAME} \
                     --set configmap.enabled=${CONFIGMAP} \
                     --set secret.enabled=${SECRET} \
