@@ -1143,9 +1143,18 @@ _up() {
         SECRET="false"
     fi
 
+    # has local values
+    CNT=$(ls charts/sample-web/ | grep 'values-local.yaml' | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
+        LOCAL=" --values charts/sample-web/values-local.yaml "
+    else
+        LOCAL=""
+    fi
+
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE}"
-    helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} --devel \
+    helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} \
+                    --devel ${LOCAL} \
                     --set fullnameOverride=${NAME} \
                     --set ingress.subdomain=${NAME}-${NAMESPACE} \
                     --set configmap.enabled=${CONFIGMAP} \
