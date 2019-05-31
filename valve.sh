@@ -1156,7 +1156,6 @@ _up() {
     helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} \
                     --devel ${LOCAL} \
                     --set fullnameOverride=${NAME} \
-                    --set ingress.subdomain=${NAME}-${NAMESPACE} \
                     --set configmap.enabled=${CONFIGMAP} \
                     --set secret.enabled=${SECRET} \
                     --set namespace=${NAMESPACE}
@@ -1265,7 +1264,6 @@ _remote() {
     _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE} --devel \
                     --set fullnameOverride=${NAME} \
-                    --set ingress.subdomain=${NAME}-${NAMESPACE} \
                     --set configmap.enabled=${CONFIGMAP} \
                     --set secret.enabled=${SECRET} \
                     --set namespace=${NAMESPACE}
