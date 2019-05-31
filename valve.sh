@@ -1096,16 +1096,18 @@ _up() {
     # make secret
     _secret "${NAME}" "${NAMESPACE}"
 
-    # helm check FAILED
-    CNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
-        DELETE=true
-    fi
+    # # helm check FAILED
+    # CNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
+    # if [ "x${CNT}" != "x0" ]; then
+    #     DELETE=true
+    # fi
 
     # helm delete
     if [ ! -z ${DELETE} ]; then
         _command "helm delete ${NAME}-${NAMESPACE} --purge"
         helm delete ${NAME}-${NAMESPACE} --purge
+
+        sleep 2
     fi
 
     # charts/${NAME}/values.yaml
@@ -1175,6 +1177,11 @@ _up() {
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
+
+    if [ "${CONFIGMAP}" == "true" ] || [ "${SECRET}" == "true" ]; then
+        _command "kubectl get cm,secret -n ${NAMESPACE}"
+        kubectl get cm,secret -n ${NAMESPACE}
+    fi
 }
 
 _remote() {
@@ -1262,6 +1269,11 @@ _remote() {
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
+
+    if [ "${CONFIGMAP}" == "true" ] || [ "${SECRET}" == "true" ]; then
+        _command "kubectl get cm,secret -n ${NAMESPACE}"
+        kubectl get cm,secret -n ${NAMESPACE}
+    fi
 }
 
 _context() {
