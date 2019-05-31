@@ -1128,19 +1128,19 @@ _up() {
     # has configmap
     CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
-        CONFIGMAP=true
+        CONFIGMAP="true"
         _result "configmap.enabled=${CONFIGMAP}"
     else
-        CONFIGMAP=false
+        CONFIGMAP="false"
     fi
 
     # has secret
     CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
-        SECRET=true
+        SECRET="true"
         _result "secret.enabled=${SECRET}"
     else
-        SECRET=false
+        SECRET="false"
     fi
 
     # helm install
@@ -1237,19 +1237,19 @@ _remote() {
     # has configmap
     CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
-        CONFIGMAP=true
+        CONFIGMAP="true"
         _result "configmap.enabled=${CONFIGMAP}"
     else
-        CONFIGMAP=false
+        CONFIGMAP="false"
     fi
 
     # has secret
     CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\")" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
-        SECRET=true
+        SECRET="true"
         _result "secret.enabled=${SECRET}"
     else
-        SECRET=false
+        SECRET="false"
     fi
 
     # helm install
