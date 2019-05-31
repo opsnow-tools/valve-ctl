@@ -1124,16 +1124,16 @@ _up() {
     docker push ${REGISTRY}/${NAME}:latest
 
     # has configmap
-    CNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
+    CNT=$(kubectl get configmap ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
+    if [ "x${CNT}" == "x2" ]; then
         CONFIGMAP=true
     else
         CONFIGMAP=false
     fi
 
     # has secret
-    CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
+    CNT=$(kubectl get secret ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
+    if [ "x${CNT}" == "x2" ]; then
         SECRET=true
     else
         SECRET=false
@@ -1226,16 +1226,16 @@ _remote() {
     fi
 
     # has configmap
-    CNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
+    CNT=$(kubectl get configmap ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
+    if [ "x${CNT}" == "x2" ]; then
         CONFIGMAP=true
     else
         CONFIGMAP=false
     fi
 
     # has secret
-    CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
+    CNT=$(kubectl get secret ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
+    if [ "x${CNT}" == "x2" ]; then
         SECRET=true
     else
         SECRET=false
