@@ -596,6 +596,7 @@ _helm_init() {
         _helm_delete "docker-registry"
         _helm_delete "kubernetes-dashboard"
         _helm_delete "metrics-server"
+        _helm_delete "chartmuseum"
         _helm_delete "heapster"
     fi
 
@@ -606,6 +607,7 @@ _helm_init() {
     _helm_install "${NAMESPACE}" "docker-registry"
     _helm_install "${NAMESPACE}" "kubernetes-dashboard"
     _helm_install "${NAMESPACE}" "metrics-server"
+    _helm_install "${NAMESPACE}" "chartmuseum"
     _helm_install "${NAMESPACE}" "heapster"
 
     _waiting_pod "${NAMESPACE}" "docker-registry"
@@ -1115,20 +1117,23 @@ _up() {
         _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
     fi
 
-    # draft up
-    _command "draft up -e ${NAMESPACE}"
-    draft up -e ${NAMESPACE}
+    # docker
+    docker build -t ${REGISTRY}/${NAME} .
 
-    DRAFT_LOGS=$(mktemp /tmp/${THIS_NAME}-draft-logs.XXXXXX)
+    # # draft up
+    # _command "draft up -e ${NAMESPACE}"
+    # draft up -e ${NAMESPACE}
 
-    # find draft error
-    draft logs | grep error > ${DRAFT_LOGS}
-    CNT=$(cat ${DRAFT_LOGS} | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
-        _command "draft logs"
-        draft logs
-        _error "$(cat ${DRAFT_LOGS})"
-    fi
+    # DRAFT_LOGS=$(mktemp /tmp/${THIS_NAME}-draft-logs.XXXXXX)
+
+    # # find draft error
+    # draft logs | grep error > ${DRAFT_LOGS}
+    # CNT=$(cat ${DRAFT_LOGS} | wc -l | xargs)
+    # if [ "x${CNT}" != "x0" ]; then
+    #     _command "draft logs"
+    #     draft logs
+    #     _error "$(cat ${DRAFT_LOGS})"
+    # fi
 
     _command "helm ls ${NAME}-${NAMESPACE}"
     helm ls ${NAME}-${NAMESPACE}
