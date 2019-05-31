@@ -596,7 +596,6 @@ _helm_init() {
         _helm_delete "docker-registry"
         _helm_delete "kubernetes-dashboard"
         _helm_delete "metrics-server"
-        _helm_delete "chartmuseum"
         _helm_delete "heapster"
     fi
 
@@ -607,7 +606,6 @@ _helm_init() {
     _helm_install "${NAMESPACE}" "docker-registry"
     _helm_install "${NAMESPACE}" "kubernetes-dashboard"
     _helm_install "${NAMESPACE}" "metrics-server"
-    _helm_install "${NAMESPACE}" "chartmuseum"
     _helm_install "${NAMESPACE}" "heapster"
 
     _waiting_pod "${NAMESPACE}" "docker-registry"
@@ -1118,7 +1116,14 @@ _up() {
     fi
 
     # docker
-    docker build -t ${REGISTRY}/${NAME} .
+    docker build -t ${REGISTRY}/${NAME}:latest .
+    docker push ${REGISTRY}/${NAME}:latest
+
+    # helm install
+    _command "helm install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE}"
+    helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} --devel \
+                    --set fullnameOverride=${NAME} \
+                    --set namespace=${NAMESPACE}
 
     # # draft up
     # _command "draft up -e ${NAMESPACE}"
