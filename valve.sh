@@ -1144,9 +1144,9 @@ _up() {
     fi
 
     # has local values
-    CNT=$(ls charts/sample-web/ | grep 'values-local.yaml' | wc -l | xargs)
+    CNT=$(ls charts/${NAME} | grep 'values-local.yaml' | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
-        LOCAL_VALUES=" --values charts/sample-web/values-local.yaml "
+        LOCAL_VALUES=" --values charts/${NAME}/values-local.yaml "
     else
         LOCAL_VALUES=""
     fi
