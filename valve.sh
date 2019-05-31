@@ -1129,6 +1129,7 @@ _up() {
     CNT=$(kubectl get configmap ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
     if [ "x${CNT}" == "x2" ]; then
         CONFIGMAP=true
+        _result "configmap=${SECRET}"
     else
         CONFIGMAP=false
     fi
@@ -1137,6 +1138,7 @@ _up() {
     CNT=$(kubectl get secret ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
     if [ "x${CNT}" == "x2" ]; then
         SECRET=true
+        _result "secret=${SECRET}"
     else
         SECRET=false
     fi
@@ -1236,6 +1238,7 @@ _remote() {
     CNT=$(kubectl get configmap ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
     if [ "x${CNT}" == "x2" ]; then
         CONFIGMAP=true
+        _result "configmap=${SECRET}"
     else
         CONFIGMAP=false
     fi
@@ -1244,6 +1247,7 @@ _remote() {
     CNT=$(kubectl get secret ${NAME} -n ${NAMESPACE} > /dev/null 2>&1 | wc -l | xargs)
     if [ "x${CNT}" == "x2" ]; then
         SECRET=true
+        _result "secret=${SECRET}"
     else
         SECRET=false
     fi
