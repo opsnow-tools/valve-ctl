@@ -1096,16 +1096,18 @@ _up() {
     # make secret
     _secret "${NAME}" "${NAMESPACE}"
 
-    # helm check FAILED
-    CNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
-        DELETE=true
-    fi
+    # # helm check FAILED
+    # CNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
+    # if [ "x${CNT}" != "x0" ]; then
+    #     DELETE=true
+    # fi
 
     # helm delete
     if [ ! -z ${DELETE} ]; then
         _command "helm delete ${NAME}-${NAMESPACE} --purge"
         helm delete ${NAME}-${NAMESPACE} --purge
+
+        sleep 2
     fi
 
     # charts/${NAME}/values.yaml
@@ -1115,20 +1117,62 @@ _up() {
         _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
     fi
 
-    # draft up
-    _command "draft up -e ${NAMESPACE}"
-    draft up -e ${NAMESPACE}
+    # docker build
+    _command "docker build -t ${REGISTRY}/${NAME}:latest ."
+    docker build -t ${REGISTRY}/${NAME}:latest .
 
-    DRAFT_LOGS=$(mktemp /tmp/${THIS_NAME}-draft-logs.XXXXXX)
+    # docker push
+    _command "docker push ${REGISTRY}/${NAME}:latest"
+    docker push ${REGISTRY}/${NAME}:latest
 
-    # find draft error
-    draft logs | grep error > ${DRAFT_LOGS}
-    CNT=$(cat ${DRAFT_LOGS} | wc -l | xargs)
+    # has configmap
+    CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
-        _command "draft logs"
-        draft logs
-        _error "$(cat ${DRAFT_LOGS})"
+        CONFIGMAP="true"
+        _result "configmap.enabled=${CONFIGMAP}"
+    else
+        CONFIGMAP="false"
     fi
+
+    # has secret
+    CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
+        SECRET="true"
+        _result "secret.enabled=${SECRET}"
+    else
+        SECRET="false"
+    fi
+
+    # has local values
+    if [ -f charts/${NAME}/values-local.yaml ]; then
+        LOCAL_VALUES="--values charts/${NAME}/values-local.yaml"
+    else
+        LOCAL_VALUES=""
+    fi
+
+    # helm install
+    _command "helm install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} ${LOCAL_VALUES}"
+    helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} \
+                    --devel ${LOCAL_VALUES} \
+                    --set fullnameOverride=${NAME} \
+                    --set configmap.enabled=${CONFIGMAP} \
+                    --set secret.enabled=${SECRET} \
+                    --set namespace=${NAMESPACE}
+
+    # # draft up
+    # _command "draft up -e ${NAMESPACE}"
+    # draft up -e ${NAMESPACE}
+
+    # DRAFT_LOGS=$(mktemp /tmp/${THIS_NAME}-draft-logs.XXXXXX)
+
+    # # find draft error
+    # draft logs | grep error > ${DRAFT_LOGS}
+    # CNT=$(cat ${DRAFT_LOGS} | wc -l | xargs)
+    # if [ "x${CNT}" != "x0" ]; then
+    #     _command "draft logs"
+    #     draft logs
+    #     _error "$(cat ${DRAFT_LOGS})"
+    # fi
 
     _command "helm ls ${NAME}-${NAMESPACE}"
     helm ls ${NAME}-${NAMESPACE}
@@ -1142,6 +1186,11 @@ _up() {
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
+
+    if [ "x${CONFIGMAP}" == "xtrue" ] || [ "x${SECRET}" == "xtrue" ]; then
+        _command "kubectl get cm,secret -n ${NAMESPACE}"
+        kubectl get cm,secret -n ${NAMESPACE}
+    fi
 }
 
 _remote() {
@@ -1193,26 +1242,27 @@ _remote() {
     fi
 
     # has configmap
-    CNT=$(kubectl get configmap -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
+    CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
-        CONFIGMAP=true
+        CONFIGMAP="true"
+        _result "configmap.enabled=${CONFIGMAP}"
     else
-        CONFIGMAP=false
+        CONFIGMAP="false"
     fi
 
     # has secret
-    CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
+    CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
-        SECRET=true
+        SECRET="true"
+        _result "secret.enabled=${SECRET}"
     else
-        SECRET=false
+        SECRET="false"
     fi
 
     # helm install
     _command "helm install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} chartmuseum/${NAME} --version ${VERSION} --namespace ${NAMESPACE} --devel \
                     --set fullnameOverride=${NAME} \
-                    --set ingress.subdomain=${NAME}-${NAMESPACE} \
                     --set configmap.enabled=${CONFIGMAP} \
                     --set secret.enabled=${SECRET} \
                     --set namespace=${NAMESPACE}
@@ -1229,6 +1279,11 @@ _remote() {
 
     _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
     kubectl get pod,svc,ing -n ${NAMESPACE}
+
+    if [ "x${CONFIGMAP}" == "xtrue" ] || [ "x${SECRET}" == "xtrue" ]; then
+        _command "kubectl get cm,secret -n ${NAMESPACE}"
+        kubectl get cm,secret -n ${NAMESPACE}
+    fi
 }
 
 _context() {
