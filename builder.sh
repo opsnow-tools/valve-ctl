@@ -118,7 +118,7 @@ _package() {
         else
             PR=$(echo "${BRANCH}" | cut -d'/' -f1)
 
-            if [ "${PR}" == "pull" ]; then
+            if [ "${PR_NUM}" != "" ] || [ "${PR_URL}" != "" ] || [ "${PR}" == "pull" ]; then
                 printf "${PR}" > ${RUN_PATH}/target/PR
 
                 if [ "${PR_NUM}" == "" ]; then
