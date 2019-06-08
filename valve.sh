@@ -562,7 +562,6 @@ _config_save() {
 
 _init() {
     _helm_init
-    _draft_init
 
     # kubernetes-dashboard
     DASHBOARD="$(kubectl get ing -n kube-system | grep kubernetes-dashboard | awk '{print $2}' | xargs)"
@@ -711,30 +710,6 @@ create_cluster_role_binding() {
         _command "kubectl describe secret ${SECRET} -n ${_NAMESPACE}"
         kubectl describe secret ${SECRET} -n ${_NAMESPACE} | grep 'token:'
     fi
-}
-
-_draft_init() {
-    _command "draft init"
-    draft init
-
-    # _command "draft version"
-    # draft version
-
-    draft config set disable-push-warning 1
-
-    # curl -sL docker-registry.127.0.0.1.nip.io:30500/v2/_catalog | jq '.'
-    REGISTRY="${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}"
-
-    # registry
-    if [ -z ${REGISTRY} ]; then
-        _command "draft config unset registry"
-        draft config unset registry
-    else
-        _command "draft config set registry ${REGISTRY}"
-        draft config set registry ${REGISTRY}
-    fi
-
-    _config_save
 }
 
 _namespace() {
@@ -1025,17 +1000,19 @@ _secret() {
     NAMESPACE="${2:-development}"
 
     # secret
-    SECRET="${NAME}"
+    SECRET="${NAME}-local"
 
-    # delete
-    if [ ! -z ${DELETE} ]; then
-        _command "kubectl delete secret ${SECRET} -n ${NAMESPACE}"
-        kubectl delete secret ${SECRET} -n ${NAMESPACE}
+    # Secret reset condition = delete or force option
+    RESET_SECRET=
+    if [ ! -z ${DELETE} ] || [ ! -z ${FORCE} ]; then
+        RESET_SECRET=1
+        echo "Secret reset - ${SECRET}"
     fi
 
-    if [ -z ${FORCE} ]; then
-        # has secret
-        CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${NAME} | wc -l | xargs)
+    # No option for secret reset
+    if [ -z ${RESET_SECRET} ]; then
+        # Exit if already has secret
+        CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${SECRET} | wc -l | xargs)
         if [ "x${CNT}" != "x0" ]; then
             return
         fi
@@ -1125,23 +1102,23 @@ _up() {
     _command "docker push ${REGISTRY}/${NAME}:latest"
     docker push ${REGISTRY}/${NAME}:latest
 
-    # has configmap
-    CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
-        CONFIGMAP="true"
-        _result "configmap.enabled=${CONFIGMAP}"
-    else
-        CONFIGMAP="false"
-    fi
+    # # has configmap
+    # CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
+    # if [ "x${CNT}" != "x0" ]; then
+    #     CONFIGMAP="false"
+    # else
+    #     CONFIGMAP="true"
+    #     _result "configmap.enabled=${CONFIGMAP}"
+    # fi
 
-    # has secret
-    CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
-    if [ "x${CNT}" != "x0" ]; then
-        SECRET="true"
-        _result "secret.enabled=${SECRET}"
-    else
-        SECRET="false"
-    fi
+    # # has secret
+    # CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
+    # if [ "x${CNT}" != "x0" ]; then
+    #     SECRET="false"
+    # else
+    #     SECRET="true"
+    #     _result "secret.enabled=${SECRET}"
+    # fi
 
     # has local values
     if [ -f charts/${NAME}/values-local.yaml ]; then
@@ -1151,12 +1128,15 @@ _up() {
     fi
 
     # helm install
-    _command "helm install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} ${LOCAL_VALUES}"
+    _command "helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} \
+                    --devel ${LOCAL_VALUES} \
+                    --set fullnameOverride=${NAME} \
+                    --set namespace=${NAMESPACE}"
     helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} \
                     --devel ${LOCAL_VALUES} \
                     --set fullnameOverride=${NAME} \
-                    --set configmap.enabled=${CONFIGMAP} \
-                    --set secret.enabled=${SECRET} \
+                    # --set configmap.enabled=${CONFIGMAP} \
+                    # --set secret.enabled=${SECRET} \
                     --set namespace=${NAMESPACE}
 
     # # draft up
