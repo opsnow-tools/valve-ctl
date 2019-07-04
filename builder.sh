@@ -15,6 +15,9 @@ REPONAME=${CIRCLE_PROJECT_REPONAME}
 
 BRANCH=${CIRCLE_BRANCH:-master}
 
+# PR_NUM=${CIRCLE_PR_NUMBER}
+PR_URL=${CIRCLE_PULL_REQUEST}
+
 DOCKER_USER=${DOCKER_USER:-$USERNAME}
 DOCKER_PASS=${DOCKER_PASS}
 DOCKER_IMAGE="${DOCKER_IMAGE:-$DOCKER_USER/$REPONAME}"
@@ -88,8 +91,6 @@ _package() {
     fi
 
     _result "BRANCH=${BRANCH}"
-    _result "PR_NUM=${PR_NUM}"
-    _result "PR_URL=${PR_URL}"
 
     # release version
     MAJOR=$(cat ${RUN_PATH}/VERSION | xargs | cut -d'.' -f1)
@@ -117,14 +118,14 @@ _package() {
         else
             PR=$(echo "${BRANCH}" | cut -d'/' -f1)
 
-            if [ "${PR}" == "pull" ]; then
+            if [ "${PR_NUM}" != "" ] || [ "${PR_URL}" != "" ] || [ "${PR}" == "pull" ]; then
                 printf "${PR}" > ${RUN_PATH}/target/PR
 
-                if [ "${PR_NUM}" == "" ]; then
-                    PR_NUM=$(echo "${BRANCH}" | cut -d'/' -f2)
-                fi
                 if [ "${PR_NUM}" == "" ] && [ "${PR_URL}" != "" ]; then
                     PR_NUM=$(echo "${PR_URL}" | cut -d'/' -f7)
+                fi
+                if [ "${PR_NUM}" == "" ]; then
+                    PR_NUM=$(echo "${BRANCH}" | cut -d'/' -f2)
                 fi
                 if [ "${PR_NUM}" == "" ]; then
                     PR_NUM=${CIRCLE_BUILD_NUM}
@@ -141,6 +142,9 @@ _package() {
             fi
         fi
     fi
+
+    _result "PR_NUM=${PR_NUM}"
+    _result "PR_URL=${PR_URL}"
 
     _result "VERSION=${VERSION}"
 }
