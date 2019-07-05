@@ -7,6 +7,7 @@ KOPS=
 HELM=
 DRAFT=
 GUARD=
+ARGOCD=
 
 CONFIG=${HOME}/.valve-tools
 touch ${CONFIG} && . ${CONFIG}
@@ -206,6 +207,24 @@ if [ "${GUARD}" != "${VERSION}" ]; then
 fi
 
 guard version 2>&1 | grep 'Version ' | xargs | awk '{print $3}'
+
+# argocd cli
+echo "================================================================================"
+_result "install argocd cli ..."
+
+# VERSION=$(curl -s https://api.github.com/repos/argoproj/argo-cd/releases/latest | jq -r '.tag_name')
+VERSION="1.0.2"
+
+if [ "${ARGOCD}" != "${VERSION}" ]; then
+    _result " ${ARGOCD} >> ${VERSION}"
+
+    curl -LO https://github.com/argoproj/argo-cd/releases/download/${VERSION}/argocd-${OS_NAME}-amd64
+    chmod +x argocd-${OS_NAME}-amd64 && sudo mv argocd-${OS_NAME}-amd64 /usr/local/bin/argocd
+
+    ARGOCD="${VERSION}"
+fi
+
+argocd version 2>&1 | grep 'argocd' | xargs | awk '{print $2}'
 
 # clean
 echo "================================================================================"
