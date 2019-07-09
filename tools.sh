@@ -213,7 +213,7 @@ echo "==========================================================================
 _result "install argocd cli ..."
 
 # VERSION=$(curl -s https://api.github.com/repos/argoproj/argo-cd/releases/latest | jq -r '.tag_name')
-VERSION="1.0.2"
+VERSION="v1.0.2"
 
 if [ "${ARGOCD}" != "${VERSION}" ]; then
     _result " ${ARGOCD} >> ${VERSION}"
