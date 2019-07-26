@@ -9,7 +9,9 @@ DRAFT=
 GUARD=
 ARGOCD=
 
-CONFIG=${HOME}/.valve-tools
+mkdir -p ~/.valve
+
+CONFIG=${HOME}/.valve/tools
 touch ${CONFIG} && . ${CONFIG}
 
 ################################################################################
