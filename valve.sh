@@ -37,7 +37,7 @@ touch ${CONFIG} && . ${CONFIG}
 if [ "${OS_NAME}" == "darwin" ]; then
   command -v fzf > /dev/null && FZF=true
 else
-  FZF=false
+  FZF=""
 fi
 
 command -v tput > /dev/null && TPUT=true
