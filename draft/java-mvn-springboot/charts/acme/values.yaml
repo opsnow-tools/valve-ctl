@@ -36,7 +36,9 @@ ingress:
   #   - acme.opsnow.com
   annotations:
     kubernetes.io/ingress.class: nginx
+    # https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.md
     # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/use-regex: "true"
   labels: {}
 
 autoscaling:
