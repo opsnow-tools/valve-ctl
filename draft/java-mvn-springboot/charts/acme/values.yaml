@@ -39,6 +39,7 @@ ingress:
     # https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.md
     # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     # nginx.ingress.kubernetes.io/use-regex: "true"
+    # ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0
   labels: {}
 
 autoscaling:
