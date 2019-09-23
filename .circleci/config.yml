@@ -6,67 +6,59 @@ jobs:
   package:
     docker:
       - image: circleci/python
-    working_directory: /tmp/works
+    working_directory: ~/works
     steps:
       - checkout
       - run:
           name: Package
           command: |
-            chmod 755 ./build.sh
-            ./build.sh package
+            mkdir target
+            cp ./builder.sh target/builder.sh
+            bash ./target/builder.sh package
+            bash ./build.sh
       - persist_to_workspace:
-          root: /tmp/works
+          root: ~/works
           paths:
-            - target/*
-            - build.sh
+            - target
   publish:
     docker:
       - image: opspresso/awscli
+    working_directory: ~/works
     steps:
       - attach_workspace:
-          at: works
+          at: ~/works
       - run:
           name: Publish
           command: |
-            chmod 755 ./works/build.sh
-            ./works/build.sh publish
+            bash ./target/builder.sh publish
   release:
     docker:
       - image: circleci/golang
+    working_directory: ~/works
     steps:
       - attach_workspace:
-          at: works
+          at: ~/works
       - run:
           name: Release
           command: |
-            chmod 755 ./works/build.sh
-            ./works/build.sh release
+            bash ./target/builder.sh release
   slack:
     docker:
       - image: circleci/python
+    working_directory: ~/works
     steps:
       - attach_workspace:
-          at: works
+          at: ~/works
       - run:
           name: Slack
           command: |
-            chmod 755 ./works/build.sh
-            ./works/build.sh slack
-
-# Advanced Settings
-# - Build forked pull requests
-# - Pass secrets to builds from forked pull requests
-# - Only build pull requests
+            bash ./target/builder.sh slack
 
 workflows:
   version: 2
   apply:
     jobs:
       - package
-      # - approval:
-      #     type: approval
-      #     requires:
-      #       - package
       - publish:
           requires:
             - package

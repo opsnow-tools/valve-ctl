@@ -1,0 +1,57 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_NAME=${0##*/}
+
+readonly SHORT_OPT="halc"
+readonly LONG_OPT="help,all,local,cluster"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve toolbox ${CUR_NAME} {Params}
+
+Params:
+    -h, --help                  현재 화면을 보여줍니다.
+
+    -a, --all                   Not yet (모든 도구들을 설치)
+    -l, --local                 Not yet
+    -c, --cluster               Not yet
+
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -a|--all)
+                echo "all option"
+                ;;
+            -l|--local)
+                echo "local option"
+                ;;
+            -c|--cluster)
+                echo "cluster option"
+                ;;
+            *|-h|--help)
+                _help
+                exit 0
+                ;;
+            --)
+                # No more options left.
+                shift
+                break
+               ;;
+        esac
+        shift
+    done
+
+}
+
+_run $@
+

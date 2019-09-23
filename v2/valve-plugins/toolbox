@@ -1,0 +1,67 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_NAME=${0##*/}
+
+readonly PLUGINS_DIR=${CUR_DIR}/${CUR_NAME}-cmds
+
+####### common functions
+source ${ROOT_PLUGINS_DIR}/common.sh
+
+################################################################################
+# help message
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}
+
+Params:
+    h, help                 현재 화면을 보여줍니다.
+
+    i, install              Not yet (TODO 도구들을 설치합니다.)
+
+================================================================================
+EOF
+}
+
+# Define short command
+_replace_cmd_short2long() {
+    case $CMD in
+        h)
+            CMD=help
+            ;;
+        i)
+            CMD=install
+            ;;
+    esac
+}
+
+_run() {
+    # check first param
+    if [ ! -z $1 ]; then
+        CMD=$1
+    else
+        _help
+        _success
+    fi
+
+    # replace short cmd to long cmd
+    _replace_cmd_short2long
+
+    # check if exist plugin
+    ls $PLUGINS_DIR/$CMD > /dev/null 2>&1
+    if [ $? -gt 0 ]; then
+        _help
+        _error "No params: $1, $CMD"
+    fi
+
+    # RUN plugin command
+    shift
+    _command "$PLUGINS_DIR/${CMD} $*"
+    command $PLUGINS_DIR/${CMD} $*
+
+}
+
+
+_run $@
+

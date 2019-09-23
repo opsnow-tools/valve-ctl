@@ -14,7 +14,7 @@ properties([
   buildDiscarder(logRotator(daysToKeepStr: "60", numToKeepStr: "30"))
 ])
 podTemplate(label: label, containers: [
-  containerTemplate(name: "builder", image: "quay.io/opsnow-tools/valve-builder", command: "cat", ttyEnabled: true, alwaysPullImage: true)
+  containerTemplate(name: "builder", image: "opsnowtools/valve-builder:v0.2.2", command: "cat", ttyEnabled: true, alwaysPullImage: true)
 ], volumes: [
   hostPathVolume(mountPath: "/var/run/docker.sock", hostPath: "/var/run/docker.sock"),
   hostPathVolume(mountPath: "/home/jenkins/.draft", hostPath: "/home/jenkins/.draft"),
@@ -119,7 +119,7 @@ podTemplate(label: label, containers: [
         container("builder") {
           try {
             // deploy(cluster, namespace, sub_domain, profile)
-            butler.deploy("dev", "${SERVICE_GROUP}-prod", "${IMAGE_NAME}", "prod")
+            butler.deploy("prod", "${SERVICE_GROUP}-prod", "${IMAGE_NAME}", "prod")
             butler.success([SLACK_TOKEN_DEV,SLACK_TOKEN_DQA], "Deploy PROD")
           } catch (e) {
             butler.failure([SLACK_TOKEN_DEV,SLACK_TOKEN_DQA], "Deploy PROD")

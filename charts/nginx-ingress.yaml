@@ -1,5 +1,5 @@
 # chart-repo: stable/nginx-ingress
-# chart-version: latest
+# chart-version: 1.4.0
 
 nameOverride: nginx-ingress
 
@@ -9,3 +9,5 @@ controller:
     targetPorts:
       http: http
       https: http
+  config:
+    use-forwarded-headers: "true"

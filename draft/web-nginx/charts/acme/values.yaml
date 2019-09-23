@@ -1,31 +1,54 @@
+fullnameOverride: acme
+
 replicaCount: 1
+
 profile: default
+
+namespace: default
+
 image:
   repository: acme
   tag: latest
   pullPolicy: Always
+
+labels: {}
+annotations: {}
+
+pod:
+  labels: {}
+  annotations: {}
+
+pdb: {}
+
 service:
   type: ClusterIP
   externalPort: 80
   internalPort: 80
   annotations: {}
   labels: {}
+
 ingress:
   enabled: true
   subdomain: acme
   basedomain: 127.0.0.1.nip.io
-  hosts:
-    - acme.opsnow.com
+  hosts: {}
+  # hosts:
+  #   - acme.opsnow.com
   annotations:
     kubernetes.io/ingress.class: nginx
+    # https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.md
     # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/use-regex: "true"
+    # ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0
   labels: {}
-hpa:
+
+autoscaling:
   enabled: true
   min: 1
   max: 5
   cpu: 80
   mem: 80
+
 resources:
   requests:
     cpu: 100m
@@ -33,31 +56,55 @@ resources:
   limits:
     cpu: 120m
     memory: 153Mi
+
 readinessProbe:
   httpGet:
     path: /
     port: 80
-  initialDelaySeconds: 5
+  initialDelaySeconds: 3
   periodSeconds: 10
+  failureThreshold: 3
+
 livenessProbe:
   httpGet:
     path: /
     port: 80
-  initialDelaySeconds: 5
+  initialDelaySeconds: 3
   periodSeconds: 10
+  failureThreshold: 3
+
 # livenessProbe:
 #   exec:
 #     command:
 #     - cat
 #     - /tmp/healthy
-#   initialDelaySeconds: 5
+#   initialDelaySeconds: 3
 #   periodSeconds: 10
 # livenessProbe:
 #   tcpSocket:
 #     port: 80
-#   initialDelaySeconds: 5
+#   initialDelaySeconds: 3
 #   periodSeconds: 10
+
+# hostNetwork: true
+# dnsPolicy: Default
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+env: {}
+  # - name: MESSAGE
+  #   value: "hello world"
+
 configmap:
   enabled: false
+  data: {}
+    # MESSAGE: "hello world"
+
 secret:
   enabled: false
+  data: {}
+    # SECRET: "c2VjcmV0IHdvcmxkCg=="
