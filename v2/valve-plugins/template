@@ -1,0 +1,53 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_NAME=${0##*/}
+
+readonly SHORT_OPT="habc"
+readonly LONG_OPT="help,along,blong,clong"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}
+
+Params:
+    h, help                 현재 화면을 보여줍니다.
+
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -a|--along)
+                echo "a option"
+                ;;
+            -b|--blong)
+                echo "bbb option"
+                ;;
+            -c|--clong)
+                echo "cc option"
+                ;;
+            *|-h|--help)
+                _help
+                exit 0
+                ;;
+            --)
+                # No more options left.
+                shift
+                break
+               ;;
+        esac
+        shift
+    done
+
+}
+
+_run $@
+
