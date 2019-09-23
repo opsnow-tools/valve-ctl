@@ -22,7 +22,7 @@ jobs:
             - target
   publish:
     docker:
-      - image: opspresso/awscli
+      - image: opsnowtools/awscli
     working_directory: ~/works
     steps:
       - attach_workspace:
