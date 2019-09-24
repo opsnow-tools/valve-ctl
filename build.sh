@@ -94,6 +94,11 @@ _package() {
     tar -czf ../target/release/draft.tar.gz *
     popd
 
+    # release v2 valve
+    pushd ${RUN_PATH}/v2
+    tar -czf ../target/release/valve.tar.gz *
+    popd
+
     # target/charts/
     cp -rf ${RUN_PATH}/charts/* ${RUN_PATH}/target/charts/
 }
