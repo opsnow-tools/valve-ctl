@@ -53,10 +53,10 @@ fi
 
 # rm DIST_DIR/*
 DIST_DIR=/usr/share
-rm -rf /${DIST_DIR}/${NAME}-*
+rm -rf ${DIST_DIR}/${NAME}-*
 
 # dist
-DIST=/${DIST_DIR}/${NAME}-${VERSION}
+DIST=${DIST_DIR}/${NAME}-${VERSION}
 
 # download
 _command "curl -sL -o ${DIST} https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}"
