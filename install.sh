@@ -53,10 +53,10 @@ fi
 
 # rm DIST_DIR/*
 DIST_DIR=/usr/local/share
-rm -rf ${DIST_DIR}/${NAME}*
+rm -rf ${DIST_DIR}/${NAME}-*
 
 # dist
-DIST=${DIST_DIR}/${NAME}2.sh
+DIST=${DIST_DIR}/${NAME}.sh
 
 # download
 _command "pushd ${DIST_DIR}"
