@@ -84,10 +84,11 @@ _package() {
     cp -rf ${RUN_PATH}/tools.sh   ${RUN_PATH}/target/publish/tools
 
     # release
-    cp -rf ${RUN_PATH}/valve.sh ${RUN_PATH}/target/release/valve
+#    cp -rf ${RUN_PATH}/valve.sh ${RUN_PATH}/target/release/valve
 
     # replace
-    _replace "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/g" ${RUN_PATH}/target/release/valve
+#    _replace "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/g" ${RUN_PATH}/target/release/valve
+    _replace "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/g" ${RUN_PATH}/v2/valve.sh
 
     # release draft.tar.gz
     pushd ${RUN_PATH}/draft
