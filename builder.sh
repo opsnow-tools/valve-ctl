@@ -151,15 +151,19 @@ _package() {
 
 _publish() {
     if [ "${BRANCH}" != "master" ]; then
+        _result "BRANCH : ${BRANCH}"
         return
     fi
     if [ -z ${PUBLISH_PATH} ]; then
+        _result "PUBLISH_PATH : ${PUBLISH_PATH}"
         return
     fi
     if [ ! -f ${RUN_PATH}/target/VERSION ]; then
+        _result "${RUN_PATH}/target/VERSION"
         return
     fi
     if [ -f ${RUN_PATH}/target/PR ]; then
+        _result "${RUN_PATH}/target/PR"
         return
     fi
 
