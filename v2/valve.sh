@@ -79,7 +79,7 @@ _run() {
     _replace_cmd_short2long
 
     # check if exist plugin
-    ls $ROOT_PLUGINS_DIR/$CMD | grep -v common.sh  > /dev/null 2>&1
+    ls $ROOT_PLUGINS_DIR/$CMD > /dev/null 2>&1 | grep -v common.sh
     if [ $? -gt 0 ]; then
         # RUN valve before version
         CMD="valve"
