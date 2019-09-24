@@ -12,9 +12,9 @@ fi
 export readonly ROOT_PLUGINS_DIR=$ROOT_SHELL_DIR/valve-plugins
 readonly PLUGIN_LIST=($(ls $ROOT_PLUGINS_DIR))
 
-THIS_REPO="opsnow-tools"
-THIS_NAME="valve-ctl"
-THIS_VERSION="v0.0.0"
+export THIS_REPO="opsnow-tools"
+export THIS_NAME="valve-ctl"
+export THIS_VERSION="v0.0.0"
 
 ####### common functions
 source $ROOT_PLUGINS_DIR/common.sh

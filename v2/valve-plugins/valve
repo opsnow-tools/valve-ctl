@@ -1,10 +1,10 @@
 #!/bin/bash
 
-OS_NAME="$(uname | awk '{print tolower($0)}')"
+#OS_NAME="$(uname | awk '{print tolower($0)}')"
 
-THIS_REPO="opsnow-tools"
-THIS_NAME="valve-ctl"
-THIS_VERSION="v0.0.0"
+#THIS_REPO="opsnow-tools"
+#THIS_NAME="valve-ctl"
+#THIS_VERSION="v0.0.0"
 
 SHELL_DIR=$(dirname $0)
 
