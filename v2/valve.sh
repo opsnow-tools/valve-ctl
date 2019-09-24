@@ -11,6 +11,9 @@ fi
 
 export readonly ROOT_PLUGINS_DIR=$ROOT_SHELL_DIR/valve-plugins
 readonly PLUGIN_LIST=($(ls $ROOT_PLUGINS_DIR))
+
+THIS_REPO="opsnow-tools"
+THIS_NAME="valve-ctl"
 THIS_VERSION="v0.0.0"
 
 ####### common functions
@@ -36,8 +39,10 @@ Usage: `basename $0` {Command} params..
 
 Commands:
     h, help                 현재 화면을 보여줍니다.
+    v, version              현재 version 을 보여줍니다.
+    u, update               최신 version 으로 업데이트 합니다.
 
-    v, valve                명시적으로 기존 valve-ctl 기능을 사용합니다. 생략할 수 있습니다.
+    V, valve                명시적으로 기존 valve-ctl 기능을 사용합니다. 생략할 수 있습니다.
 
 Check command lists:
 -----------------------------------
@@ -48,9 +53,44 @@ EOF
 
 }
 
+###################################################################################
+
+_update() {
+    _echo "# version: ${THIS_VERSION}" 3
+    curl -sL repo.opsnow.io/${THIS_NAME}/install | bash -s ${NAME}
+    exit 0
+}
+
+_version() {
+    _command "kubectl version"
+    kubectl version
+
+    _command "helm version"
+    helm version
+
+    _command "draft version"
+    draft version
+
+    _command "valve version"
+    _echo "${THIS_VERSION}"
+}
+
+###################################################################################
 # Define short command
-_replace_cmd_short2long() {
+_set_cmd() {
     case $CMD in
+        h|help)
+            _help
+            _success
+            ;;
+        v|version)
+            _version
+            _success
+            ;;
+        u|update)
+            _update
+            _success
+            ;;
         t)
             CMD=template
             ;;
@@ -60,12 +100,13 @@ _replace_cmd_short2long() {
         tb)
             CMD=toolbox
             ;;
-        v)
+        V)
             CMD=valve
             ;;
     esac
 }
 
+# main loop
 _run() {
     # check first param
     if [ ! -z $1 ]; then
@@ -76,10 +117,10 @@ _run() {
     fi
 
     # replace short cmd to long cmd
-    _replace_cmd_short2long
+    _set_cmd
 
     # check if exist plugin
-    ls $ROOT_PLUGINS_DIR/$CMD > /dev/null 2>&1 | grep -v common.sh
+    ls $ROOT_PLUGINS_DIR/$CMD 2>/dev/null | grep -v common.sh
     if [ $? -gt 0 ]; then
         # RUN valve before version
         CMD="valve"
@@ -91,6 +132,7 @@ _run() {
     # RUN plugin command
     # _command "$ROOT_PLUGINS_DIR/${CMD} $*"
     command $ROOT_PLUGINS_DIR/${CMD} $*
+
 
 }
 
