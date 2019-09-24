@@ -8,8 +8,13 @@ readonly PLUGINS_DIR=${CUR_DIR}/${CUR_NAME}-cmds
 ####### common functions
 source ${ROOT_PLUGINS_DIR}/common.sh
 
-################################################################################
-# help message
+##### 새 기능의 모체 추가할때
+# 1. help message 추가
+# 2. _set_cmd function 내 case 추가
+# 3. 현재 스크립트의 위치에 ${현재스크립트이름}-cmds directory 가 존재해야 하며 
+#   directory 내에는 정의한 command (long) 와 일치하는 스크립트(chmod +x)가 존재해야 함.
+
+# 1 point. help message 추가
 _help() {
     cat <<EOF
 ================================================================================
@@ -25,8 +30,9 @@ EOF
 }
 
 # Define short command
-_replace_cmd_short2long() {
+_set_cmd() {
     case $CMD in
+# 2 point. _set_cmd function 내 case 추가
         h)
             CMD=help
             ;;
@@ -46,19 +52,18 @@ _run() {
     fi
 
     # replace short cmd to long cmd
-    _replace_cmd_short2long
+    _set_cmd
 
+    ### Use another script, if exist ###
     # check if exist plugin
-    ls $PLUGINS_DIR/$CMD > /dev/null 2>&1
-    if [ $? -gt 0 ]; then
+    if [ ! -f $PLUGINS_DIR/$CMD ]; then
         _help
         _error "No params: $1, $CMD"
     fi
 
     # RUN plugin command
     shift
-    _command "$PLUGINS_DIR/${CMD} $*"
-    command $PLUGINS_DIR/${CMD} $*
+    $PLUGINS_DIR/${CMD} $*
 
 }
 
