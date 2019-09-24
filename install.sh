@@ -79,5 +79,6 @@ fi
 
 mkdir -p ${COPY_PATH}
 # mv -f ${DIST} ${COPY_PATH}/${NAME}
+rm -f ${DIST}
 ln -s ${DIST} ${COPY_PATH}/${NAME}
 
