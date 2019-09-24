@@ -59,9 +59,9 @@ rm -rf ${DIST_DIR}/${NAME}-*
 DIST=${DIST_DIR}/${NAME}.sh
 
 # download
-pushd ${DIST_DIR}
+pushd ${DIST_DIR} > /dev/null
 curl -sL https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz
-popd
+popd > /dev/null
 
 # copy
 COPY_PATH=/usr/local/bin
