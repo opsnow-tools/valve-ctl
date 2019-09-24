@@ -51,13 +51,15 @@ if [ -z ${VERSION} ]; then
     _error
 fi
 
-# rm tmp
-rm -rf /tmp/${NAME}-*
+# rm DIST_DIR/*
+DIST_DIR=/usr/share
+rm -rf /${DIST_DIR}/${NAME}-*
 
 # dist
-DIST=/tmp/${NAME}-${VERSION}
+DIST=/${DIST_DIR}/${NAME}-${VERSION}
 
 # download
+_command "curl -sL -o ${DIST} https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}"
 curl -sL -o ${DIST} https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}
 chmod +x ${DIST}
 
@@ -76,4 +78,6 @@ if [ ! -z $HOME ]; then
 fi
 
 mkdir -p ${COPY_PATH}
-mv -f ${DIST} ${COPY_PATH}/${NAME}
+# mv -f ${DIST} ${COPY_PATH}/${NAME}
+ln -s ${COPY_PATH}/${NAME} ${DIST}
+
