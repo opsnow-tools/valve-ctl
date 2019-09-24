@@ -53,14 +53,18 @@ fi
 
 # rm DIST_DIR/*
 DIST_DIR=/usr/local/share
-rm -rf ${DIST_DIR}/${NAME}-*
+rm -rf ${DIST_DIR}/${NAME}*
 
 # dist
-DIST=${DIST_DIR}/${NAME}-${VERSION}.tar.gz
+DIST=${DIST_DIR}/${NAME}2.sh
 
 # download
-_command "curl -sL -o ${DIST} https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz"
-curl -sL -o ${DIST} https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz
+_command "pushd ${DIST_DIR}"
+_command "curl -sL https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz"
+_command "popd"
+pushd ${DIST_DIR}
+curl -sL https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz
+popd
 
 # _command "curl -sL -o ${DIST} https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}"
 # curl -sL -o ${DIST} https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}
