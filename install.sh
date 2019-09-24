@@ -52,7 +52,7 @@ if [ -z ${VERSION} ]; then
 fi
 
 # rm DIST_DIR/*
-DIST_DIR=/tmp
+DIST_DIR=/usr/local/share
 rm -rf ${DIST_DIR}/${NAME}-*
 
 # dist
