@@ -89,7 +89,7 @@ _run() {
     fi
 
     # RUN plugin command
-    _command "$ROOT_PLUGINS_DIR/${CMD} $*"
+    # _command "$ROOT_PLUGINS_DIR/${CMD} $*"
     command $ROOT_PLUGINS_DIR/${CMD} $*
 
 }
