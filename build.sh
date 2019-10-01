@@ -88,15 +88,15 @@ _package() {
 
     # replace
 #    _replace "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/g" ${RUN_PATH}/target/release/valve
-    _replace "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/g" ${RUN_PATH}/v2/valve.sh
+    _replace "s/THIS_VERSION=.*/THIS_VERSION=${VERSION}/g" ${RUN_PATH}/src/valve.sh
 
     # release draft.tar.gz
     pushd ${RUN_PATH}/draft
     tar -czf ../target/release/draft.tar.gz *
     popd
 
-    # release v2 valve
-    pushd ${RUN_PATH}/v2
+    # release valve
+    pushd ${RUN_PATH}/src
     tar -czf ../target/release/valve.tar.gz *
     popd
 
