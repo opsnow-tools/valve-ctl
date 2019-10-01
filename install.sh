@@ -36,12 +36,15 @@ REPONAME="valve-ctl"
 NAME="valve"
 
 VERSION=${1}
+_command "INPUT Version : ${VERSION}"
 
 if [ -z ${VERSION} ]; then
     VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4)
+    _command "github Version : ${VERSION}"
 
     if [ -z ${VERSION} ]; then
         VERSION=$(curl -sL repo.opsnow.io/${REPONAME}/VERSION | xargs)
+        _command "repo Version : ${VERSION}"
     fi
 fi
 
