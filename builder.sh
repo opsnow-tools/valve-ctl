@@ -152,7 +152,7 @@ _package() {
 _publish() {
     if [ "${BRANCH}" != "master" ]; then
         _result "BRANCH : ${BRANCH}"
-        # return
+        return
     fi
     if [ -z ${PUBLISH_PATH} ]; then
         _result "PUBLISH_PATH : ${PUBLISH_PATH}"
