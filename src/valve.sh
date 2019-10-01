@@ -96,7 +96,7 @@ EOF
 
 _update() {
     _echo "# version: ${THIS_VERSION}" 3
-    curl -sL repo.opsnow.io/${THIS_NAME}/install ${THIS_VERSION} | bash -s ${NAME}
+    curl -sL repo.opsnow.io/${THIS_NAME}/install | bash -s ${NAME}
     exit 0
 }
 
