@@ -93,12 +93,15 @@ if [ "${OS_TYPE}" == "apt" ]; then
     sudo apt update && sudo apt upgrade -y
     command -v jq > /dev/null || sudo apt install -y jq
     command -v git > /dev/null || sudo apt install -y git
-    command -v pip > /dev/null || sudo apt install -y python-pip
+#    command -v pip > /dev/null || sudo apt install -y python-pip
+    command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
+    command -v python3-distutils || apt-get -y install python3-distutils
 elif [ "${OS_TYPE}" == "yum" ]; then
     sudo yum update -y
     command -v jq > /dev/null || sudo yum install -y jq
     command -v git > /dev/null || sudo yum install -y git
-    command -v pip > /dev/null || sudo yum install -y python-pip
+#    command -v pip > /dev/null || sudo yum install -y python-pip
+    command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
 elif [ "${OS_TYPE}" == "brew" ]; then
     brew update && brew upgrade
     command -v jq > /dev/null || brew install jq
@@ -118,7 +121,12 @@ _result "install aws-cli..."
 if [ "${OS_TYPE}" == "brew" ]; then
     command -v aws > /dev/null || brew install awscli
 else
-    pip install --upgrade --user awscli
+#    pip install --upgrade --user awscli
+    python3 get-pip.py --user
+    echo "PATH=~/.local/bin:$PATH" >> ~/.bashrc
+    export PATH=~/.local/bin:$PATH
+    pip3 --version
+    pip3 install awscli --upgrade --user
 fi
 
 aws --version | xargs

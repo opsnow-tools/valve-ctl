@@ -39,3 +39,6 @@ dist/
 
 # config
 conf/
+
+# tools
+get-pip.py
