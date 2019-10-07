@@ -1005,7 +1005,7 @@ _secret() {
     NAMESPACE="${2:-development}"
 
     # secret
-    SECRET="${NAME}-local"
+    SECRET="${NAME}"
 
     # Secret reset condition = delete or force option
     RESET_SECRET=
