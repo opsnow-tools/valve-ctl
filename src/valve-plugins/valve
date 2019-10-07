@@ -1140,9 +1140,9 @@ _up() {
     helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} \
                     --devel ${LOCAL_VALUES} \
                     --set fullnameOverride=${NAME} \
+                    --set namespace=${NAMESPACE}
                     # --set configmap.enabled=${CONFIGMAP} \
                     # --set secret.enabled=${SECRET} \
-                    --set namespace=${NAMESPACE}
 
     # # draft up
     # _command "draft up -e ${NAMESPACE}"
