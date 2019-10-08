@@ -94,6 +94,7 @@ if [ "${OS_TYPE}" == "apt" ]; then
     command -v jq > /dev/null || sudo apt install -y jq
     command -v git > /dev/null || sudo apt install -y git
 #    command -v pip > /dev/null || sudo apt install -y python-pip
+    command -v python3 > /dev/null || sudo apt install -y python3
     command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
     command -v python3-distutils || apt-get -y install python3-distutils
 elif [ "${OS_TYPE}" == "yum" ]; then
@@ -101,6 +102,7 @@ elif [ "${OS_TYPE}" == "yum" ]; then
     command -v jq > /dev/null || sudo yum install -y jq
     command -v git > /dev/null || sudo yum install -y git
 #    command -v pip > /dev/null || sudo yum install -y python-pip
+    command -v python3 > /dev/null || sudo yum install -y python3
     command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
 elif [ "${OS_TYPE}" == "brew" ]; then
     brew update && brew upgrade
