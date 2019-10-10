@@ -96,7 +96,8 @@ if [ "${OS_TYPE}" == "apt" ]; then
 #    command -v pip > /dev/null || sudo apt install -y python-pip
     command -v python3 > /dev/null || sudo apt install -y python3
     command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
-    command -v python3-distutils || apt-get -y install python3-distutils
+    command -v python3-distutils > /dev/null || sudo apt-get -y install python3-distutils
+    command -v socat > /dev/null || sudo apt install -y socat
 elif [ "${OS_TYPE}" == "yum" ]; then
     sudo yum update -y
     command -v jq > /dev/null || sudo yum install -y jq
@@ -129,6 +130,7 @@ else
     export PATH=~/.local/bin:$PATH
     pip3 --version
     pip3 install awscli --upgrade --user
+    rm -f get-pip.py
 fi
 
 aws --version | xargs
