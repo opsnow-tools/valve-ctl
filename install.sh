@@ -55,34 +55,30 @@ if [ -z ${VERSION} ]; then
 fi
 
 # copy
-COPY_PATH=/usr/local/bin
-DIST_DIR=/usr/local/share
+OS_NAME="$(uname | awk '{print tolower($0)}')"
 
-if [ ! -z $HOME ]; then
-    COUNT=$(echo "$PATH" | grep "$HOME/.local/bin" | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then    # For Linux
-        COPY_PATH=$HOME/.local/bin
-    else
-        COUNT=$(echo "$PATH" | grep "$HOME/bin" | wc -l | xargs)
-        if [ "x${COUNT}" != "x0" ]; then    # For Window
-            DIST_DIR=$HOME/share
-            COPY_PATH=$HOME/bin
-            mkdir -p ${DIST_DIR}
-            mkdir -p ${COPY_PATH}
-        fi
-    fi
+if [ "${OS_NAME}" == "darwin" ]; then
+    BIN_DIR=/usr/local/bin
+    LIB_DIR=/usr/local/share
+elif [ "${OS_NAME}" == "linux" ]; then
+    BIN_DIR=$HOME/.local/bin
+    LIB_DIR=$HOME/.local/share
+else
+    BIN_DIR=$HOME/bin
+    LIB_DIR=$HOME/.local/share
 fi
 
-# rm DIST_DIR/*
-rm -rf ${DIST_DIR}/${NAME}-*
+mkdir -p ${BIN_DIR}
+mkdir -p ${LIB_DIR}
 
-# dist
-DIST=${DIST_DIR}/${NAME}.sh
+# delete old version files
+rm -rf ${LIB_DIR}/${NAME}-*
+rm -f ${BIN_DIR}/${NAME}
 
-# download
-pushd ${DIST_DIR} > /dev/null
+# download new version files
+pushd ${LIB_DIR} > /dev/null
 curl -sL https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz
 popd > /dev/null
 
-rm -f ${COPY_PATH}/${NAME}
-ln -s ${DIST} ${COPY_PATH}/${NAME}
+# create symbolic link
+ln -s ${LIB_DIR}/${NAME}.sh ${BIN_DIR}/${NAME}
