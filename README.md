@@ -41,7 +41,7 @@ Jenkinsfile은 valve로 명명된 다른 프로젝트와 연동하여 동작합�
 ```bash
 curl -sL repo.opsnow.io/valve-ctl/install | bash
 
-# with specific version
+# to install a specific version
 curl -sL repo.opsnow.io/valve-ctl/install | bash -s v2.0.3
 ```
 
