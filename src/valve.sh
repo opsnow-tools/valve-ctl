@@ -4,20 +4,20 @@
 export OS_NAME="$(uname | awk '{print tolower($0)}')"
 
 if [ "${OS_NAME}" == "darwin" ]; then
-    readonly ROOT_SHELL_DIR=$(dirname "$(readlink "$0")")
+    readonly LIB_DIR=$(dirname "$(readlink "$0")")
 else
-    readonly ROOT_SHELL_DIR=$HOME/share
+    readonly LIB_DIR=$HOME/.local/share
 fi
 
-export readonly ROOT_PLUGINS_DIR=$ROOT_SHELL_DIR/valve-plugins
-readonly PLUGIN_LIST=($(ls $ROOT_PLUGINS_DIR))
+export readonly PLUGINS_DIR=$LIB_DIR/valve-plugins
+readonly PLUGIN_LIST=($(ls $PLUGINS_DIR))
 
 export THIS_REPO="opsnow-tools"
 export THIS_NAME="valve-ctl"
 export THIS_VERSION="v0.0.0"
 
 ####### common functions
-source $ROOT_PLUGINS_DIR/common.sh
+source $PLUGINS_DIR/common.sh
 
 ################################################################################
 # help message
@@ -85,7 +85,7 @@ V1: (아래 기능들은 현재 사용가능 합니다.)
 
 Check command lists:
 -----------------------------------
-$(ls -p ${ROOT_PLUGINS_DIR} | grep -v / | grep -v common.sh)
+$(ls -p ${PLUGINS_DIR} | grep -v / | grep -v common.sh)
 -----------------------------------
 ================================================================================
 EOF
@@ -160,15 +160,15 @@ _run() {
 
     ### Use another script, if exist ###
     # check if exist plugin
-    if [ ! -f $ROOT_PLUGINS_DIR/$CMD ]; then
+    if [ ! -f $PLUGINS_DIR/$CMD ]; then
         CMD="valve"
     else
         shift
     fi
 
     # RUN plugin command
-    # _command "$ROOT_PLUGINS_DIR/${CMD} $*"
-    $ROOT_PLUGINS_DIR/${CMD} $*
+    # _command "$PLUGINS_DIR/${CMD} $*"
+    $PLUGINS_DIR/${CMD} $*
 
 
 }
