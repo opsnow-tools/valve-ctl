@@ -55,13 +55,16 @@ if [ -z ${VERSION} ]; then
 fi
 
 # copy
-BIN_DIR=/usr/local/bin
-LIB_DIR=/usr/local/share
-
 OS_NAME="$(uname | awk '{print tolower($0)}')"
 
-if [ "${OS_NAME}" != "darwin" ]; then
+if [ "${OS_NAME}" == "darwin" ]; then
+    BIN_DIR=/usr/local/bin
+    LIB_DIR=/usr/local/share
+elif [ "${OS_NAME}" == "linux" ]; then
     BIN_DIR=$HOME/.local/bin
+    LIB_DIR=$HOME/.local/share
+else
+    BIN_DIR=$HOME/bin
     LIB_DIR=$HOME/.local/share
 fi
 
