@@ -54,8 +54,26 @@ if [ -z ${VERSION} ]; then
     _error
 fi
 
-# rm DIST_DIR/*
+# copy
+COPY_PATH=/usr/local/bin
 DIST_DIR=/usr/local/share
+
+if [ ! -z $HOME ]; then
+    COUNT=$(echo "$PATH" | grep "$HOME/.local/bin" | wc -l | xargs)
+    if [ "x${COUNT}" != "x0" ]; then    # For Linux
+        COPY_PATH=$HOME/.local/bin
+    else
+        COUNT=$(echo "$PATH" | grep "$HOME/bin" | wc -l | xargs)
+        if [ "x${COUNT}" != "x0" ]; then    # For Window
+            DIST_DIR=$HOME/share
+            COPY_PATH=$HOME/bin
+            mkdir -p ${DIST_DIR}
+            mkdir -p ${COPY_PATH}
+        fi
+    fi
+fi
+
+# rm DIST_DIR/*
 rm -rf ${DIST_DIR}/${NAME}-*
 
 # dist
@@ -66,22 +84,5 @@ pushd ${DIST_DIR} > /dev/null
 curl -sL https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz
 popd > /dev/null
 
-# copy
-COPY_PATH=/usr/local/bin
-if [ ! -z $HOME ]; then
-    COUNT=$(echo "$PATH" | grep "$HOME/.local/bin" | wc -l | xargs)
-    if [ "x${COUNT}" != "x0" ]; then
-        COPY_PATH=$HOME/.local/bin
-    else
-        COUNT=$(echo "$PATH" | grep "$HOME/bin" | wc -l | xargs)
-        if [ "x${COUNT}" != "x0" ]; then
-            COPY_PATH=$HOME/bin
-        fi
-    fi
-fi
-
-mkdir -p ${COPY_PATH}
-
 rm -f ${COPY_PATH}/${NAME}
 ln -s ${DIST} ${COPY_PATH}/${NAME}
-
