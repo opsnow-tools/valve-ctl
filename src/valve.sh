@@ -6,7 +6,7 @@ export OS_NAME="$(uname | awk '{print tolower($0)}')"
 if [ "${OS_NAME}" == "darwin" ]; then
     readonly ROOT_SHELL_DIR=$(dirname "$(readlink "$0")")
 else
-    readonly ROOT_SHELL_DIR=$(dirname "$(readlink -f "$0")")
+    readonly ROOT_SHELL_DIR=$HOME/share
 fi
 
 export readonly ROOT_PLUGINS_DIR=$ROOT_SHELL_DIR/valve-plugins
