@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# SHELL_DIR=${0}
+SHELL_DIR=$(dirname $0)
+CONFIG=${HOME}/.valve-ctl
+touch ${CONFIG} && . ${CONFIG}
 # MYNAME=${0##*/}
 
 #OS_NAME="$(uname | awk '{print tolower($0)}')"
@@ -109,4 +111,15 @@ _select_one() {
             SELECTED=$(sed -n ${ANSWER}p ${LIST})
         fi
     fi
+}
+
+_config_save() {
+    echo "# valve config" > ${CONFIG}
+    echo "REGISTRY=${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}" >> ${CONFIG}
+    echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
+    echo "USERNAME=${USERNAME}" >> ${CONFIG}
+}
+
+_debug_mode() {
+    echo -e "\e[1;33m+++++++++++++ ${FUNCNAME[1]}\e[0m"
 }
