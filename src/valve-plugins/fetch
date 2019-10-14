@@ -7,8 +7,8 @@ CUR_NAME=${0##*/}
 source ${ROOT_PLUGINS_DIR}/common.sh
 
 
-readonly SHORT_OPT=":hvon:g:s:r:"
-readonly LONG_OPT="help,verbose,overwrite,group:,service:,repo:,name:"
+readonly SHORT_OPT=":hvon:g:s:u:"
+readonly LONG_OPT=":help,verbose,overwrite,group:,service:,name:,url:"
 
 _help() {
     cat <<EOF
@@ -25,16 +25,25 @@ LIST=/tmp/${THIS_NAME}-draft-ls
 sed 's/^/\t\t\t\t\t\t/' < ${LIST}
     cat <<EOF
                                                 ===== 드레프트 리스트 ====
+                                                디폴트로 fetch할 때 현재 working 디렉토리 이름을 사용합니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
+                                                따라서 디렉토리 이름은 {서비스 그룹}-{서비스 이름} 이어야 합니다.
 
-    -g, --group string          (optional)      서비스 그룹 이름입니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
-                                                서비스 그룹은 
+    -o, --overwrite             (requirement)   드레프트를 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
+                                                .valvesecret은 유지됩니다.
+                                                덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 드레프트를 백업합니다.
+                                                따라서 기존 드레프트를 확인하려면 .valve-history 디렉토리를 확인바랍니다.
 
-    -s, --service string        (optional)      서비스 이름 입니다. 
+    -g, --group string          (optional)      서비스 그룹 이름입니다. 서비스 그룹은 서비스를 대표하는 이름입니다. 
+                                                서비스 그룹명을 바꾸고 싶을 때 사용합니다.
 
-    -u, --url string            (optional)      repository URL.
-                                                valve finds automatically project's repository. But when you change base repository URL, you can change URL by using this option.
+    -s, --service string        (optional)      서비스 이름 입니다. 서비스 그룹에서 동작하는 app 이름입니다.
+                                                서비스 이름명을 바꾸고 싶을 때 사용합니다.
+
+    -u, --url string            (optional)      서비스의 레파지토리 URL입니다. valve-ctl은 디폴트로 fetch 할 때 가져오는 레파지토리 URL을 자동으로 찾아줍니다.
+                                                하지만 레파지토리 URL을 변경하고 싶다면 다음 옵션을 사용합니다.
 
     -o, --overwrite             (optional)      드레프트를 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
+                                                .valvesecret은 유지됩니다.
                                                 덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 드레프트를 백업합니다.
                                                 따라서 기존 드레프트를 확인하려면 .valve-history 디렉토리를 확인바랍니다.
 
@@ -46,6 +55,7 @@ Examples:
     $ valve fetch -n java-mvn-tomcat
 
     [Optional]
+    $ valve fetch --name java-mvn-tomcat --group sample
     $ valve fetch --name java-mvn-tomcat --group sample --service tomcat
     $ valve fetch --name java-mvn-tomcat --group sample --service tomcat --repo {REPO URL}
 
@@ -54,8 +64,7 @@ EOF
 }
 
 _run() {
-
-    if ! OPTIONS=$(getopt -o "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
+    if ! OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
     then
         _help
         exit 1
@@ -76,7 +85,7 @@ _run() {
                 shift
                 PARAM_SERVICE=$1
                 ;;
-            -r|--repo)
+            -u|--url)
                 shift
                 PARAM_REPO=$1
                 ;;
@@ -94,10 +103,6 @@ _run() {
             --)
                 shift
                 break
-                ;;
-            --*)
-                _help
-                exit 1
                 ;;
         esac
         shift
@@ -124,10 +129,9 @@ _fetch(){
     SERVICE_NAME=$PARAM_SERVICE
     REPOSITORY_URL=$PARAM_REPO
 
-    __validate
-
     __pkg_version_check
     __pkg_name_check
+    __validate
 
     __pkg_variable_gen
 
@@ -207,7 +211,7 @@ __pkg_name_check() {
     if [ $IDX == $CNT ]; then       # Check name if doesn't match.
         _result "Draft package: "${PARAM_NAME}
         rm -rf ${DIST}
-        _error "Use valve fetch --list / valve fetch -l \n\e[4m${PARAM_NAME}\e[0m draft package doesn't matching anything"
+        _error "Use valve fetch -h / valve fetch --help \n\e[4m${PARAM_NAME}\e[0m draft package doesn't matching anything"
     else        # Check name
         PACKAGE=${PARAM_NAME}
     fi
@@ -243,9 +247,8 @@ __pkg_gen() {
     _chart_replace "Jenkinsfile" "def SERVICE_NAME" "${SERVICE_NAME}" true  # Replace Jenkinsfile SERVICE_NAME
     SERVICE_NAME="${REPLACE_VAL}"
 
-    # if [ "${SERVICE_GROUP}" != "" ] && [ "${SERVICE_NAME}" != "" ]; then
-    #     NAME="${SERVICE_GROUP}-${SERVICE_NAME}"
-    # fi
+    _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${REPOSITORY_URL}" true
+    REPOSITORY_URL="${REPLACE_VAL}"
     
     if [ -f draft.toml ] && [ ! -z ${NAME} ]; then  # Replace draft.toml NAME
         _replace "s|NAMESPACE|${NAMESPACE}|" draft.toml
