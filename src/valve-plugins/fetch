@@ -7,8 +7,8 @@ CUR_NAME=${0##*/}
 source ${ROOT_PLUGINS_DIR}/common.sh
 
 
-readonly SHORT_OPT=":hdlon:g:s:r:"
-readonly LONG_OPT="help,debug,list,overwrite,group:,service:,repo:,name:"
+readonly SHORT_OPT=":hvon:g:s:r:"
+readonly LONG_OPT="help,verbose,overwrite,group:,service:,repo:,name:"
 
 _help() {
     cat <<EOF
@@ -16,21 +16,23 @@ _help() {
 Usage: valve ${CUR_NAME} {Params}
 
 Params:
-    -h, --help                  valve fetch 화면을 보여줍니다.
+    -h, --help                                  valve fetch 화면을 보여줍니다.
 
-    -n, --name string           (requirement)   드레프트를 설치합니다.
+    -n, --name string           (requirement)   드레프트를 설치합니다. 드레프트 리스트는 다음과 같으며, 다음 리스트에서 드레프트를 선택해야 합니다.
                                                 ===== 드레프트 리스트 ====
-    
-    -g, --group string          (optional)      service group name.
-        
-    
-    -s, --service string        (optional)      service name.
-        
-    
-    -r, --repo string           (optional)      repository URL.
+EOF
+LIST=/tmp/${THIS_NAME}-draft-ls
+sed 's/^/\t\t\t\t\t\t/' < ${LIST}
+    cat <<EOF
+                                                ===== 드레프트 리스트 ====
+
+    -g, --group string          (optional)      서비스 그룹 이름입니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
+                                                서비스 그룹은 
+
+    -s, --service string        (optional)      서비스 이름 입니다. 
+
+    -u, --url string            (optional)      repository URL.
                                                 valve finds automatically project's repository. But when you change base repository URL, you can change URL by using this option.
-        
-    -l, --list                  listing draft module name.
 
     -o, --overwrite             (optional)      드레프트를 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
                                                 덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 드레프트를 백업합니다.
@@ -43,8 +45,6 @@ Examples:
     or
     $ valve fetch -n java-mvn-tomcat
 
-    $ valve fetch --list    
-
     [Optional]
     $ valve fetch --name java-mvn-tomcat --group sample --service tomcat
     $ valve fetch --name java-mvn-tomcat --group sample --service tomcat --repo {REPO URL}
@@ -55,9 +55,13 @@ EOF
 
 _run() {
 
-    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
+    if ! OPTIONS=$(getopt -o "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
+    then
+        _help
+        exit 1
+    fi
     eval set -- "${OPTIONS}"
-    
+
     while [ $# -gt 0 ]; do
         case "$1" in
             -n|--name)
@@ -76,10 +80,6 @@ _run() {
                 shift
                 PARAM_REPO=$1
                 ;;
-            -l|--list)
-                _list
-                exit 0
-                ;;
             -o|--overwrite)
                 PARAM_OVERWRITE=1
                 ;;
@@ -87,8 +87,17 @@ _run() {
                 _help
                 exit 0
                 ;;
-            -d|--debug)
+            -v|--verbose)
                 DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                break
+                ;;
+            --*)
+                _help
+                exit 1
                 ;;
         esac
         shift
@@ -136,7 +145,7 @@ _fetch(){
 
 ############# Start Private function #############
 __validate() {      # validate overwrite option
-    _debug_mode
+    _debug_mode set -x
     if (( PARAM_OVERWRITE == 1 )); then
         if [ -f Jenkinsfile ]; then
             if [ ! -d .valve-history ]; then
@@ -327,13 +336,6 @@ _chart_replace() {
         _command "sed -i -e s|${REPLACE_KEY} = .*|${REPLACE_KEY} = ${REPLACE_VAL}| ${REPLACE_FILE}"
         _replace "s|${REPLACE_KEY} = .*|${REPLACE_KEY} = \"${REPLACE_VAL}\"|" ${REPLACE_FILE}
     fi
-}
-
-_list() {
-    LIST=/tmp/${THIS_NAME}-draft-ls
-    _result "Draft list"
-    cat ${LIST}
-
 }
 
 ##################################################################################

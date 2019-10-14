@@ -122,6 +122,11 @@ _config_save() {
 
 _debug_mode() {
     if [ ${DEBUG_MODE} ]; then
-        echo -e "\e[1;33m+++++++++++++ ${FUNCNAME[1]}\e[0m"
+        if [ $VERBOSE -ge 3 ]; then     # -vvv
+            echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
+            $@
+        else                            # -v | --verbose
+            echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
+        fi
     fi
 }
