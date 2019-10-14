@@ -121,5 +121,7 @@ _config_save() {
 }
 
 _debug_mode() {
-    echo -e "\e[1;33m+++++++++++++ ${FUNCNAME[1]}\e[0m"
+    if [ ${DEBUG_MODE} ]; then
+        echo -e "\e[1;33m+++++++++++++ ${FUNCNAME[1]}\e[0m"
+    fi
 }
