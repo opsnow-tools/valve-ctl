@@ -9,15 +9,18 @@ else
     readonly ROOT_SHELL_DIR=$HOME/.local/share
 fi
 
+export readonly ROOT_SHELL_DIR
 export readonly ROOT_PLUGINS_DIR=$ROOT_SHELL_DIR/valve-plugins
+export readonly ROOT_CORE_DIR=$ROOT_SHELL_DIR/valve-core
 readonly PLUGIN_LIST=($(ls $ROOT_PLUGINS_DIR))
+readonly CORE_LIST=($(ls $ROOT_CORE_DIR))
 
 export THIS_REPO="opsnow-tools"
 export THIS_NAME="valve-ctl"
 export THIS_VERSION="v0.0.0"
 
 ####### common functions
-source $ROOT_PLUGINS_DIR/common.sh
+source $ROOT_SHELL_DIR/common.sh
 
 ################################################################################
 # help message
@@ -85,7 +88,8 @@ V1: (아래 기능들은 현재 사용가능 합니다.)
 
 Check command lists:
 -----------------------------------
-$(ls -p ${ROOT_PLUGINS_DIR} | grep -v / | grep -v common.sh)
+$(ls -p ${ROOT_CORE_DIR} | grep -e / | grep -v draft | awk -F/ '{print $1}')
+$(ls -p ${ROOT_PLUGINS_DIR} | grep -e / | grep -v draft | awk -F/ '{print $1}')
 -----------------------------------
 ================================================================================
 EOF
@@ -136,6 +140,9 @@ _set_cmd() {
         f)
             CMD=fetch
             ;;
+        e)
+            CMD=example
+            ;;
         tb)
             CMD=toolbox
             ;;
@@ -160,17 +167,21 @@ _run() {
 
     ### Use another script, if exist ###
     # check if exist plugin
-    if [ ! -f $ROOT_PLUGINS_DIR/$CMD ]; then
+    if [ ! -d $ROOT_PLUGINS_DIR/$CMD -a ! -d $ROOT_CORE_DIR/$CMD ]; then
         CMD="valve"
+        $ROOT_PLUGINS_DIR/${CMD} $*
     else
         shift
+        # RUN plugin command
+        if [ -d $ROOT_PLUGINS_DIR/$CMD ]; then
+            # _command "$ROOT_PLUGINS_DIR/${CMD} $*"
+            $ROOT_PLUGINS_DIR/${CMD}/run.sh $*
+        elif [ -d $ROOT_CORE_DIR/$CMD ]; then
+            $ROOT_CORE_DIR/${CMD}/run.sh $*
+        fi
     fi
 
-    # RUN plugin command
-    # _command "$ROOT_PLUGINS_DIR/${CMD} $*"
-    $ROOT_PLUGINS_DIR/${CMD} $*
-
-
+    
 }
 
 _run $@
