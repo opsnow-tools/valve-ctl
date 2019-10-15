@@ -1,10 +1,11 @@
 #!/bin/bash
 
 CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
 CUR_NAME=${0##*/}
 
 ####### common functions
-source ${ROOT_PLUGINS_DIR}/common.sh
+source ${ROOT_SHELL_DIR}/common.sh
 
 ##### 새 기능을 추가할때
 # 1. OPT 추가
@@ -14,14 +15,14 @@ source ${ROOT_PLUGINS_DIR}/common.sh
 
 
 # 1 point. OPT 추가
-readonly SHORT_OPT="habc:"
-readonly LONG_OPT="help,along,blong,clong:"
+readonly SHORT_OPT=":habc:"
+readonly LONG_OPT=":help,along,blong,clong:"
 
 # 2 point. help message 추가
 _help() {
     cat <<EOF
 ================================================================================
-Usage: valve ${CUR_NAME} {Params}
+Usage: valve ${CUR_OBJECT} ${CUR_NAME} {Params}
 
 Params:
     -h, --help                  현재 화면을 보여줍니다.
@@ -37,9 +38,18 @@ EOF
 
 _run() {
 
-    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
+    if ! OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
+    then
+        _help
+        exit 1
+    fi
     eval set -- "${OPTIONS}"
-
+    
+    if [[ $1 == "--" ]]; then
+        _help
+        exit 1
+    fi
+    
     while [ $# -gt 0 ]; do
 # 3 point. case 추가
         case "$1" in
@@ -54,7 +64,7 @@ _run() {
                 PARAM=$1
                 echo "c opt param : $PARAM"
                 ;;
-            *|-h|--help)
+            -h|--help)
                 _help
                 exit 0
                 ;;

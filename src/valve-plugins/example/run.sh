@@ -22,7 +22,7 @@ Usage: valve ${CUR_OBJECT} {Params}
 Params:
     h, help                 현재 화면을 보여줍니다.
 
-    i, install              Not yet (TODO 도구들을 설치합니다.)
+    e, example              Not yet (TODO 도구들을 설치합니다.)
 
 ================================================================================
 EOF
@@ -35,8 +35,8 @@ _set_cmd() {
         h)
             CMD=help
             ;;
-        i)
-            CMD=install
+        e)
+            CMD=example
             ;;
     esac
 }
