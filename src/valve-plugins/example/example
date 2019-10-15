@@ -15,8 +15,8 @@ source ${ROOT_SHELL_DIR}/common.sh
 
 
 # 1 point. OPT 추가
-readonly SHORT_OPT=":habc:"
-readonly LONG_OPT=":help,along,blong,clong:"
+readonly SHORT_OPT="habc:"
+readonly LONG_OPT="help,along,blong,clong:"
 
 # 2 point. help message 추가
 _help() {
@@ -38,17 +38,15 @@ EOF
 
 _run() {
 
-    if ! OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
-    then
+    OPTIONS=$(getopt -q -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
+    if  [ $? -eq 1 ]; then
         _help
-        exit 1
+        _error "Error params: $1"
+    elif ! [[ $@ =~ '-' ]]; then
+        _help
+        _error "Error params: $@"
     fi
     eval set -- "${OPTIONS}"
-    
-    if [[ $1 == "--" ]]; then
-        _help
-        exit 1
-    fi
     
     while [ $# -gt 0 ]; do
 # 3 point. case 추가
