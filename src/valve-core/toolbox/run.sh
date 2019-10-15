@@ -45,6 +45,7 @@ _set_cmd() {
 _run() {
     # check first param
     if [ ! -z $1 ]; then
+        echo $CMD
         CMD=$1
     else
         _help

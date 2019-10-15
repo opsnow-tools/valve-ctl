@@ -14,8 +14,8 @@ source ${ROOT_PLUGINS_DIR}/common.sh
 
 
 # 1 point. OPT 추가
-readonly SHORT_OPT="halc"
-readonly LONG_OPT="help,all,local,cluster"
+readonly SHORT_OPT=":halc"
+readonly LONG_OPT=":help,all,local,cluster"
 
 # 2 point. help message 추가
 _help() {
