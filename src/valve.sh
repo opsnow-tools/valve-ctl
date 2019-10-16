@@ -88,7 +88,10 @@ V1: (아래 기능들은 현재 사용가능 합니다.)
 
 Check command lists:
 -----------------------------------
-$(ls -p ${ROOT_CORE_DIR} | grep -e / | grep -v draft | awk -F/ '{print $1}')
+EOF
+_cmd_list   # Print using object and hidden object command in common.sh
+
+cat << EOF
 $(ls -p ${ROOT_PLUGINS_DIR} | grep -e / | grep -v draft | awk -F/ '{print $1}')
 -----------------------------------
 ================================================================================
