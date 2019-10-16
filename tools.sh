@@ -93,12 +93,18 @@ if [ "${OS_TYPE}" == "apt" ]; then
     sudo apt update && sudo apt upgrade -y
     command -v jq > /dev/null || sudo apt install -y jq
     command -v git > /dev/null || sudo apt install -y git
-    command -v pip > /dev/null || sudo apt install -y python-pip
+#    command -v pip > /dev/null || sudo apt install -y python-pip
+    command -v python3 > /dev/null || sudo apt install -y python3
+    command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
+    command -v python3-distutils > /dev/null || sudo apt-get -y install python3-distutils
+    command -v socat > /dev/null || sudo apt install -y socat
 elif [ "${OS_TYPE}" == "yum" ]; then
     sudo yum update -y
     command -v jq > /dev/null || sudo yum install -y jq
     command -v git > /dev/null || sudo yum install -y git
-    command -v pip > /dev/null || sudo yum install -y python-pip
+#    command -v pip > /dev/null || sudo yum install -y python-pip
+    command -v python3 > /dev/null || sudo yum install -y python3
+    command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
 elif [ "${OS_TYPE}" == "brew" ]; then
     brew update && brew upgrade
     command -v jq > /dev/null || brew install jq
@@ -118,7 +124,13 @@ _result "install aws-cli..."
 if [ "${OS_TYPE}" == "brew" ]; then
     command -v aws > /dev/null || brew install awscli
 else
-    pip install --upgrade --user awscli
+#    pip install --upgrade --user awscli
+    python3 get-pip.py --user
+    echo "PATH=~/.local/bin:$PATH" >> ~/.bashrc
+    export PATH=~/.local/bin:$PATH
+    pip3 --version
+    pip3 install awscli --upgrade --user
+    rm -f get-pip.py
 fi
 
 aws --version | xargs

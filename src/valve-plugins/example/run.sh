@@ -1,12 +1,11 @@
 #!/bin/bash
 
 CUR_DIR=${0%/*}
-CUR_NAME=${0##*/}
-
-readonly PLUGINS_DIR=${CUR_DIR}/${CUR_NAME}-cmds
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+readonly PLUGINS_DIR=${CUR_DIR}
 
 ####### common functions
-source ${ROOT_PLUGINS_DIR}/common.sh
+source ${ROOT_SHELL_DIR}/common.sh
 
 ##### 새 기능의 모체 추가할때
 # 1. help message 추가
@@ -18,12 +17,12 @@ source ${ROOT_PLUGINS_DIR}/common.sh
 _help() {
     cat <<EOF
 ================================================================================
-Usage: valve ${CUR_NAME} {Params}
+Usage: valve ${CUR_OBJECT} {Params}
 
 Params:
     h, help                 현재 화면을 보여줍니다.
 
-    i, install              Not yet (TODO 도구들을 설치합니다.)
+    e, example              Not yet (TODO 도구들을 설치합니다.)
 
 ================================================================================
 EOF
@@ -36,23 +35,24 @@ _set_cmd() {
         h)
             CMD=help
             ;;
-        i)
-            CMD=install
+        e)
+            CMD=example
             ;;
     esac
 }
 
 _run() {
     # check first param
-    if [ ! -z $1 ]; then
-        CMD=$1
-    else
+    if [ -z $1 ]; then
         _help
         _success
+    elif [ $1 == "h" -o $1 == "help" ]; then
+        _help
+        _success
+    else
+        CMD=$1
+        _set_cmd
     fi
-
-    # replace short cmd to long cmd
-    _set_cmd
 
     ### Use another script, if exist ###
     # check if exist plugin
@@ -69,4 +69,3 @@ _run() {
 
 
 _run $@
-
