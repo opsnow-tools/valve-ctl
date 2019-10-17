@@ -1,14 +1,15 @@
 #!/bin/bash
 
 CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
 CUR_NAME=${0##*/}
 
 ####### common functions
-source ${ROOT_PLUGINS_DIR}/common.sh
+source ${ROOT_SHELL_DIR}/common.sh
 
 
-readonly SHORT_OPT=":hvon:g:s:u:"
-readonly LONG_OPT=":help,verbose,overwrite,group:,service:,name:,url:"
+readonly SHORT_OPT="hvon:g:s:u:"
+readonly LONG_OPT="help,verbose,overwrite,group:,service:,name:,url:"
 
 _help() {
     cat <<EOF
@@ -18,20 +19,20 @@ Usage: valve ${CUR_NAME} {Params}
 Params:
     -h, --help                                  valve fetch 화면을 보여줍니다.
 
-    -n, --name string           (requirement)   드레프트를 설치합니다. 드레프트 리스트는 다음과 같으며, 다음 리스트에서 드레프트를 선택해야 합니다.
-                                                ===== 드레프트 리스트 ====
+    -n, --name string           (requirement)   템플릿을 설치합니다. 템플릿 리스트는 다음과 같으며, 다음 리스트에서 템플릿를 선택해야 합니다.
+                                                ===== 템플릿 리스트 ====
 EOF
 LIST=/tmp/${THIS_NAME}-draft-ls
 sed 's/^/\t\t\t\t\t\t/' < ${LIST}
     cat <<EOF
-                                                ===== 드레프트 리스트 ====
+                                                ===== 템플릿 리스트 ====
                                                 디폴트로 fetch할 때 현재 working 디렉토리 이름을 사용합니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
                                                 따라서 디렉토리 이름은 {서비스 그룹}-{서비스 이름} 이어야 합니다.
 
-    -o, --overwrite             (requirement)   드레프트를 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
+    -o, --overwrite             (requirement)   템플릿을 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
                                                 .valvesecret은 유지됩니다.
-                                                덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 드레프트를 백업합니다.
-                                                따라서 기존 드레프트를 확인하려면 .valve-history 디렉토리를 확인바랍니다.
+                                                덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 템플릿을 백업합니다.
+                                                따라서 기존 템플릿을 확인하려면 .valve-history 디렉토리를 확인바랍니다.
 
     -g, --group string          (optional)      서비스 그룹 이름입니다. 서비스 그룹은 서비스를 대표하는 이름입니다. 
                                                 서비스 그룹명을 바꾸고 싶을 때 사용합니다.
@@ -42,10 +43,10 @@ sed 's/^/\t\t\t\t\t\t/' < ${LIST}
     -u, --url string            (optional)      서비스의 레파지토리 URL입니다. valve-ctl은 디폴트로 fetch 할 때 가져오는 레파지토리 URL을 자동으로 찾아줍니다.
                                                 하지만 레파지토리 URL을 변경하고 싶다면 다음 옵션을 사용합니다.
 
-    -o, --overwrite             (optional)      드레프트를 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
+    -o, --overwrite             (optional)      템플릿을 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
                                                 .valvesecret은 유지됩니다.
-                                                덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 드레프트를 백업합니다.
-                                                따라서 기존 드레프트를 확인하려면 .valve-history 디렉토리를 확인바랍니다.
+                                                덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 템플릿을 백업합니다.
+                                                따라서 기존 템플릿을 확인하려면 .valve-history 디렉토리를 확인바랍니다.
 
 Examples:
     [Mandatory]
@@ -64,10 +65,14 @@ EOF
 }
 
 _run() {
-    if ! OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@")
-    then
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
         _help
-        exit 1
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    elif ! [[ $@ =~ '-' ]]; then
+        _help
+        _error "Error params: $@"
     fi
     eval set -- "${OPTIONS}"
 
@@ -171,7 +176,7 @@ __pkg_version_check() {
     _debug_mode
     if [ "${THIS_VERSION}" == "v0.0.0" ]; then      # Use local draft
         if [ ! -d ${SHELL_DIR}/draft ]; then
-            _error
+            _error $SHELL_DIR
         fi
 
         rm -rf ${DIST}
