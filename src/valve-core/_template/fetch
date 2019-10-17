@@ -176,7 +176,7 @@ __pkg_version_check() {
     _debug_mode
     if [ "${THIS_VERSION}" == "v0.0.0" ]; then      # Use local draft
         if [ ! -d ${SHELL_DIR}/draft ]; then
-            _error $SHELL_DIR
+            _error "There is no templates in here : "$SHELL_DIR
         fi
 
         rm -rf ${DIST}

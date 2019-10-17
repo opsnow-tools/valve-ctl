@@ -28,7 +28,7 @@ _set_cmd() {
         h)
             CMD=help
             ;;
-        f|fetch)
+        fetch)
             CMD=fetch
             ;;
     esac

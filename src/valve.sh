@@ -140,7 +140,7 @@ _set_cmd() {
         t)
             CMD=template
             ;;
-        f|fetch)
+        fetch)
             CMD=_template
             H_CMD=fetch
             ;;
