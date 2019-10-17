@@ -140,8 +140,9 @@ _set_cmd() {
         t)
             CMD=template
             ;;
-        f)
-            CMD=fetch
+        f|fetch)
+            CMD=_template
+            H_CMD=fetch
             ;;
         e)
             CMD=example
@@ -180,7 +181,11 @@ _run() {
             # _command "$ROOT_PLUGINS_DIR/${CMD} $*"
             $ROOT_PLUGINS_DIR/${CMD}/run.sh $*
         elif [ -d $ROOT_CORE_DIR/$CMD ]; then
-            $ROOT_CORE_DIR/${CMD}/run.sh $*
+            if [ ! -z $H_CMD ]; then
+                $ROOT_CORE_DIR/${CMD}/run.sh $H_CMD $*
+            else
+                $ROOT_CORE_DIR/${CMD}/run.sh $*
+            fi
         fi
     fi
 
