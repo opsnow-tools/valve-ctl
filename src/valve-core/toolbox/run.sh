@@ -19,9 +19,9 @@ _help() {
 Usage: valve ${CUR_OBJECT} {Params}
 
 Params:
-    h, help                 현재 화면을 보여줍니다.
+    help                 현재 화면을 보여줍니다.
 
-    i, install              Not yet (TODO 도구들을 설치합니다.)
+    install              valve-ctl에 필요한 도구들을 설치합니다.
 
 ================================================================================
 EOF
@@ -31,10 +31,10 @@ EOF
 _set_cmd() {
     case $CMD in
         # 2 point. _set_cmd function 내 case 추가
-        h)
+        help)
             CMD=help
             ;;
-        i)
+        install)
             CMD=install
             ;;
     esac
