@@ -9,7 +9,7 @@ source ${ROOT_SHELL_DIR}/common.sh
 
 
 readonly SHORT_OPT="hvon:g:s:u:"
-readonly LONG_OPT="help,verbose,overwrite,group:,service:,name:,url:"
+readonly LONG_OPT="help,verbose,overwrite,group:,service:,name:,giturl:"
 
 _help() {
     cat <<EOF
@@ -40,7 +40,7 @@ sed 's/^/\t\t\t\t\t\t/' < ${LIST}
     -s, --service string        (optional)      서비스 이름 입니다. 서비스 그룹에서 동작하는 app 이름입니다.
                                                 서비스 이름명을 바꾸고 싶을 때 사용합니다.
 
-    -u, --url string            (optional)      서비스의 레파지토리 URL입니다. valve-ctl은 디폴트로 fetch 할 때 가져오는 레파지토리 URL을 자동으로 찾아줍니다.
+    -u, --giturl string         (optional)      서비스의 레파지토리 URL입니다. valve-ctl은 디폴트로 fetch 할 때 가져오는 레파지토리 URL을 자동으로 찾아줍니다.
                                                 하지만 레파지토리 URL을 변경하고 싶다면 다음 옵션을 사용합니다.
 
     -o, --overwrite             (optional)      템플릿을 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
@@ -58,7 +58,7 @@ Examples:
     [Optional]
     $ valve fetch --name java-mvn-tomcat --group sample
     $ valve fetch --name java-mvn-tomcat --group sample --service tomcat
-    $ valve fetch --name java-mvn-tomcat --group sample --service tomcat --repo {REPO URL}
+    $ valve fetch --name java-mvn-tomcat --group sample --service tomcat --giturl {REPO URL}
 
 ================================================================================
 EOF
@@ -90,7 +90,7 @@ _run() {
                 shift
                 PARAM_SERVICE=$1
                 ;;
-            -u|--url)
+            -u|--giturl)
                 shift
                 PARAM_REPO=$1
                 ;;
@@ -154,7 +154,7 @@ _fetch(){
 
 ############# Start Private function #############
 __validate() {      # validate overwrite option
-    _debug_mode set -x
+    _debug_mode
     if (( PARAM_OVERWRITE == 1 )); then
         if [ -f Jenkinsfile ]; then
             if [ ! -d .valve-history ]; then
