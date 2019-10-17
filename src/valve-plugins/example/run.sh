@@ -10,8 +10,7 @@ source ${ROOT_SHELL_DIR}/common.sh
 ##### 새 기능의 모체 추가할때
 # 1. help message 추가
 # 2. _set_cmd function 내 case 추가
-# 3. 현재 스크립트의 위치에 ${현재스크립트이름}-cmds directory 가 존재해야 하며 
-#   directory 내에는 정의한 command (long) 와 일치하는 스크립트(chmod +x)가 존재해야 함.
+# 3. 나머지 기능은 수정하지 않음.
 
 # 1 point. help message 추가
 _help() {
@@ -31,7 +30,7 @@ EOF
 # Define short command
 _set_cmd() {
     case $CMD in
-# 2 point. _set_cmd function 내 case 추가
+        # 2 point. _set_cmd function 내 case 추가
         h)
             CMD=help
             ;;
