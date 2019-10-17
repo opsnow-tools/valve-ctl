@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SHELL_DIR=$(dirname $0)
+CONFIG=${HOME}/.valve-ctl
+touch ${CONFIG} && . ${CONFIG}
 # SHELL_DIR=${0}
 # MYNAME=${0##*/}
 
@@ -108,5 +111,33 @@ _select_one() {
             fi
             SELECTED=$(sed -n ${ANSWER}p ${LIST})
         fi
+    fi
+}
+
+_config_save() {
+    echo "# valve config" > ${CONFIG}
+    echo "REGISTRY=${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}" >> ${CONFIG}
+    echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
+    echo "USERNAME=${USERNAME}" >> ${CONFIG}
+}
+
+_debug_mode() {
+    if [ ${DEBUG_MODE} ]; then
+        if [ $VERBOSE -ge 3 ]; then     # -vvv
+            echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
+            $@
+        else                            # -v | --verbose
+            echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
+        fi
+    fi
+}
+
+_cmd_list() {
+    # using object
+    ls -p ${ROOT_CORE_DIR} | grep -e / | grep -v draft | grep -v '_' | awk -F/ '{print $1}'
+
+    # Print commands in hidden object
+    if ! find ${ROOT_CORE_DIR} -maxdepth 0 -empty | read; then
+        find ${ROOT_CORE_DIR}  | grep -e / | grep -E '_' | awk -F/ '{print $7}' | grep -e '.' | grep -v run
     fi
 }

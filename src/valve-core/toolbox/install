@@ -48,7 +48,7 @@ _run() {
     eval set -- "${OPTIONS}"
 
     while [ $# -gt 0 ]; do
-# 3 point. case 추가
+        # 3 point. case 추가
         case "$1" in
             -a|--all)
                 _aoption
