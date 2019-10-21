@@ -7,18 +7,9 @@ CUR_NAME=${0##*/}
 ####### common functions
 source ${ROOT_SHELL_DIR}/common.sh
 
-##### 새 기능을 추가할때
-# 1. OPT 추가
-# 2. help message 추가
-# 3. run function 내 case 추가
-# 4. public function (api) 은 _ 로 시작, private function 은 __ 로 시작
+readonly SHORT_OPT="hvalc"
+readonly LONG_OPT="help,verbose,all,local,cluster"
 
-
-# 1 point. OPT 추가
-readonly SHORT_OPT="halc"
-readonly LONG_OPT="help,all,local,cluster"
-
-# 2 point. help message 추가
 _help() {
     cat <<EOF
 ================================================================================
@@ -27,17 +18,16 @@ Usage: valve ${CUR_OBJECT} ${CUR_NAME} {Params}
 Params:
     -h, --help                  현재 화면을 보여줍니다.
 
-    -a, --all                   Not yet(All tools)
-    -l, --local                 Not yet(Local tools)
-    -c, --cluster               Not yet(Cluster tools)
-        
+    -a, --all                   도구를 설치하고 로컬 환경을 초기화 합니다.
+    -l, --local                 로컬 환경을 초기화 합니다.
+    -c, --cluster               도구를 설치합니다.
 ================================================================================
 EOF
 }
 
 _run() {
 
-    OPTIONS=$(getopt -q -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@" 2>${CUR_DIR}/.tmp)
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
     if  [ $? -eq 1 ]; then
         _help
         _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
@@ -48,23 +38,25 @@ _run() {
     eval set -- "${OPTIONS}"
 
     while [ $# -gt 0 ]; do
-        # 3 point. case 추가
         case "$1" in
             -a|--all)
-                _aoption
+                ALL=true
                 ;;
             -l|--local)
-                _boption
+                LOCAL=true
                 ;;
             -c|--cluster)
-                echo "c opt param"
+                CLUSTER=true
                 ;;
             -h|--help)
                 _help
                 exit 0
                 ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
             --)
-                # No more options left.
                 shift
                 break
                ;;
@@ -72,26 +64,462 @@ _run() {
         shift
     done
 
+    if [ "${ALL}" == "true" ]; then
+        _local
+        _cluster
+    elif [ "${LOCAL}" == "true" ]; then
+        _local
+    elif [ "${CLUSTER}" == "true" ]; then
+        _cluster
+    else
+        _help
+        _error
+    fi
+
 }
 
 ##################################################################################
-# 4 point. function 추가
-_aoption() {
-    _result "CUR_DIR : ${CUR_DIR}"
-    _result "CUR_NAME : ${CUR_NAME}"
+_all() {
+    _debug_mode
+    _local
+    _cluster
+}
+
+_local() {
+    _debug_mode
+# version
+DATE=
+KUBECTL=
+KOPS=
+HELM=
+DRAFT=
+GUARD=
+ARGOCD=
+    echo ${CONFIG}
+    ################################################################################
+    DATE=$(date '+%Y-%m-%d %H:%M:%S')
+
+    OS_NAME="$(uname | awk '{print tolower($0)}')"
+    OS_FULL="$(uname -a)"
+    OS_TYPE=
+
+    if [ "${OS_NAME}" == "linux" ]; then
+        if [ $(echo "${OS_FULL}" | grep -c "amzn1") -gt 0 ]; then
+            OS_TYPE="yum"
+        elif [ $(echo "${OS_FULL}" | grep -c "amzn2") -gt 0 ]; then
+            OS_TYPE="yum"
+        elif [ $(echo "${OS_FULL}" | grep -c "el6") -gt 0 ]; then
+            OS_TYPE="yum"
+        elif [ $(echo "${OS_FULL}" | grep -c "el7") -gt 0 ]; then
+            OS_TYPE="yum"
+        elif [ $(echo "${OS_FULL}" | grep -c "Ubuntu") -gt 0 ]; then
+            OS_TYPE="apt"
+        elif [ $(echo "${OS_FULL}" | grep -c "coreos") -gt 0 ]; then
+            OS_TYPE="apt"
+        fi
+    elif [ "${OS_NAME}" == "darwin" ]; then
+        OS_TYPE="brew"
+    fi
+
+    _result "${OS_NAME} [${OS_TYPE}]"
+    _result "${DATE}"
+
+    if [ "${OS_TYPE}" == "" ]; then
+        _error "Not supported OS. [${OS_NAME}]"
+    fi
+
+    # brew for mac
+    if [ "${OS_TYPE}" == "brew" ]; then
+        command -v brew > /dev/null || ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    fi
+
+    # for ubuntu
+    if [ "${OS_TYPE}" == "apt" ]; then
+        export LC_ALL=C
+    fi
+
+    # update
+    echo "================================================================================"
+    _result "update..."
+
+    if [ "${OS_TYPE}" == "apt" ]; then
+        sudo apt update && sudo apt upgrade -y
+        command -v jq > /dev/null || sudo apt install -y jq
+        command -v git > /dev/null || sudo apt install -y git
+        command -v python3 > /dev/null || sudo apt install -y python3
+        command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
+        command -v python3-distutils > /dev/null || sudo apt-get -y install python3-distutils
+        command -v socat > /dev/null || sudo apt install -y socat
+    elif [ "${OS_TYPE}" == "yum" ]; then
+        sudo yum update -y
+        command -v jq > /dev/null || sudo yum install -y jq
+        command -v git > /dev/null || sudo yum install -y git
+        command -v python3 > /dev/null || sudo yum install -y python3
+        command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
+    elif [ "${OS_TYPE}" == "brew" ]; then
+        brew update && brew upgrade
+        command -v jq > /dev/null || brew install jq
+        command -v git > /dev/null || brew install git
+        # getopt
+        GETOPT=$(getopt 2>&1 | head -1 | xargs)
+        if [ "${GETOPT}" == "--" ]; then
+            brew install gnu-getopt
+            brew link --force gnu-getopt
+        fi
+    fi
+
+    # aws-cli
+    echo "================================================================================"
+    _result "install aws-cli..."
+
+    if [ "${OS_TYPE}" == "brew" ]; then
+        command -v aws > /dev/null || brew install awscli
+    else
+        command -v pip3 > /dev/null
+        if ! [ $? -eq 0 ]; then
+            python3 get-pip.py --user
+            echo "PATH=~/.local/bin:$PATH" >> ~/.bashrc
+            export PATH=~/.local/bin:$PATH
+            pip3 --version
+            pip3 install awscli --upgrade --user
+            rm -f get-pip.py
+        else
+            pip3 --version
+            pip3 install awscli --upgrade --user
+            rm -f get-pip.py
+        fi
+    fi
+
+    aws --version | xargs
+
+    if [ ! -f ~/.aws/config ]; then
+        # aws region
+        aws configure set default.region ap-northeast-2
+    fi
+
+    # kubectl
+    echo "================================================================================"
+    _result "install kubectl..."
+
+    if [ "${OS_TYPE}" == "brew" ]; then
+        command -v kubectl > /dev/null || brew install kubernetes-cli
+    else
+        VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+
+        if [ "${KUBECTL}" != "${VERSION}" ] || [ "$(command -v kubectl)" == "" ]; then
+            _result " ${KUBECTL} >> ${VERSION}"
+
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/${OS_NAME}/amd64/kubectl
+            chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
+
+            KUBECTL="${VERSION}"
+        fi
+    fi
+
+    kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1
+
+    # helm
+    echo "================================================================================"
+    _result "install helm..."
+
+    if [ "${OS_TYPE}" == "brew" ]; then
+        command -v helm > /dev/null || brew install kubernetes-helm
+    else
+        # VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq -r '.tag_name')
+        VERSION="v2.13.1"
+
+        if [ "${HELM}" != "${VERSION}" ] || [ "$(command -v helm)" == "" ]; then
+            _result " ${HELM} >> ${VERSION}"
+
+            curl -L https://storage.googleapis.com/kubernetes-helm/helm-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz
+            sudo mv ${OS_NAME}-amd64/helm /usr/local/bin/helm && rm -rf ${OS_NAME}-amd64
+
+            HELM="${VERSION}"
+        fi
+    fi
+
+    helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1
+
+    # # draft
+    # echo "================================================================================"
+    # _result "install draft..."
+
+    # if [ "${OS_TYPE}" == "brew" ]; then
+    #    command -v draft > /dev/null || brew tap azure/draft && brew install azure/draft/draft
+    # else
+    #     VERSION=$(curl -s https://api.github.com/repos/Azure/draft/releases/latest | jq -r '.tag_name')
+
+    #     if [ "${DRAFT}" != "${VERSION}" ] || [ "$(command -v draft)" == "" ]; then
+    #         _result " ${DRAFT} >> ${VERSION}"
+
+    #         curl -L https://azuredraft.blob.core.windows.net/draft/draft-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz
+    #         sudo mv ${OS_NAME}-amd64/draft /usr/local/bin/draft && rm -rf ${OS_NAME}-amd64
+
+    #         DRAFT="${VERSION}"
+    #     fi
+    # fi
+
+    # draft version --short | xargs | cut -d'+' -f1
+
+    # guard
+    echo "================================================================================"
+    _result "install guard..."
+
+    # VERSION=$(curl -s https://api.github.com/repos/appscode/guard/releases/latest | jq -r '.tag_name')
+    VERSION="0.1.2"
+
+    if [ "${GUARD}" != "${VERSION}" ]; then
+        _result " ${GUARD} >> ${VERSION}"
+
+        curl -LO https://github.com/appscode/guard/releases/download/${VERSION}/guard-${OS_NAME}-amd64
+        chmod +x guard-${OS_NAME}-amd64 && sudo mv guard-${OS_NAME}-amd64 /usr/local/bin/guard
+
+        GUARD="${VERSION}"
+    fi
+
+    guard version 2>&1 | grep 'Version ' | xargs | awk '{print $3}'
+
+    # argocd cli
+    echo "================================================================================"
+    _result "install argocd cli ..."
+
+    # VERSION=$(curl -s https://api.github.com/repos/argoproj/argo-cd/releases/latest | jq -r '.tag_name')
+    VERSION="v1.0.2"
+
+    if [ "${ARGOCD}" != "${VERSION}" ]; then
+        _result " ${ARGOCD} >> ${VERSION}"
+
+        curl -LO https://github.com/argoproj/argo-cd/releases/download/${VERSION}/argocd-${OS_NAME}-amd64
+        chmod +x argocd-${OS_NAME}-amd64 && sudo mv argocd-${OS_NAME}-amd64 /usr/local/bin/argocd
+
+        ARGOCD="${VERSION}"
+    fi
+
+    argocd version 2>&1 | grep 'argocd' | xargs | awk '{print $2}'
+
+    # clean
+    echo "================================================================================"
+    _result "clean all..."
+
+    if [ "${OS_TYPE}" == "apt" ]; then
+        sudo apt clean all
+        sudo apt autoremove -y
+    elif [ "${OS_TYPE}" == "yum" ]; then
+        sudo yum clean all
+    elif [ "${OS_TYPE}" == "brew" ]; then
+        brew cleanup
+    fi
+
+    echo "================================================================================"
     
-    _command "a option"
+    cat ${CONFIG} | grep version
+    if [ $? -eq 1 ]; then
+cat <<EOF >> ${CONFIG}
+# version
+DATE="${DATE}"
+KUBECTL="${KUBECTL}"
+HELM="${HELM}"
+DRAFT="${DRAFT}"
+GUARD="${GUARD}"
+EOF
+        cat ${CONFIG}
+    else
+        cat ${CONFIG}
+    fi
 }
 
-_boption() {
-    _result "public b func"
-    __private_bopt
+_cluster() {
+    _debug_mode
+    __helm_init
+
+    # kubernetes-dashboard
+    DASHBOARD="$(kubectl get ing -n kube-system | grep kubernetes-dashboard | awk '{print $2}' | xargs)"
+
+    if [ "${DASHBOARD}" != "" ]; then
+        _result "kubernetes-dashboard: http://${DASHBOARD}/"
+
+        # kubernetes-dashboard token
+        __create_cluster_role_binding admin kube-system kubernetes-dashboard-admin true
+    fi
+
+    # namespace
+    __namespace "development" true
 }
 
-__private_bopt() {
-    _result "private b func"
+__helm_install() {
+    _NS=$1
+    _NM=$2
+
+    CNT=$(helm ls ${_NM} | wc -l | xargs)
+
+    if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
+        CHART=/tmp/${_NM}.yaml
+
+        _get_yaml "charts/${_NM}" "${CHART}"
+
+        CHART_VERSION=$(cat ${CHART} | grep chart-version | awk '{print $3}' | xargs)
+
+        if [ -z ${CHART_VERSION} ] || [ "${CHART_VERSION}" == "latest" ]; then
+            _command "helm upgrade --install ${_NM} stable/${_NM}"
+            helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART}
+        else
+            _command "helm upgrade --install ${_NM} stable/${_NM} --version ${CHART_VERSION}"
+            helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}
+        fi
+    fi
 }
 
+__helm_delete() {
+    _NM=$1
+
+    CNT=$(helm ls ${_NM} | wc -l | xargs)
+
+    if [ "x${CNT}" != "x0" ]; then
+        _command "helm delete ${_NM} --purge"
+        helm delete ${_NM} --purge
+    fi
+}
+
+__namespace() {
+    _debug_mode
+    NAMESPACE=$1
+    DEFAULT=$2
+
+    CHECK=
+
+    _command "kubectl get ns ${NAMESPACE}"
+    kubectl get ns ${NAMESPACE} > /dev/null 2>&1 || export CHECK=CREATE
+
+    if [ "${CHECK}" == "CREATE" ]; then
+        _result "${NAMESPACE}"
+
+        _command "kubectl create ns ${NAMESPACE}"
+        kubectl create ns ${NAMESPACE}
+    fi
+
+    if [ "${DEFAULT}" == "true" ]; then
+        kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
+    fi
+}
+
+__create_service_account() {
+    _debug_mode
+    _NAMESPACE=$1
+    _ACCOUNT=$2
+
+    CHECK=
+
+    _command "kubectl get sa ${_ACCOUNT} -n ${_NAMESPACE}"
+    kubectl get sa ${_ACCOUNT} -n ${_NAMESPACE} > /dev/null 2>&1 || export CHECK=CREATE
+
+    if [ "${CHECK}" == "CREATE" ]; then
+        _result "${_NAMESPACE}:${_ACCOUNT}"
+
+        _command "kubectl create sa ${_ACCOUNT} -n ${_NAMESPACE}"
+        kubectl create sa ${_ACCOUNT} -n ${_NAMESPACE}
+    fi
+}
+
+__create_cluster_role_binding() {
+    _debug_mode
+    _ROLE=$1
+    _NAMESPACE=$2
+    _ACCOUNT=${3:-default}
+    _TOKEN=${4:-false}
+
+    __create_service_account ${_NAMESPACE} ${_ACCOUNT}
+
+    CHECK=
+
+    _command "kubectl get clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT}"
+    kubectl get clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} > /dev/null 2>&1 || export CHECK=CREATE
+
+    if [ "${CHECK}" == "CREATE" ]; then
+        _result "${_ROLE}:${_NAMESPACE}:${_ACCOUNT}"
+
+        _command "kubectl create clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} --clusterrole=${_ROLE} --serviceaccount=${_NAMESPACE}:${_ACCOUNT}"
+        kubectl create clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} --clusterrole=${_ROLE} --serviceaccount=${_NAMESPACE}:${_ACCOUNT}
+    fi
+
+    if [ "${_TOKEN}" == "true" ]; then
+        SECRET=$(kubectl get secret -n ${_NAMESPACE} | grep ${_ACCOUNT}-token | awk '{print $1}')
+
+        _command "kubectl describe secret ${SECRET} -n ${_NAMESPACE}"
+        kubectl describe secret ${SECRET} -n ${_NAMESPACE} | grep 'token:'
+    fi
+}
+
+__waiting_pod() {
+    _NS=${1}
+    _NM=${2}
+    SEC=${3:-30}
+
+    TMP=/tmp/${THIS_NAME}-pod-status
+
+    _command "kubectl get pod -n ${_NS} | grep ${_NM}"
+
+    IDX=0
+    while [ 1 ]; do
+        kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > ${TMP}
+        cat ${TMP}
+
+        STATUS=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $3}')
+
+        if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "development" ]; then
+            READY=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $2}' | cut -d'/' -f1)
+        else
+            READY="1"
+        fi
+
+        if [ "${STATUS}" == "Running" ] && [ "x${READY}" != "x0" ]; then
+            break
+        elif [ "${STATUS}" == "Error" ]; then
+            _error "${STATUS}"
+        elif [ "${STATUS}" == "CrashLoopBackOff" ]; then
+            _error "${STATUS}"
+        elif [ "x${IDX}" == "x${SEC}" ]; then
+            _error "Timeout"
+        fi
+
+        IDX=$(( ${IDX} + 1 ))
+        sleep 2
+    done
+}
+
+__helm_init() {
+    _debug_mode
+    _command "helm init --upgrade"
+    helm init --upgrade
+
+    _command "helm repo update"
+    helm repo update
+
+    # tiller
+    __waiting_pod "kube-system" "tiller"
+
+    # _command "helm version"
+    # helm version
+
+    if [ ! -z ${DELETE} ]; then
+        __helm_delete "nginx-ingress"
+        __helm_delete "docker-registry"
+        __helm_delete "kubernetes-dashboard"
+        __helm_delete "metrics-server"
+        __helm_delete "heapster"
+    fi
+
+    # namespace
+    NAMESPACE="${NAMESPACE:-kube-system}"
+
+    __helm_install "${NAMESPACE}" "nginx-ingress"
+    __helm_install "${NAMESPACE}" "docker-registry"
+    __helm_install "${NAMESPACE}" "kubernetes-dashboard"
+    __helm_install "${NAMESPACE}" "metrics-server"
+    __helm_install "${NAMESPACE}" "heapster"
+
+    __waiting_pod "${NAMESPACE}" "docker-registry"
+    __waiting_pod "${NAMESPACE}" "nginx-ingress"
+}
 ##################################################################################
 
 _run $@
