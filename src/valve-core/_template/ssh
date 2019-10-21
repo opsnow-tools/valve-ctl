@@ -77,8 +77,6 @@ _run() {
 _ssh() {
     _debug_mode
 
-    NAMESPACE="${NAMESPACE:-development}"
-
     if [ ! -v ${PARAM_PODS} ]; then
         _command "kubectl get pod -n ${NAMESPACE}"
         FIND_POD=$(kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | grep ${PARAM_PODS} | awk '{print $1}')
