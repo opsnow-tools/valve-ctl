@@ -14,7 +14,7 @@ readonly LONG_OPT="help,verbose,helm:"
 _help() {
     cat <<EOF
 ================================================================================
-Usage: valve #{CUR_NAME} {Params}                               로컬 클러스터에 배포한 앱을 지웁니다.
+Usage: valve ${CUR_NAME} {Params}                               로컬 클러스터에 배포한 앱을 지웁니다.
 
 Params:
     -h, --help                                                  valve off 화면을 보여줍니다.
