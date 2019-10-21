@@ -1,0 +1,33 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_OBJECT} ${CUR_NAME} 
+
+Examples:
+    [Mandatory]
+    $ cd {PROJECT}
+    $ valve repo list
+================================================================================
+EOF
+}
+
+_run() {
+    _list
+}
+
+##################################################################################
+_list() {
+    cat ${ROOT_SHELL_DIR}/.repo-list | awk -F' ' '{print "[Name] ", $1,"\t", "[Custom Template Url] ", $2}'
+}
+##################################################################################
+
+_run $@
