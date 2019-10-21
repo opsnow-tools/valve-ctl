@@ -1,0 +1,351 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="hvon:g:s:u:"
+readonly LONG_OPT="help,verbose,overwrite,group:,service:,name:,giturl:"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}
+
+Params:
+    -h, --help                                  valve fetch 화면을 보여줍니다.
+
+    -n, --name string           (requirement)   템플릿을 설치합니다. 템플릿 리스트는 다음과 같으며, 다음 리스트에서 템플릿를 선택해야 합니다.
+                                                ===== 템플릿 리스트 ====
+EOF
+LIST=/tmp/${THIS_NAME}-draft-ls
+sed 's/^/\t\t\t\t\t\t/' < ${LIST}
+    cat <<EOF
+                                                ===== 템플릿 리스트 ====
+                                                디폴트로 fetch할 때 현재 working 디렉토리 이름을 사용합니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
+                                                따라서 디렉토리 이름은 {서비스 그룹}-{서비스 이름} 이어야 합니다.
+
+    -o, --overwrite             (requirement)   템플릿을 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
+                                                .valvesecret은 유지됩니다.
+                                                덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 템플릿을 백업합니다.
+                                                따라서 기존 템플릿을 확인하려면 .valve-history 디렉토리를 확인바랍니다.
+
+    -g, --group string          (optional)      서비스 그룹 이름입니다. 서비스 그룹은 서비스를 대표하는 이름입니다. 
+                                                서비스 그룹명을 바꾸고 싶을 때 사용합니다.
+
+    -s, --service string        (optional)      서비스 이름 입니다. 서비스 그룹에서 동작하는 app 이름입니다.
+                                                서비스 이름명을 바꾸고 싶을 때 사용합니다.
+
+    -u, --giturl string         (optional)      서비스의 레파지토리 URL입니다. valve-ctl은 디폴트로 fetch 할 때 가져오는 레파지토리 URL을 자동으로 찾아줍니다.
+                                                하지만 레파지토리 URL을 변경하고 싶다면 다음 옵션을 사용합니다.
+
+    -o, --overwrite             (optional)      템플릿을 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
+                                                .valvesecret은 유지됩니다.
+                                                덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 템플릿을 백업합니다.
+                                                따라서 기존 템플릿을 확인하려면 .valve-history 디렉토리를 확인바랍니다.
+
+Examples:
+    [Mandatory]
+    $ cd {PROJECT}
+    $ valve fetch --name java-mvn-tomcat
+    or
+    $ valve fetch -n java-mvn-tomcat
+
+    [Optional]
+    $ valve fetch --name java-mvn-tomcat --group sample
+    $ valve fetch --name java-mvn-tomcat --group sample --service tomcat
+    $ valve fetch --name java-mvn-tomcat --group sample --service tomcat --giturl {REPO URL}
+
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    elif ! [[ $@ =~ '-' ]]; then
+        _help
+        _error "Error params: $@"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -n|--name)
+                shift
+                PARAM_NAME=$1
+                ;;
+            -g|--group)
+                shift
+                PARAM_GROUP=$1
+                ;;
+            -s|--service)
+                shift
+                PARAM_SERVICE=$1
+                ;;
+            -u|--giturl)
+                shift
+                PARAM_REPO=$1
+                ;;
+            -o|--overwrite)
+                PARAM_OVERWRITE=1
+                ;;
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ ! -v PARAM_NAME ]; then
+        _help
+        _error "You don't use -n or --name option"
+    else
+        _fetch
+    fi
+}
+
+##################################################################################
+_fetch(){
+    _result "draft package version: ${THIS_VERSION}"
+
+    DIST=/tmp/${THIS_NAME}-draft-${THIS_VERSION}
+    LIST=/tmp/${THIS_NAME}-draft-ls
+
+    NAMESPACE="${NAMESPACE:-development}"
+
+    SERVICE_GROUP=$PARAM_GROUP
+    SERVICE_NAME=$PARAM_SERVICE
+    REPOSITORY_URL=$PARAM_REPO
+
+    __pkg_version_check
+    __pkg_name_check
+    __validate
+
+    __pkg_variable_gen
+
+    __pkg_copy
+    __chart_copy
+    
+    __pkg_gen
+    __chart_gen
+
+    _config_save
+    _success 'valve fetch success'
+}
+
+
+
+############# Start Private function #############
+__validate() {      # validate overwrite option
+    _debug_mode
+    if (( PARAM_OVERWRITE == 1 )); then
+        if [ -f Jenkinsfile ]; then
+            if [ ! -d .valve-history ]; then
+                mkdir -p .valve-history
+            fi
+            cp -r charts/ .valve-history/
+            cp -r Dockerfile .valve-history
+            cp -r draft.toml .valve-history
+            cp -r Jenkinsfile .valve-history
+            rm -rf charts/ Dockerfile draft.toml Jenkinsfile
+        fi
+    else
+        if [ -f Jenkinsfile ]; then
+            _error "Warning!!\nThere is existing chart & Dockerfile & Jenkinsfile. If you want to replace all to new one, Use --overwrite or -o option.\nOverwrite option will copy backup in .valve_history directory."
+        fi
+    fi
+}
+__pkg_version_check() {
+    _debug_mode
+    if [ "${THIS_VERSION}" == "v0.0.0" ]; then      # Use local draft
+        if [ ! -d ${SHELL_DIR}/draft ]; then
+            _error "There is no templates in here : "$SHELL_DIR
+        fi
+
+        rm -rf ${DIST}
+        mkdir -p ${DIST}
+
+        
+        _command "cp -rf ${SHELL_DIR}/draft/* ${DIST}"  # copy local draft
+        cp -rf ${SHELL_DIR}/draft/* ${DIST}
+
+        _result "local package used."
+    else        # Use release version
+        if [ ! -d ${DIST} ]; then   
+            echo
+            mkdir -p ${DIST}
+
+            # download
+            pushd ${DIST}
+            curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
+            popd
+
+            _result "draft package downloaded."
+        fi
+    fi
+}
+
+__pkg_name_check() {
+    _debug_mode
+    ls ${DIST} | sort > ${LIST}     # create LIST
+    IDX=0
+    CNT=`wc -l < ${LIST}`
+    while read VAL; do
+        if ! [[ ${PARAM_NAME} =~ $VAL ]]; then
+            IDX=$((IDX+1))
+        fi
+    done < ${LIST}
+
+    if [ $IDX == $CNT ]; then       # Check name if doesn't match.
+        _result "Draft package: "${PARAM_NAME}
+        rm -rf ${DIST}
+        _error "Use valve fetch -h / valve fetch --help \n\e[4m${PARAM_NAME}\e[0m draft package doesn't matching anything"
+    else        # Check name
+        PACKAGE=${PARAM_NAME}
+    fi
+}
+
+__pkg_variable_gen() {
+    _debug_mode
+    if [ "${NAME}" == "" ]; then
+        NAME=$(echo $(basename $(pwd)) | sed 's/\./-/g')
+        if [ "${SERVICE_GROUP}" == "" ]; then
+            SERVICE_GROUP=$(echo $NAME | cut -d- -f1)
+        fi
+
+        if [ "${SERVICE_NAME}" == "" ]; then
+            SERVICE_NAME=$(echo $NAME | cut -d- -f2)
+        fi
+    fi
+
+    NAME="${SERVICE_GROUP}-${SERVICE_NAME}"
+
+    if [ "${REPOSITORY_URL}" == "" ]; then
+        if [ -d .git ]; then
+            REPOSITORY_URL=$(git config --get remote.origin.url | head -1 | xargs)
+        fi
+    fi
+}
+
+__pkg_gen() {
+    _debug_mode
+    _chart_replace "Jenkinsfile" "def SERVICE_GROUP" "${SERVICE_GROUP}" true    # Replace Jenkinsfile SERVICE_GROUP
+    SERVICE_GROUP="${REPLACE_VAL}"
+
+    _chart_replace "Jenkinsfile" "def SERVICE_NAME" "${SERVICE_NAME}" true  # Replace Jenkinsfile SERVICE_NAME
+    SERVICE_NAME="${REPLACE_VAL}"
+
+    _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${REPOSITORY_URL}" true
+    REPOSITORY_URL="${REPLACE_VAL}"
+    
+    if [ -f draft.toml ] && [ ! -z ${NAME} ]; then  # Replace draft.toml NAME
+        _replace "s|NAMESPACE|${NAMESPACE}|" draft.toml
+        _replace "s|NAME|${NAME}-${NAMESPACE}|" draft.toml
+    fi
+}
+
+__pkg_copy() {  # copy drafts
+    _debug_mode
+    if [ -f ${DIST}/${PACKAGE}/dockerignore ] && [ ! -f .dockerignore ]; then
+        cp -rf ${DIST}/${PACKAGE}/dockerignore .dockerignore
+    fi
+    if [ -f ${DIST}/${PACKAGE}/draftignore ] && [ ! -f .draftignore ]; then
+        cp -rf ${DIST}/${PACKAGE}/draftignore .draftignore
+    fi
+    if [ -f ${DIST}/${PACKAGE}/valvesecret ] && [ ! -f .valvesecret ]; then
+        cp -rf ${DIST}/${PACKAGE}/valvesecret .valvesecret
+    fi
+    if [ -f ${DIST}/${PACKAGE}/Dockerfile ]; then
+        cp -rf ${DIST}/${PACKAGE}/Dockerfile Dockerfile
+    fi
+    if [ -f ${DIST}/${PACKAGE}/Jenkinsfile ]; then
+        cp -rf ${DIST}/${PACKAGE}/Jenkinsfile Jenkinsfile
+    fi
+    if [ -f ${DIST}/${PACKAGE}/draft.toml ]; then
+        cp -rf ${DIST}/${PACKAGE}/draft.toml draft.toml
+    fi
+}
+
+__chart_copy() {    # cp charts/acme/ to charts/${NAME}/
+    _debug_mode
+    if [ -d ${DIST}/${PACKAGE}/charts ]; then
+        mkdir -p charts/${NAME}
+        cp -rf ${DIST}/${PACKAGE}/charts/acme/* charts/${NAME}/
+    fi
+}
+
+__chart_gen() {
+    _debug_mode
+    if [ -d charts ] && [ ! -z ${NAME} ]; then
+        # chart name
+        _replace "s|name: .*|name: ${NAME}|" charts/${NAME}/Chart.yaml
+
+        # values fullnameOverride
+        _replace "s|fullnameOverride: .*|fullnameOverride: ${NAME}|" charts/${NAME}/values.yaml
+
+        # values namespace
+        _replace "s|namespace: .*|namespace: ${NAMESPACE}|" charts/${NAME}/values.yaml
+
+        # values repository
+        if [ -z ${REGISTRY} ]; then
+            _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
+        else
+            _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
+        fi
+
+        # values host
+        _replace "s|subdomain: .*|subdomain: ${NAME}|" charts/${NAME}/values.yaml
+        _replace "s|- acme|- ${NAME}|" charts/${NAME}/values.yaml
+    fi
+}
+############# End Private function #############
+
+_chart_replace() {
+    REPLACE_FILE=$1
+    REPLACE_KEY=$2
+    DEFAULT_VAL=$3
+    REQUIRED=$4
+
+    # if [ "${DEFAULT_VAL}" == "" ]; then
+    #     Q="${REPLACE_KEY} : "
+    # else
+    #     Q="${REPLACE_KEY} [${DEFAULT_VAL}] : "
+    # fi
+
+    # _read "${Q}"
+
+    REPLACE_VAL=${ANSWER:-${DEFAULT_VAL}}
+
+    if [ "${REQUIRED}" == "true" ] && [ "${REPLACE_VAL}" == "" ]; then
+        _error "Required: ${REPLACE_KEY}"
+    fi
+
+    if [ "${REPLACE_TYPE}" == "yaml" ]; then
+        _command "sed -i -e s|${REPLACE_KEY}: .*|${REPLACE_KEY}: ${REPLACE_VAL}| ${REPLACE_FILE}"
+        _replace "s|${REPLACE_KEY}: .*|${REPLACE_KEY}: ${REPLACE_VAL}|" ${REPLACE_FILE}
+    else
+        _command "sed -i -e s|${REPLACE_KEY} = .*|${REPLACE_KEY} = ${REPLACE_VAL}| ${REPLACE_FILE}"
+        _replace "s|${REPLACE_KEY} = .*|${REPLACE_KEY} = \"${REPLACE_VAL}\"|" ${REPLACE_FILE}
+    fi
+}
+
+##################################################################################
+
+_run $@
