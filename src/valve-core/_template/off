@@ -1,0 +1,100 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="hv"
+readonly LONG_OPT="help,verbose,helm:"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve #{CUR_NAME} {Params}                               로컬 클러스터에 배포한 앱을 지웁니다.
+
+Params:
+    -h, --help                                                  valve off 화면을 보여줍니다.
+
+    --helm                                      (requirement)   로컬 클러스터에 배포한 앱들 중 템플릿을 지정하여 지웁니다.
+                                                                템플릿 목록은 valve chart list를 통해 확인할 수 있습니다.
+
+Examples:
+    [Mandatory]
+    $ cd {PROJECT}
+    $ valve off
+
+    [Optional]
+    $ valve get --helm 
+    $ valve off --helm sample-tomcat-development
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    # elif ! [[ $@ =~ '-' ]]; then
+    #     _help
+    #     _error "Error params: $@"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --helm)
+                shift
+                PARAM_HELM=$1
+                ;;
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ -v ${PARAM_HELM} ]; then
+        _help
+        _error "Use valve off --help / valve off -h"
+    else
+        _off
+    fi
+}
+
+##################################################################################
+
+_off() {
+    _debug_mode
+    if [ ! -v ${PARAM_HELM} ]; then
+        FIND_HELM=$(helm ls --all | grep -v "NAME" | grep -E ${PARAM_HELM} | awk '{print $1}')
+        if [[ ${FIND_HELM} == ${PARAM_HELM} ]]; then
+            helm delete ${PARAM_HELM} --purge
+        else
+            _error "There is no apps in local cluster. Use valve get --helm"
+        fi
+    else
+        _error "Use valve get --helm"
+    fi
+
+    
+    
+    _success
+}
+##################################################################################
+
+_run $@
