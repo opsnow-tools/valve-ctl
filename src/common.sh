@@ -138,6 +138,6 @@ _cmd_list() {
 
     # Print commands in hidden object
     if ! find ${ROOT_CORE_DIR} -maxdepth 0 -empty | read; then
-        find ${ROOT_CORE_DIR}  | grep -e / | grep -E '_' | awk -F/ '{print $7}' | grep -e '.' | grep -v run
+        find ${ROOT_CORE_DIR}  | grep -e / | grep -v draft | grep -E '_' | awk -F/ '{print $7}' | grep -e '.' | grep -v '\.'
     fi
 }
