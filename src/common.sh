@@ -2,7 +2,9 @@
 
 SHELL_DIR=$(dirname $0)
 CONFIG=${HOME}/.valve/valve-ctl
+REPO_CONFIG=${HOME}/.valve/valve-repo
 touch ${CONFIG} && . ${CONFIG}
+touch ${REPO_CONFIG}
 # SHELL_DIR=${0}
 # MYNAME=${0##*/}
 
