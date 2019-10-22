@@ -1,0 +1,84 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="hv"
+readonly LONG_OPT="help,verbose"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}                               로컬 클러스터에 배포한 app들의 리소스를 모니터링 합니다.
+
+Params:
+    -h, --help                                                  valve top 화면을 보여줍니다.
+
+Examples:
+    [Mandatory]
+    $ valve top
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    # elif ! [[ $@ =~ '-' ]]; then
+    #     _help
+    #     _error "Error params: $@"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                PARAM_TOP=true
+                shift
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ -v ${PARAM_TOP} ]; then
+        _help
+        _error "Use valve top --help / valve top -h"
+    else
+        _top
+    fi
+}
+
+##################################################################################
+
+_top() {
+    _debug_mode
+
+    if [[ ${PARAM_TOP} == "true" ]]; then
+        _command "kubectl top pod -n ${NAMESPACE}"
+        kubectl top pod -n ${NAMESPACE}
+    else
+        _error "Use valve top --help"
+    fi
+    
+    _success
+}
+##################################################################################
+
+_run $@
