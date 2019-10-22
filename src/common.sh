@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SHELL_DIR=$(dirname $0)
-CONFIG=${HOME}/.valve-ctl
+CONFIG=${HOME}/.valve/valve-ctl
 touch ${CONFIG} && . ${CONFIG}
 # SHELL_DIR=${0}
 # MYNAME=${0##*/}
@@ -115,17 +115,22 @@ _select_one() {
 }
 
 _config_save() {
-    echo "# valve config" > ${CONFIG}
-    echo "REGISTRY=${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}" >> ${CONFIG}
-    echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
-    echo "USERNAME=${USERNAME}" >> ${CONFIG}
+    FIND_CNT=$(cat ${CONFIG} | grep REGISTRY= | wc -l | xargs)
+    if [ ${FIND_CNT} -eq 0 ]; then
+        echo "# valve config" > ${CONFIG}
+        echo "REGISTRY=${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}" >> ${CONFIG}
+        echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
+        echo "USERNAME=${USERNAME}" >> ${CONFIG}
+    else
+        _success "CONFIG Set"
+    fi
 }
 
 _debug_mode() {
     if [ ${DEBUG_MODE} ]; then
         if [ $VERBOSE -ge 3 ]; then     # -vvv
             echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
-            $@
+            set -x
         else                            # -v | --verbose
             echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
         fi
