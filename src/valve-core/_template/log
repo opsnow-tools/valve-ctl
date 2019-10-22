@@ -17,7 +17,7 @@ _help() {
 Usage: valve ${CUR_NAME} {Params}                               로컬 클러스터에 배포한 app에 log로 확인합니다.
 
 Params:
-    -h, --help                                                  valve ssh 화면을 보여줍니다.
+    -h, --help                                                  valve log 화면을 보여줍니다.
 
     --pod, -p                               (requirement)       로컬 클러스터에 배포한 app의 이름을 이용하여 log를 확인합니다.
                                                                 로컬 클러스터에 배포한 app의 이름은 valve get --pods 로 검색합니다.
@@ -75,7 +75,7 @@ _run() {
 
     if [ -v ${PARAM_PODS} ]; then
         _help
-        _error "Use valve ssh --help / valve ssh -h"
+        _error "Use valve log --help / valve log -h"
     else
         _logs
     fi
@@ -110,7 +110,7 @@ _logs() {
             _error "There is no pod that matching exactly. Use valve get --pods & check pods name"
         fi
     else
-        _error "Use valve ssh --help"
+        _error "Use valve log --help"
     fi
     _command "${P_CMD}${C_CMD}${F_CMD}"
     ${P_CMD}${C_CMD}${F_CMD}
