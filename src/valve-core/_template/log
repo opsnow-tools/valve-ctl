@@ -14,7 +14,7 @@ readonly LONG_OPT="help,verbose,pod:,container:,follow:"
 _help() {
     cat <<EOF
 ================================================================================
-Usage: valve ${CUR_NAME} {Params}                               로컬 클러스터에 배포한 app에 ssh로 접근합니다.
+Usage: valve ${CUR_NAME} {Params}                               로컬 클러스터에 배포한 app에 log로 확인합니다.
 
 Params:
     -h, --help                                                  valve ssh 화면을 보여줍니다.
