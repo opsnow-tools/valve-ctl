@@ -68,8 +68,8 @@ _chart_list() {
     _command "helm repo update chartmuseum"
     helm repo update chartmuseum
 
-    _command "curl -s ${CHARTMUSEUM}/api/charts | jq -r 'keys[]'"
-    curl -s ${CHARTMUSEUM}/api/charts | jq -r 'keys[]'
+    _command "curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]'"
+    curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]'
 
     _success
 }
