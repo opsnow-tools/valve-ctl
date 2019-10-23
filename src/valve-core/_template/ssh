@@ -1,0 +1,97 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="hvp:"
+readonly LONG_OPT="help,verbose,pod:"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}                               로컬 클러스터에 배포한 app에 ssh로 접근합니다.
+
+Params:
+    -h, --help                                                  valve ssh 화면을 보여줍니다.
+
+    --pod, -p                               (requirement)       로컬 클러스터에 배포한 app의 이름을 이용하여 ssh로 접근합니다.
+                                                                로컬 클러스터에 배포한 app의 이름은 valve get --pods 로 검색합니다.
+
+Examples:
+    [Mandatory]
+    $ valve get --pods
+    $ valve ssh --pod sample-tomcat-751-bnj
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    # elif ! [[ $@ =~ '-' ]]; then
+    #     _help
+    #     _error "Error params: $@"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -p|--pod)
+                shift
+                PARAM_PODS=$1
+                ;;
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ -v ${PARAM_PODS} ]; then
+        _help
+        _error "Use valve ssh --help / valve ssh -h"
+    else
+        _ssh
+    fi
+}
+
+##################################################################################
+
+_ssh() {
+    _debug_mode
+
+    if [ ! -v ${PARAM_PODS} ]; then
+        _command "kubectl get pod -n ${NAMESPACE}"
+        FIND_POD=$(kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | grep ${PARAM_PODS} | awk '{print $1}')
+        if [[ ${FIND_POD} == ${PARAM_PODS} ]]; then
+            _command "kubectl exec -n ${NAMESPACE} -it ${FIND_POD} -- /bin/bash"
+            kubectl exec -n ${NAMESPACE} -it ${FIND_POD} -- /bin/bash
+        else
+            _error "There is no pod that matching exactly. Use valve get --pods & check pods name"
+        fi
+    else
+        _error "Use valve ssh --help"
+    fi
+    
+    _success
+}
+##################################################################################
+
+_run $@
