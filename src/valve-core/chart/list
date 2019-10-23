@@ -69,7 +69,8 @@ _chart_list() {
     helm repo update chartmuseum
 
     _command "curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]'"
-    curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]'
+    _result "Enter spacebar & listing charts more\n"
+    curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]' | more
 
     _success
 }
