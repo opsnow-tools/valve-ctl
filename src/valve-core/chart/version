@@ -1,0 +1,89 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="hvn:"
+readonly LONG_OPT="help,verbose,name:"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}                               Chartmuseum에 배포된 차트 중 선택된 차트의 버전 목록을 보여줍니다.
+
+Params:
+    -h, --help                                                  valve chart list 화면을 보여줍니다.
+
+    -n, --name                       (requirement)              Chartmuseum에 배포된 차트 이름을 넣어 해당 차트의 버전 목록을 보여줍니다.
+    
+
+Examples:
+    $ valve chart version -n sample-tomcat / valve chart version --name sample-tomcat
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -n|--name)
+                shift
+                PARAM_CHART_NAME=$1
+                ;;
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ ! -v ${PARAM_CHART_NAME} ]; then
+        _chart_version
+    else
+        _help
+        _error "Use valve chart version -h or valve chart version --help"
+    fi
+}
+
+##################################################################################
+
+_chart_version() {
+    _debug_mode
+
+    _command "helm repo update chartmuseum"
+    helm repo update chartmuseum
+
+    FIND_CHART=$(curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]' | grep "${PARAM_CHART_NAME}")
+    if [[ ${FIND_CHART} == ${PARAM_CHART_NAME} ]]; then
+        _command "curl -s https://${CHARTMUSEUM}/api/charts/${FIND_CHART} | jq -r '.[].version'"
+        _result "Enter spacebar & listing charts more\n"
+        curl -s https://${CHARTMUSEUM}/api/charts/${FIND_CHART} | jq -r '.[].version'
+    fi
+    _success
+}
+
+##################################################################################
+
+_run $@
