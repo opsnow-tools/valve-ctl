@@ -117,7 +117,7 @@ _select_one() {
 _config_save() {
     echo "# valve config" > ${CONFIG}
     echo "REGISTRY=${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}" >> ${CONFIG}
-    echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
+    echo "CHARTMUSEUM=https://${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
     echo "USERNAME=${USERNAME}" >> ${CONFIG}
 }
 

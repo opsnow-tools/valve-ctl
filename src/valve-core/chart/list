@@ -1,0 +1,79 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="hv"
+readonly LONG_OPT="help,verbose"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}                               Chartmuseum에 배포된 차트의 목록을 보여줍니다.
+
+Params:
+    -h, --help                                                  valve chart list 화면을 보여줍니다.
+
+Examples:
+    $ valve chart list
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                PARAM_CHART_LIST=true
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ "${PARAM_CHART_LIST}" == "true" ]; then
+        _chart_list
+    else
+        _error "Use valve chart list -h or valve chart list --help"
+    fi
+}
+
+##################################################################################
+
+_chart_list() {
+    _debug_mode
+
+    _command "helm repo update chartmuseum"
+    helm repo update chartmuseum
+
+    _command "curl -s ${CHARTMUSEUM}/api/charts | jq -r 'keys[]'"
+    curl -s ${CHARTMUSEUM}/api/charts | jq -r 'keys[]'
+
+    _success
+}
+
+##################################################################################
+
+_run $@
