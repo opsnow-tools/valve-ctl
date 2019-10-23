@@ -144,6 +144,30 @@ _set_cmd() {
             CMD=_template
             H_CMD=fetch
             ;;
+        on)
+            CMD=_template
+            H_CMD=on
+            ;;
+        off)
+            CMD=_template
+            H_CMD=off
+            ;;
+        ssh)
+            CMD=_template
+            H_CMD=ssh
+            ;;
+        log)
+            CMD=_template
+            H_CMD=log
+            ;;
+        top)
+            CMD=_template
+            H_CMD=top
+            ;;
+        get)
+            CMD=_template
+            H_CMD=get
+            ;;
         e)
             CMD=example
             ;;

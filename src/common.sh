@@ -8,6 +8,9 @@ touch ${CONFIG} && . ${CONFIG}
 
 #OS_NAME="$(uname | awk '{print tolower($0)}')"
 
+# namespace
+NAMESPACE="${NAMESPACE:-development}"
+
 if [ "${OS_NAME}" == "darwin" ]; then
   command -v fzf > /dev/null && FZF=true
 else

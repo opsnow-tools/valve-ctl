@@ -1,0 +1,455 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="hrve:"
+readonly LONG_OPT="help,recreate,verbose,external-chart:"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}                               설치된 템플릿을 로컬 클러스터에 앱으로 배포합니다.
+
+Params:
+    -h, --help                                                  valve on 화면을 보여줍니다.
+
+    -r, --recreate                              (optional)      로컬 클러스터에 배포했었던 앱을 지우고 다시 로컬 클러스터에 배포합니다.
+    -e, --external-chart string[:version]       (optional)      외부에 배포됐던 앱을 로컬 클러스터에 배포합니다. 
+                                                                외부에 배포됐던 앱을 보기 위해서 valve chart -h / valve chart --help를 참고 하시기 바랍니다.
+
+Examples:
+    [Mandatory]
+    $ cd {PROJECT}
+    $ valve on
+
+    [Optional]
+    $ valve on -r / valve on --recreate
+    $ valve on -e sample-tomcat / valve on --external-chart sample-tomcat
+    $ valve on -e sample-tomcat:v0.0.1-20190830-0003 / valve on --external-chart sample-tomcat:v0.0.1-20190830-0003
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -r|--recreate)
+                PARAM_RE=true
+                ;;
+            -e|--external-chart)
+                shift
+                PARAM_EX=$1
+                PARAM_FLG=ex
+                ;;
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                PARAM_TMP=$1
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ "${PARAM_RE}" == "true" ]; then
+        _recreate
+    elif [ ! -v "${PARAM_TMP}" -a -v "${PARAM_EX}" ]; then
+        _help
+        _error "There is no url in here. See valve on -h or valve on --help"
+    elif [ ! -v ${PARAM_EX} ]; then
+        _external_chart
+    elif [ ! -v ${PARAM_TMP} ]; then
+        _help
+        _error "Use valve on --help / valve on -h"
+    else
+        _on
+    fi
+}
+
+##################################################################################
+
+_on() {
+    _debug_mode
+    if [ ! -d charts ]; then
+        _error "Not found charts"
+    fi
+
+    __find_var    
+
+    # helm check FAILED
+    CNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
+        _error "Please use valve on -r / valve on --recreate. This App isn't deployed properly"
+    fi
+
+    # make secret
+    __secret "${NAME}" "${NAMESPACE}"
+
+    # docker build
+    __build
+
+    ###################################### It will rebuilding soon.
+    # # has configmap
+    # CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
+    # if [ "x${CNT}" != "x0" ]; then
+    #     CONFIGMAP="false"
+    # else
+    #     CONFIGMAP="true"
+    #     _result "configmap.enabled=${CONFIGMAP}"
+    # fi
+
+    # # has secret
+    # CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${NAME}\") | .metadata.name" | wc -l | xargs)
+    # if [ "x${CNT}" != "x0" ]; then
+    #     SECRET="false"
+    # else
+    #     SECRET="true"
+    #     _result "secret.enabled=${SECRET}"
+    # fi
+    ###################################### It will rebuilding soon.
+    
+    # has local values
+    if [ -f charts/${NAME}/values-local.yaml ]; then
+        LOCAL_VALUES="--values charts/${NAME}/values-local.yaml"
+    else
+        LOCAL_VALUES=""
+    fi
+    __helm_install
+    __helm_cmd
+}
+
+_recreate() {
+    _debug_mode
+    __find_var
+    __helm_delete
+    _on
+}
+_external_chart() {
+    _debug_mode
+    _result ${PARAM_EX}
+
+    # _helm_init
+
+    __helm_repo
+    __find_var
+    __chart_check
+    __find_chart_name
+    __find_chart_version
+    
+    # delete
+    __helm_delete
+
+    # has configmap
+    CNT=$(kubectl get configmap -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${PARAM_CHART_NAME}\") | .metadata.name" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
+        CONFIGMAP="true"
+        _result "configmap.enabled=${CONFIGMAP}"
+    else
+        CONFIGMAP="false"
+    fi
+
+    # has secret
+    CNT=$(kubectl get secret -n ${NAMESPACE} -o json | jq -r ".items[] | select(.metadata.name == \"${PARAM_CHART_NAME}\") | .metadata.name" | wc -l | xargs)
+    if [ "x${CNT}" != "x0" ]; then
+        SECRET="true"
+        _result "secret.enabled=${SECRET}"
+    else
+        SECRET="false"
+    fi
+
+    __helm_install
+    __helm_cmd
+}
+##################################################################################
+
+############# Start Private function #############
+__find_var() {
+    _debug_mode
+    # name
+    NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
+
+    LIST=/tmp/${THIS_NAME}-charts-ls
+}
+__secret() {
+    _debug_mode
+    if [ ! -f .valvesecret ]; then
+        return
+    fi
+
+    CNT=$(cat .valvesecret | wc -l | xargs)
+    if [ "x${CNT}" == "x0" ]; then
+        return
+    fi
+
+    # name
+    NAME="${1:-secret}"
+
+    # secret
+    SECRET="${NAME}"
+
+    # Secret reset condition = delete or force option
+    RESET_SECRET=
+    if [ ! -z ${DELETE} ] || [ ! -z ${FORCE} ]; then
+        RESET_SECRET=1
+        echo "Secret reset - ${SECRET}"
+    fi
+
+    # No option for secret reset
+    if [ -z ${RESET_SECRET} ]; then
+        # Exit if already has secret
+        CNT=$(kubectl get secret -n ${NAMESPACE} | grep ${SECRET} | wc -l | xargs)
+        if [ "x${CNT}" != "x0" ]; then
+            return
+        fi
+    fi
+
+    TMP=/tmp/${THIS_NAME}-secret.yaml
+
+    TARGET=/tmp/${SECRET}-secret.yaml
+
+    # secret
+    cat <<EOF > ${TARGET}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${SECRET}
+type: Opaque
+data:
+EOF
+
+    LIST=$(cat .valvesecret)
+    for VAL in ${LIST}; do
+        _read "secret ${VAL} : "
+
+        if [ "${ANSWER}" != "" ]; then
+            echo -n ${ANSWER} | base64 > ${TMP}
+
+            CNT=$(cat ${TMP} | wc -l | xargs)
+            if [ "x${CNT}" == "x1" ]; then
+                echo "  ${VAL}: $(cat ${TMP})" >> ${TARGET}
+            else
+                echo "  ${VAL}: |-" >> ${TARGET}
+                sed "s/^/    /" ${TMP} >> ${TARGET}
+            fi
+        fi
+    done
+
+    # apply secret
+    _command "kubectl apply -f ${TARGET} -n ${NAMESPACE}"
+    kubectl apply -f ${TARGET} -n ${NAMESPACE}
+}
+
+__build(){
+    _debug_mode
+    _command "docker build -t ${REGISTRY}/${NAME}:latest ."
+    docker build -t ${REGISTRY}/${NAME}:latest .
+
+    # docker push
+    _command "docker push ${REGISTRY}/${NAME}:latest"
+    docker push ${REGISTRY}/${NAME}:latest
+}
+
+__helm_install() {
+    _debug_mode
+    if [ "${PARAM_FLG}" == "ex" ]; then
+        # helm install
+        _command "helm install ${PARAM_CHART_NAME}-${NAMESPACE} chartmuseum/${PARAM_CHART_NAME} --version ${PARAM_CHART_VERSION} --namespace ${NAMESPACE}"
+        helm upgrade --install ${PARAM_CHART_NAME}-${NAMESPACE} chartmuseum/${PARAM_CHART_NAME} --version ${PARAM_CHART_VERSION} --namespace ${NAMESPACE} --devel \
+                        --set fullnameOverride=${PARAM_CHART_NAME} \
+                        --set configmap.enabled=${CONFIGMAP} \
+                        --set secret.enabled=${SECRET} \
+                        --set namespace=${NAMESPACE}
+    else
+        # helm install
+        _command "helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} \
+                        --devel ${LOCAL_VALUES} \
+                        --set fullnameOverride=${NAME} \
+                        --set namespace=${NAMESPACE}"
+        helm upgrade --install ${NAME}-${NAMESPACE} charts/${NAME} --namespace ${NAMESPACE} \
+                        --devel ${LOCAL_VALUES} \
+                        --set fullnameOverride=${NAME} \
+                        --set namespace=${NAMESPACE}
+                        # --set configmap.enabled=${CONFIGMAP} \
+                        # --set secret.enabled=${SECRET} \
+    fi
+    
+}
+
+__helm_cmd() {
+    _debug_mode
+    if [ "${PARAM_FLG}" == "ex" ]; then
+        _command "helm ls ${PARAM_CHART_NAME}-${NAMESPACE}"
+        helm ls ${PARAM_CHART_NAME}-${NAMESPACE}
+
+        CNT=$(helm ls ${PARAM_CHART_NAME}-${NAMESPACE} | wc -l | xargs)
+        if [ "x${CNT}" == "x0" ]; then
+            _error
+        fi
+
+        __waiting_pod "${NAMESPACE}" "${PARAM_CHART_NAME}"
+
+        _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
+        kubectl get pod,svc,ing -n ${NAMESPACE}
+
+        if [ "x${CONFIGMAP}" == "xtrue" ] || [ "x${SECRET}" == "xtrue" ]; then
+            _command "kubectl get cm,secret -n ${NAMESPACE}"
+            kubectl get cm,secret -n ${NAMESPACE}
+        fi
+    else
+        _command "helm ls ${NAME}-${NAMESPACE}"
+        helm ls ${NAME}-${NAMESPACE}
+
+        CNT=$(helm ls ${NAME}-${NAMESPACE} | wc -l | xargs)
+        if [ "x${CNT}" == "x0" ]; then
+            _error "Deploy app isn't work successfully. Try valve on -r / valve on --recreate"
+        fi
+
+        __waiting_pod "${NAMESPACE}" "${NAME}"
+
+        _command "kubectl get pod,svc,ing -n ${NAMESPACE}"
+        kubectl get pod,svc,ing -n ${NAMESPACE}
+
+        if [ "x${CONFIGMAP}" == "xtrue" ] || [ "x${SECRET}" == "xtrue" ]; then
+            _command "kubectl get cm,secret -n ${NAMESPACE}"
+            kubectl get cm,secret -n ${NAMESPACE}
+        fi
+    fi
+}
+
+__waiting_pod() {
+    _debug_mode
+    _NS=${1}
+    _NM=${2}
+    SEC=${3:-30}
+
+    TMP=/tmp/${THIS_NAME}-pod-status
+
+    _command "kubectl get pod -n ${_NS} | grep ${_NM}"
+
+    IDX=0
+    while [ 1 ]; do
+        kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > ${TMP}
+        cat ${TMP}
+
+        STATUS=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $3}')
+
+        if [ "${STATUS}" == "Running" ] && [ "${_NS}" != "development" ]; then
+            READY=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $2}' | cut -d'/' -f1)
+        else
+            READY="1"
+        fi
+
+        if [ "${STATUS}" == "Running" ] && [ "x${READY}" != "x0" ]; then
+            break
+        elif [ "${STATUS}" == "Error" ]; then
+            _error "${STATUS}"
+        elif [ "${STATUS}" == "CrashLoopBackOff" ]; then
+            _error "${STATUS}"
+        elif [ "x${IDX}" == "x${SEC}" ]; then
+            _error "Timeout"
+        fi
+
+        IDX=$(( ${IDX} + 1 ))
+        sleep 2
+    done
+
+    _success "valve on success"
+}
+__helm_delete() {
+    _debug_mode
+    # helm delete
+    if [ "${PARAM_RE}" == "true" ]; then
+        if [ "${PARAM_FLG}" == "ex" ]; then
+            _command "helm delete ${PARAM_CHART_NAME}-${NAMESPACE} --purge"
+            helm delete ${PARAM_CHART_NAME}-${NAMESPACE} --purge
+
+            sleep 2
+        else
+            _command "helm delete ${NAME}-${NAMESPACE} --purge"
+            helm delete ${NAME}-${NAMESPACE} --purge
+
+            sleep 2
+        fi
+    fi
+}
+
+__helm_repo() {
+    _debug_mode
+    CNT=$(helm repo list | grep chartmuseum | wc -l | xargs)
+
+    if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
+        # DEFAULT="${CHARTMUSEUM:-chartmuseum.opsnow.com}"
+        # _read "CHARTMUSEUM [${DEFAULT}] : "
+        # CHARTMUSEUM="${ANSWER:-$DEFAULT}"
+
+        if [ -z ${CHARTMUSEUM} ]; then
+            _error "Check config using valve config. Or use valve fetch --help / valve fetch -h and fetch your template."
+        fi
+
+        _command "helm repo add chartmuseum https://${CHARTMUSEUM}"
+        helm repo add chartmuseum https://${CHARTMUSEUM}
+
+        # _config_save
+    fi
+
+    _command "helm repo update"
+    helm repo update > /dev/null
+}
+
+__chart_check() {
+    _debug_mode
+    echo ${PARAM_EX} | grep ':'
+    if [ $? -eq 0 ]; then
+        PARAM_CHART_NAME=$(echo ${PARAM_EX} | awk -F: '{print $1}')
+        PARAM_CHART_VERSION=$(echo ${PARAM_EX} | awk -F: '{print $2}')
+    else
+        PARAM_CHART_NAME=$PARAM_EX
+        PARAM_CHART_VERSION=
+    fi
+}
+__find_chart_name() {
+    _debug_mode
+    curl -sL https://${CHARTMUSEUM}/api/charts | jq 'keys[]' -r > ${LIST}
+    FIND_CHART_NAME=$(cat ${LIST} | grep ${PARAM_CHART_NAME})
+    if [[ ${FIND_CHART_NAME} != ${PARAM_CHART_NAME} ]]; then
+        _error "There is no matching template. Use valve chart list"
+    fi
+}
+
+__find_chart_version() {
+    _debug_mode
+    if [ -v ${PARAM_CHART_VERSION} ]; then
+        PARAM_CHART_VERSION=$(curl -sL https://${CHARTMUSEUM}/api/charts/${PARAM_CHART_NAME} | jq '.[] | {version} | .version' -r | sort -r | tail -n 1)
+    else
+        CNT=$(curl -sL https://${CHARTMUSEUM}/api/charts/${PARAM_CHART_NAME} | jq '.[] | {version} | .version' -r | sort -r | grep ${PARAM_CHART_VERSION} | wc -l | xargs)
+        if [ "x${CNT}" != "x1" ]; then
+            _error "There is no matching template. Use valve chart list"
+        fi
+    fi
+    
+    rm -rf ${LIST}
+}
+############# End Private function #############
+
+_run $@
