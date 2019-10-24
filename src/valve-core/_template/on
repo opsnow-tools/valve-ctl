@@ -449,9 +449,10 @@ __find_chart_version() {
         fi
         rm -f ${TMP}/${PARAM_CHART_NAME}-${PARAM_CHART_VERSION}.tgz
     else
-        CNT=$(curl -sL https://${CHARTMUSEUM}/api/charts/${PARAM_CHART_NAME} | jq '.[] | {version} | .version' -r | sort -r | grep ${PARAM_CHART_VERSION} | wc -l | xargs)
-        if [ "x${CNT}" != "x1" ]; then
-            _error "There is no matching template. Use 'valve chart list' or 'valve chart version'"
+        CNT=$(curl -sL https://${CHARTMUSEUM}/api/charts/${PARAM_CHART_NAME} | jq '.[] | {version} | .version' -r | sort -r | grep ${PARAM_CHART_VERSION}-stable$ | wc -l | xargs)
+        _result "It will be used stable chart"
+        if [ "x${CNT}" == "x0" ]; then
+            _error "There is no matching stable template. Use 'valve chart list' or 'valve chart version' to find stable chart"
         else
             helm fetch chartmuseum/${PARAM_CHART_NAME} --version=${PARAM_CHART_VERSION} -d ${TMP} 2>/dev/null
             if [ $? -eq 1 ]; then
