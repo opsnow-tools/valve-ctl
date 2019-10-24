@@ -99,6 +99,7 @@ _chart_tag() {      # Find stable chart / If not, then mark stable tag in releas
                 __chart_release_list
             fi
         else
+            FIND_VERSION=$(curl -s https://${CHARTMUSEUM}/api/charts/${FIND_CHART} | jq -r '.[].version' | grep "${v_chart}")
             if [[ ${PARAM_TAG_STABLE} == "true" ]]; then
                 __chart_release_mark
             else
