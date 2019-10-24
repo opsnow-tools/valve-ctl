@@ -431,7 +431,7 @@ __chart_check() {
 __find_chart_name() {
     _debug_mode
     curl -sL https://${CHARTMUSEUM}/api/charts | jq 'keys[]' -r > ${LIST}
-    FIND_CHART_NAME=$(cat ${LIST} | grep ${PARAM_CHART_NAME})
+    FIND_CHART_NAME=$(cat ${LIST} | grep ${PARAM_CHART_NAME}$)
     if [[ ${FIND_CHART_NAME} != ${PARAM_CHART_NAME} ]]; then
         _error "There is no matching template. Use valve chart list"
     fi
