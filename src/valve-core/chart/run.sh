@@ -15,7 +15,9 @@ Usage: valve ${CUR_OBJECT} {Params}
 Params:
     h, help                 현재 화면을 보여줍니다.
 
-    f, fetch                템플릿을 설치합니다.
+    list                    Chartmuseum에 배포된 차트를 목록으로 보여줍니다.
+    version                 Chartmuseum에 배포된 차트의 버전을 보여줍니다.
+    tag                     Chartmuseum에 배포된 차트의 태그를 보여주고, stable 태그를 추가/제거 할 수 있습니다.
 
 ================================================================================
 EOF
@@ -28,8 +30,14 @@ _set_cmd() {
         h)
             CMD=help
             ;;
-        fetch)
-            CMD=fetch
+        list)
+            CMD=list
+            ;;
+        version)
+            CMD=version
+            ;;
+        tag)
+            CMD=tag
             ;;
     esac
 }
