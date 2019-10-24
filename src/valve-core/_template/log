@@ -8,8 +8,8 @@ CUR_NAME=${0##*/}
 source ${ROOT_SHELL_DIR}/common.sh
 
 
-readonly SHORT_OPT="hvp:c:f:"
-readonly LONG_OPT="help,verbose,pod:,container:,follow:"
+readonly SHORT_OPT="hvp:c:f"
+readonly LONG_OPT="help,verbose,pod:,container:,follow"
 
 _help() {
     cat <<EOF
