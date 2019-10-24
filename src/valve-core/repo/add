@@ -1,0 +1,103 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+readonly SHORT_OPT="hvn:u:"
+readonly LONG_OPT="help,verbose,name:,url:"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_OBJECT} ${CUR_NAME}
+
+Params:
+    -h, --help                                          현재 화면을 보여줍니다.
+
+    -n, --name                      (requirement)       템플릿의 이름을 추가합니다.
+    -u, --url                       (requirement)       템플릿의 주소를 추가합니다.
+
+Examples:
+    [Mandatory]
+    $ cd {PROJECT}
+    $ valve repo add --name example --url git@github.com:example/examgle.git
+================================================================================
+EOF
+}
+
+_run() {
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    elif ! [[ $@ =~ '-' ]]; then
+        _help
+        _error "Error params: $@"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -n|--name)
+                shift
+                PARAMS_NAME=$1
+                ;;
+            -u|--url)
+                shift
+                PARAMS_URL=$1
+                ;;
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                break
+               ;;
+        esac
+        shift
+    done
+
+    if [ ! -z ${PARAMS_NAME} ] && [ ! -z ${PARAMS_URL} ]; then
+        _add
+    else
+        _help
+        _error "Use valve repo add -h or valve repo add --help"
+    fi
+}
+
+##################################################################################
+_add() {
+    _debug_mode
+    #_command "cat ${CONFIG} | grep ${PARAMS_NAME} | grep ${PARAMS_URL} | wc -l | xargs"
+    CNT=$(cat ${CONFIG} | grep "${PARAMS_NAME} ${PARAMS_URL}" | wc -l | xargs)
+    CNT_TITLE=$(cat ${CONFIG} | grep "REPO LIST" | wc -l | xargs)
+
+    if [ ${CNT} -eq 1 ]; then
+        _error "There is a same repo in config file. Register another name & url"
+    else
+        if [ ${CNT_TITLE} -eq 1 ]; then
+cat <<EOF >> ${CONFIG}
+# ${PARAMS_NAME} ${PARAMS_URL}
+EOF
+        cat ${CONFIG}
+        else
+cat <<EOF >> ${CONFIG}
+### REPO LIST ###
+# ${PARAMS_NAME} ${PARAMS_URL}
+EOF
+        cat ${CONFIG}
+        fi
+    fi
+}
+##################################################################################
+
+_run $@
