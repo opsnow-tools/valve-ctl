@@ -119,7 +119,7 @@ __chart_release_mark() {        # marking stable tag in release images
     helm fetch chartmuseum/${FIND_CHART} --version=${FIND_VERSION} -d ${TMP}
 
     if [ ! -f ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz ]; then
-        _error "Not found the chart(${FIND_VERSION}-${FIND_VERSION})"
+        _error "Not found the chart(${FIND_CHART}-${FIND_VERSION})"
     else
         helm push ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz chartmuseum --version="${FIND_VERSION}-stable"
         rm ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz
