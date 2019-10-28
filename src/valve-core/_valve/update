@@ -1,0 +1,70 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="v"
+readonly LONG_OPT="verbose"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}                       valve-ctl을 최신으로 업데이트 합니다.
+                                                        valve-ctl의 다른 버전으로 업데이트를 하기 위해서는 release 버전을 확인 바랍니다. (https://github.com/opsnow-tools/valve-ctl/releases)
+                                                        valve-ctl의 release버전으로 업데이트 하는 방법은 아래와 같습니다.
+
+Examples:
+    [Mandatory]
+    $ valve update
+    $ valve update v2.0.21
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    # elif ! [[ $@ =~ '-' ]]; then
+    #     _help
+    #     _error "Error params: $@"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                PARAM_VERSION=$1
+                break
+                ;;
+        esac
+        shift
+    done
+
+    _update
+}
+
+##################################################################################
+
+_update() {
+    _debug_mode
+    _echo "# version: ${THIS_VERSION}" ${PARAM_VERSION}
+    curl -sL repo.opsnow.io/${THIS_NAME}/install | bash -s ${PARAM_VERSION}
+
+    _success
+}
+##################################################################################
+
+_run $@

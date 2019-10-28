@@ -129,11 +129,11 @@ _set_cmd() {
             _help
             _success
             ;;
-        v|version)
+        v)
             _version
             _success
             ;;
-        u|update)
+        u)
             _update
             _success
             ;;
@@ -167,6 +167,18 @@ _set_cmd() {
         get)
             CMD=_template
             H_CMD=get
+            ;;
+        update)
+            CMD=_valve
+            H_CMD=update
+            ;;
+        version)
+            CMD=_valve
+            H_CMD=version
+            ;;
+        config)
+            CMD=_valve
+            H_CMD=config
             ;;
         e)
             CMD=example
