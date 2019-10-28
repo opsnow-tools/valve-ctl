@@ -1,0 +1,149 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="hvn:s:"
+readonly LONG_OPT="help,verbose,name:,stable:"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}                               Chartmuseum에 배포된 차트 중 선택된 차트의 stable tag를 확인하고 stable tag를 붙이거나 뗄 수 있도록 합니다.
+
+Params:
+    -h, --help                                                  valve chart tag 화면을 보여줍니다.
+
+    -n, --name                      (requirement)               Chartmuseum에 배포된 차트 중 선택된 차트의 stable tag를 확인합니다.
+    -s, --stable                    (optional)                  Chartmuseum에 배포된 차트 중 선택된 차트에 stable tag를 붙이거나 뗍니다.
+                                                                value는 true / false를 입력 합니다.
+    
+
+Examples:
+    $ valve chart tag -n sample-tomcat:v0.0.1-20190830-0003 / valve chart tag --name sample-tomcat:v0.0.1-20190830-0003
+    $ valve chart tag -n sample-tomcat:v0.0.1-20190830-0003 -s true / valve chart tag -n sample-tomcat:v0.0.1-20190830-0003 --stable false
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -n|--name)
+                shift
+                PARAM_CHART_NAME=$1
+                ;;
+            -s|--stable)
+                shift
+                PARAM_TAG_STABLE=$1
+                ;;
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                shift
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ ! -v ${PARAM_CHART_NAME} ]; then
+        _chart_tag
+    else
+        _help
+        _error "Use valve chart tag -h or valve chart tag --help"
+    fi
+}
+
+##################################################################################
+
+_chart_tag() {      # Find stable chart / If not, then mark stable tag in release
+    _debug_mode
+
+    _command "helm repo update chartmuseum"
+    helm repo update chartmuseum
+
+    n_chart=$(echo ${PARAM_CHART_NAME} | awk -F: '{print $1}')
+    v_chart=$(echo ${PARAM_CHART_NAME} | awk -F: '{print $2}')
+
+    TMP=/tmp
+    
+    FIND_CHART=$(curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]' | grep "${n_chart}")
+    if [[ ${FIND_CHART} == ${n_chart} ]]; then
+        FIND_VERSION=$(curl -s https://${CHARTMUSEUM}/api/charts/${FIND_CHART} | jq -r '.[].version' | grep "${v_chart}"-stable)
+
+        if [[ ${FIND_VERSION} == ${v_chart}-stable ]]; then
+            if [[ ${PARAM_TAG_STABLE} == "false" ]];then
+                __chart_release_unmark
+                __chart_release_list
+            else
+                __chart_release_list
+            fi
+        else
+            FIND_VERSION=$(curl -s https://${CHARTMUSEUM}/api/charts/${FIND_CHART} | jq -r '.[].version' | grep "${v_chart}")
+            if [[ ${PARAM_TAG_STABLE} == "true" ]]; then
+                __chart_release_mark
+            else
+                _error "There is no stable release. Use '-s true' or '--stable true' option to mark stable tag"
+            fi
+        fi
+    else
+        _error "Use valve chart tag -h or valve chart tag --help"
+    fi
+    _success
+}
+
+############# Start Private function #############
+__chart_release_mark() {        # marking stable tag in release images
+    _debug_mode
+
+    helm fetch chartmuseum/${FIND_CHART} --version=${FIND_VERSION} -d ${TMP}
+
+    if [ ! -f ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz ]; then
+        _error "Not found the chart(${FIND_CHART}-${FIND_VERSION})"
+    else
+        helm push ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz chartmuseum --version="${FIND_VERSION}-stable"
+        rm ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz
+    fi    
+}
+
+__chart_release_unmark() {
+    _debug_mode
+    #_command "curl -s -X DELETE https://${CHARTMUSEUM}/api/charts/${FIND_CHART}-${FIND_VERSION}"
+    curl -s -X DELETE https://${CHARTMUSEUM}/api/charts/${FIND_CHART}-${FIND_VERSION}
+    return 0
+}
+
+__chart_release_list() {
+    _debug_mode
+    RELEASE_LIST=$(curl -s https://${CHARTMUSEUM}/api/charts/${FIND_CHART} | jq -r '.[].version' | grep ${v_chart}-stable)
+    if [ -v ${RELEASE_LIST} ]; then
+        "There is no stable release"
+    else
+        _result $RELEASE_LIST
+    fi
+}
+############# End Private function #############
+
+##################################################################################
+
+_run $@
