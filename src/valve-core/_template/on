@@ -431,7 +431,7 @@ __chart_check() {
 __find_chart_name() {
     _debug_mode
     curl -sL https://${CHARTMUSEUM}/api/charts | jq 'keys[]' -r > ${LIST}
-    FIND_CHART_NAME=$(cat ${LIST} | grep ${PARAM_CHART_NAME})
+    FIND_CHART_NAME=$(cat ${LIST} | grep ${PARAM_CHART_NAME}$)
     if [[ ${FIND_CHART_NAME} != ${PARAM_CHART_NAME} ]]; then
         _error "There is no matching template. Use valve chart list"
     fi
@@ -439,12 +439,26 @@ __find_chart_name() {
 
 __find_chart_version() {
     _debug_mode
+
+    TMP=/tmp
     if [ -v ${PARAM_CHART_VERSION} ]; then
-        PARAM_CHART_VERSION=$(curl -sL https://${CHARTMUSEUM}/api/charts/${PARAM_CHART_NAME} | jq '.[] | {version} | .version' -r | sort -r | tail -n 1)
+        PARAM_CHART_VERSION=$(curl -sL https://${CHARTMUSEUM}/api/charts/${PARAM_CHART_NAME} | jq '.[] | {version} | .version' -r | sort -r | head -n 1)
+        helm fetch chartmuseum/${PARAM_CHART_NAME} --version=${PARAM_CHART_VERSION} -d ${TMP} 2>/dev/null
+        if [ $? -eq 1 ]; then
+            _error "There is no release binary in chart. Check 'valve chart list' or 'valve chart version' "
+        fi
+        rm -f ${TMP}/${PARAM_CHART_NAME}-${PARAM_CHART_VERSION}.tgz
     else
-        CNT=$(curl -sL https://${CHARTMUSEUM}/api/charts/${PARAM_CHART_NAME} | jq '.[] | {version} | .version' -r | sort -r | grep ${PARAM_CHART_VERSION} | wc -l | xargs)
-        if [ "x${CNT}" != "x1" ]; then
-            _error "There is no matching template. Use valve chart list"
+        CNT=$(curl -sL https://${CHARTMUSEUM}/api/charts/${PARAM_CHART_NAME} | jq '.[] | {version} | .version' -r | sort -r | grep ${PARAM_CHART_VERSION}-stable$ | wc -l | xargs)
+        _result "It will be used stable chart"
+        if [ "x${CNT}" == "x0" ]; then
+            _error "There is no matching stable template. Use 'valve chart list' or 'valve chart version' to find stable chart"
+        else
+            helm fetch chartmuseum/${PARAM_CHART_NAME} --version=${PARAM_CHART_VERSION} -d ${TMP} 2>/dev/null
+            if [ $? -eq 1 ]; then
+                _error "There is no release binary in chart. Check 'valve chart list' or 'valve chart version' "
+            fi
+            rm -f ${TMP}/${PARAM_CHART_NAME}-${PARAM_CHART_VERSION}.tgz
         fi
     fi
     
