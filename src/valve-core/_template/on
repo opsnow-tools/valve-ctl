@@ -238,21 +238,11 @@ type: Opaque
 data:
 EOF
 
-    LIST=$(cat .valvesecret)
+    LIST=$(cat .valvesecret)        ## .valvesecret should like this.. ex) AWS_SECRET=example
     for VAL in ${LIST}; do
-        _read "secret ${VAL} : "
-
-        if [ "${ANSWER}" != "" ]; then
-            echo -n ${ANSWER} | base64 > ${TMP}
-
-            CNT=$(cat ${TMP} | wc -l | xargs)
-            if [ "x${CNT}" == "x1" ]; then
-                echo "  ${VAL}: $(cat ${TMP})" >> ${TARGET}
-            else
-                echo "  ${VAL}: |-" >> ${TARGET}
-                sed "s/^/    /" ${TMP} >> ${TARGET}
-            fi
-        fi
+        VAL_KEY=$(echo ${VAL} | awk -F'=' '{print $1}')
+        VAL_SECRET=$(echo ${VAL} | awk -F'=' '{print $2}' | base64)
+        echo "  ${VAL_KEY}: ${VAL_SECRET}" >> ${TARGET}
     done
 
     # apply secret
