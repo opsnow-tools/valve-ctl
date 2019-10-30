@@ -2,7 +2,8 @@
 
 SHELL_DIR=$(dirname $0)
 CONFIG=${HOME}/.valve/valve-ctl
-mkdir ${HOME}/.valve
+CONFIG_DIR=${HOME/.valve
+mkdir $CONFIG_DIR
 touch ${CONFIG} && . ${CONFIG}
 # SHELL_DIR=${0}
 # MYNAME=${0##*/}
