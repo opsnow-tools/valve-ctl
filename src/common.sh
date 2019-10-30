@@ -61,6 +61,11 @@ _success() {
     exit 0
 }
 
+_warning() {
+    echo
+    _echo "- $@" 1
+}
+
 _error() {
     echo
     _echo "- $@" 1

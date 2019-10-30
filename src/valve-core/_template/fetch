@@ -20,6 +20,8 @@ Params:
     -h, --help                                  valve fetch 화면을 보여줍니다.
 
     -n, --name string           (requirement)   템플릿을 설치합니다. 템플릿 리스트는 다음과 같으며, 다음 리스트에서 템플릿를 선택해야 합니다.
+                                                [custom]으로 되어있는 템플릿은 개발자가 등록한 템플릿입니다. 사용하실 때는 [custom]을 빼고 
+                                                valve fetch를 이용합니다.
                                                 ===== 템플릿 리스트 ====
 EOF
 LIST=/tmp/${THIS_NAME}-draft-ls
@@ -123,7 +125,7 @@ _run() {
 
 ##################################################################################
 _fetch(){
-    _result "draft package version: ${THIS_VERSION}"
+    _result "valve-ctl version: ${THIS_VERSION}"
 
     DIST=/tmp/${THIS_NAME}-draft-${THIS_VERSION}
     LIST=/tmp/${THIS_NAME}-draft-ls
@@ -160,9 +162,10 @@ __validate() {      # validate overwrite option
             if [ ! -d .valve-history ]; then
                 mkdir -p .valve-history
             fi
-            cp -r charts/ .valve-history/
+            if [ -d charts ]; then
+                cp -r charts/ .valve-history/
+            fi
             cp -r Dockerfile .valve-history
-            cp -r draft.toml .valve-history
             cp -r Jenkinsfile .valve-history
             rm -rf charts/ Dockerfile draft.toml Jenkinsfile
         fi
@@ -197,28 +200,95 @@ __pkg_version_check() {
             curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
             popd
 
-            _result "draft package downloaded."
+            _result "Template downloaded."
         fi
     fi
 }
 
 __pkg_name_check() {
     _debug_mode
+
     ls ${DIST} | sort > ${LIST}     # create LIST
     IDX=0
+    __template_count_validate
+
     CNT=`wc -l < ${LIST}`
+    
+    CONFIG_NAME_LIST=$(cat ${CONFIG} | sed '1,/REPO/d' | awk -F ' ' '{print $2}')
+    
+    if [ ${IDX} == ${CNT} ]; then       # Check name if doesn't match.
+        _result "Template: "${PARAM_NAME}
+
+        __config_count_validate
+        if [ "${CONFIG_RESULT}" == "" ]; then
+            pushd ${DIST} > /dev/null
+            if [ ! -d ${TEMPLATE} ]; then
+                git clone ${TEMPLATE_URL} ${TEMPLATE}
+                ls ${DIST} | sed 's/'${TEMPLATE}'/\[custom\]'${REMOTE_NAME}'\/'${REMOTE_TEMPLATE}'/g' | sort > ${LIST}
+            fi
+            popd > /dev/null
+            PACKAGE=${TEMPLATE}
+        elif [ ${CONFIG_RESULT} == "ERROR" ]; then
+            rm -rf ${DIST}
+            _error "\e[4m${PARAM_NAME}\e[0m template doesn't matching anything. So use 'valve repo list' and check it out!"
+        fi
+    else        # Check name correct one.
+        PACKAGE=${PARAM_NAME}
+    fi
+}
+
+__template_count_validate() {
+    _debug_mode
+
     while read VAL; do
         if ! [[ ${PARAM_NAME} =~ $VAL ]]; then
             IDX=$((IDX+1))
         fi
     done < ${LIST}
+}
 
-    if [ $IDX == $CNT ]; then       # Check name if doesn't match.
-        _result "Draft package: "${PARAM_NAME}
-        rm -rf ${DIST}
-        _error "Use valve fetch -h / valve fetch --help \n\e[4m${PARAM_NAME}\e[0m draft package doesn't matching anything"
-    else        # Check name
-        PACKAGE=${PARAM_NAME}
+__config_count_validate() {
+    _debug_mode
+
+    IDX_CF=0
+    _is_param_name=$(echo ${PARAM_NAME} | grep '/')
+    if [ "${_is_param_name}" == "" ]; then
+        _error "Use valve fetch -h / valve fetch --help \n\e[4m${PARAM_NAME}\e[0m template doesn't matching anything"
+    else
+        ## Parsing Input remote template
+        REMOTE_NAME=$(echo ${PARAM_NAME} | awk -F'/' '{print $1}')
+        REMOTE_TEMPLATE=$(echo ${PARAM_NAME} | awk -F'/' '{print $2}')
+    fi
+    
+    _config_tm_list=/tmp/_config_tm_list
+    cat ${CONFIG} | sed '1,/REPO/d' | awk -F' ' '{print $2"|"$3}' >> ${_config_tm_list}
+
+    IFS='|'
+    while read -r _name _u
+    do
+        if [ "$_name" == "${REMOTE_NAME}" ]; then
+            _protocol="$(echo ${_u} | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+            _url=$(echo ${_u} | sed -e s,$_protocol,,g)
+            _path=$(echo ${_url} | awk -F'.' '{print $(NF-1)}' | awk -F'/' '{print $NF}')
+            if [ "$_path" == "${REMOTE_TEMPLATE}" ]; then
+                if [ "${_protocol}" == "https://" ]; then
+                    TEMPLATE_URL=$_u
+                fi
+                IDX_CF=$((IDX_CF+1))
+            fi
+        fi
+    done < ${_config_tm_list}
+    rm -f ${_config_tm_list}
+
+    if [ "x${IDX_CF}" == "x2" ]; then
+        _warning "Warning! It will be used default repository url https. If you want to use ssh url, then you should delete repo https"
+        TEMPLATE=${REMOTE_NAME}-${REMOTE_TEMPLATE}
+        CONFIG_RESULT=""
+    elif [ "x${IDX_CF}" == "x1" ]; then
+        TEMPLATE=${REMOTE_NAME}-${REMOTE_TEMPLATE}
+        CONFIG_RESULT=""
+    elif [ "x${IDX_CF}" == "x0" ]; then
+        CONFIG_RESULT="ERROR"
     fi
 }
 
@@ -318,6 +388,8 @@ __chart_gen() {
 ############# End Private function #############
 
 _chart_replace() {
+    _debug_mode
+
     REPLACE_FILE=$1
     REPLACE_KEY=$2
     DEFAULT_VAL=$3
