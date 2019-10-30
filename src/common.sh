@@ -130,8 +130,10 @@ _config_save() {
         echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
         echo "USERNAME=${USERNAME}" >> ${CONFIG}
     else
-        _success "CONFIG Set"
+        _result "CONFIG Set"
     fi
+    LIST=$CONFIG_DIR/${THIS_NAME}-draft-ls
+    curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar zt | awk -F'/' '{print $1}' | sort -u > ${LIST}
 }
 
 _debug_mode() {

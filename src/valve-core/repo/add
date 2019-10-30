@@ -84,15 +84,20 @@ _add() {
     if [ ${CNT} -eq 1 ]; then
         _error "There is a same repo in config file. Register another name & url"
     else
+        if [[ ${PARAMS_URL} =~ "https" ]]; then
+            TEMPLATE_NAME=$(echo $(echo ${PARAMS_URL##h*/}) | awk -F'.' '{print $1}')
+        elif [[ ${PARAMS_URL} =~ "ssh" ]]; then
+            TEMPLATE_NAME=$(echo $(echo ${PARAMS_URL##s*/}) | awk -F'.' '{print $1}')
+        fi
         if [ ${CNT_TITLE} -eq 1 ]; then
 cat <<EOF >> ${CONFIG}
-# ${PARAMS_NAME} ${PARAMS_URL}
+# ${PARAMS_NAME} ${PARAMS_URL} ${PARAMS_NAME}/${TEMPLATE_NAME}
 EOF
         cat ${CONFIG}
         else
 cat <<EOF >> ${CONFIG}
 ### REPO LIST ###
-# ${PARAMS_NAME} ${PARAMS_URL}
+# ${PARAMS_NAME} ${PARAMS_URL} ${PARAMS_NAME}/${TEMPLATE_NAME}
 EOF
         cat ${CONFIG}
         fi

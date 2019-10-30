@@ -12,6 +12,7 @@ readonly SHORT_OPT="hvon:g:s:u:"
 readonly LONG_OPT="help,verbose,overwrite,group:,service:,name:,giturl:"
 
 _help() {
+    cat $CONFIG_DIR
     cat <<EOF
 ================================================================================
 Usage: valve ${CUR_NAME} {Params}
@@ -24,8 +25,10 @@ Params:
                                                 valve fetch를 이용합니다.
                                                 ===== 템플릿 리스트 ====
 EOF
-LIST=/tmp/${THIS_NAME}-draft-ls
-sed 's/^/\t\t\t\t\t\t/' < ${LIST}
+LIST=$CONFIG_DIR/${THIS_NAME}-draft-ls
+if [ -f ${LIST} ]; then
+    sed 's/^/\t\t\t\t\t\t/' < ${LIST}
+fi
     cat <<EOF
                                                 ===== 템플릿 리스트 ====
                                                 디폴트로 fetch할 때 현재 working 디렉토리 이름을 사용합니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
@@ -127,8 +130,8 @@ _run() {
 _fetch(){
     _result "valve-ctl version: ${THIS_VERSION}"
 
-    DIST=/tmp/${THIS_NAME}-draft-${THIS_VERSION}
-    LIST=/tmp/${THIS_NAME}-draft-ls
+    DIST=$CONFIG_DIR/${THIS_NAME}-draft-${THIS_VERSION}
+    LIST=$CONFIG_DIR/${THIS_NAME}-draft-ls
 
     NAMESPACE="${NAMESPACE:-development}"
 
@@ -148,7 +151,6 @@ _fetch(){
     __pkg_gen
     __chart_gen
 
-    _config_save
     _success 'valve fetch success'
 }
 
@@ -199,7 +201,6 @@ __pkg_version_check() {
             pushd ${DIST}
             curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
             popd
-
             _result "Template downloaded."
         fi
     fi
@@ -207,8 +208,7 @@ __pkg_version_check() {
 
 __pkg_name_check() {
     _debug_mode
-
-    ls ${DIST} | sort > ${LIST}     # create LIST
+    
     IDX=0
     __template_count_validate
 
@@ -260,7 +260,7 @@ __config_count_validate() {
         REMOTE_TEMPLATE=$(echo ${PARAM_NAME} | awk -F'/' '{print $2}')
     fi
     
-    _config_tm_list=/tmp/_config_tm_list
+    _config_tm_list=$CONFIG_DIR/_config_tm_list
     cat ${CONFIG} | sed '1,/REPO/d' | awk -F' ' '{print $2"|"$3}' >> ${_config_tm_list}
 
     IFS='|'

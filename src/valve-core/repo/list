@@ -26,7 +26,11 @@ _run() {
 
 ##################################################################################
 _list() {
-    sed '1,/REPO/d' ${CONFIG} | awk -F' ' '{print "[Name] ", $2,"\t", "[Custom Template Url] ", $3}'
+    # _protocol="$(echo ${_u} | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+    # _url=$(echo ${_u} | sed -e s,$_protocol,,g)
+    # _path=$(echo ${_url} | awk -F'.' '{print $(NF-1)}' | awk -F'/' '{print $NF}')
+    echo -e "[Template]\t\t[Name]\t\t[Custom Template Url]"
+    sed '1,/REPO/d' ${CONFIG} | awk -F' ' '{print $4,"\t",$2,"\t",$3}'
 }
 ##################################################################################
 

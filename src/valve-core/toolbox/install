@@ -63,7 +63,8 @@ _run() {
         esac
         shift
     done
-
+    
+    _config_save
     if [ "${ALL}" == "true" ]; then
         _local
         _cluster
