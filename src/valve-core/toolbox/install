@@ -509,7 +509,7 @@ __helm_init() {
     fi
 
     # namespace
-    NAMESPACE="${NAMESPACE:-kube-system}"
+    NAMESPACE="kube-system"
 
     __helm_install "${NAMESPACE}" "nginx-ingress"
     __helm_install "${NAMESPACE}" "docker-registry"
