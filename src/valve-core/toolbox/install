@@ -355,7 +355,7 @@ __helm_install() {
     if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         CHART=/tmp/${_NM}.yaml
 
-        _get_yaml "charts/${_NM}" "${CHART}"
+        __get_yaml "charts/${_NM}" "${CHART}"
 
         CHART_VERSION=$(cat ${CHART} | grep chart-version | awk '{print $3}' | xargs)
 
@@ -366,6 +366,17 @@ __helm_install() {
             _command "helm upgrade --install ${_NM} stable/${_NM} --version ${CHART_VERSION}"
             helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}
         fi
+    fi
+}
+
+__get_yaml() {
+    _NAME=$1
+    _DIST=$2
+
+    if [ "${THIS_VERSION}" == "v0.0.0" ]; then
+        cp -rf ${SHELL_DIR}/${_NAME}.yaml ${_DIST}
+    else
+        curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}
     fi
 }
 
