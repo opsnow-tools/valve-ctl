@@ -118,7 +118,7 @@ _run() {
         shift
     done
 
-    if [ ! -v PARAM_NAME ]; then
+    if [ -z PARAM_NAME ]; then
         _help
         _error "You don't use -n or --name option"
     else

@@ -86,12 +86,12 @@ _run() {
 _logs() {
     _debug_mode
 
-    if [ ! -v ${PARAM_PODS} ]; then
+    if [ -z ${PARAM_PODS} ]; then
         _command "kubectl get pod -n ${NAMESPACE}"
         FIND_POD=$(kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | grep ${PARAM_PODS} | awk '{print $1}')
         if [[ ${FIND_POD} == ${PARAM_PODS} ]]; then
             P_CMD="kubectl logs -n ${NAMESPACE} ${FIND_POD}"
-            if [ ! -v ${PARAM_CONTAINER} ]; then
+            if [ -z ${PARAM_CONTAINER} ]; then
                 FIND_CONTAINER=$(kubectl get pods -ndevelopment -o=custom-columns=NameSpace:.metadata.namespace,NAME:.metadata.name,CONTAINERS:.spec.containers[*].name | grep ${PARAM_CONTAINER} | awk '{print $3}')
                 if [[ ${FIND_CONTAINER} == ${PARAM_CONTAINER} ]]; then
                     C_CMD=" -c ${FIND_CONTAINER}"

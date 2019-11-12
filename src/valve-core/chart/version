@@ -59,7 +59,7 @@ _run() {
         shift
     done
 
-    if [ ! -v ${PARAM_CHART_NAME} ]; then
+    if [ -z ${PARAM_CHART_NAME} ]; then
         _chart_version
     else
         _help
