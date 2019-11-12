@@ -204,6 +204,7 @@ ARGOCD=
 
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v kubectl > /dev/null || brew install kubernetes-cli
+        VERSION=$(kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1)
     else
         VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
 
@@ -212,11 +213,9 @@ ARGOCD=
 
             curl -LO https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/${OS_NAME}/amd64/kubectl
             chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
-
-            KUBECTL="${VERSION}"
         fi
     fi
-
+    KUBECTL="${VERSION}"
     kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1
 
     # helm
@@ -225,6 +224,7 @@ ARGOCD=
 
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v helm > /dev/null || brew install kubernetes-helm
+        VERSION=$(helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1)
     else
         # VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq -r '.tag_name')
         VERSION="v2.13.1"
@@ -234,11 +234,9 @@ ARGOCD=
 
             curl -L https://storage.googleapis.com/kubernetes-helm/helm-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz
             sudo mv ${OS_NAME}-amd64/helm /usr/local/bin/helm && rm -rf ${OS_NAME}-amd64
-
-            HELM="${VERSION}"
         fi
     fi
-
+    HELM="${VERSION}"
     helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1
 
     # # draft
@@ -375,7 +373,11 @@ __get_yaml() {
     _DIST=$2
 
     if [ "${THIS_VERSION}" == "v0.0.0" ]; then
-        cp -rf ${SHELL_DIR}/${_NAME}.yaml ${_DIST}
+        if [ ${LOCAL_DIR} == "valve-ctl" ]; then
+            cp -rf ${_NAME}.yaml ${_DIST}
+        else
+            _error "This version is v0.0.0 and you are testing now. So you should run in local valve-ctl home."
+        fi
     else
         curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}
     fi
