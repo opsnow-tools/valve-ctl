@@ -74,9 +74,6 @@ _run() {
 
     if [ "${PARAM_RE}" == "true" ]; then
         _recreate
-    elif [ -z "${PARAM_TMP}" -a -v "${PARAM_EX}" ]; then
-        _help
-        _error "There is no url in here. See valve on -h or valve on --help"
     elif [ ! -z ${PARAM_EX} ]; then
         _external_chart
     elif [ ! -z ${PARAM_TMP} ]; then
