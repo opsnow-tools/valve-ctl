@@ -68,7 +68,7 @@ _run() {
         shift
     done
 
-    if [ -v ${PARAM_HELM} ]; then
+    if [ -z ${PARAM_HELM} ]; then
         _help
         _error "Use valve off --help / valve off -h"
     else
@@ -80,7 +80,7 @@ _run() {
 
 _off() {
     _debug_mode
-    if [ -z ${PARAM_HELM} ]; then
+    if [ ! -z ${PARAM_HELM} ]; then
         FIND_HELM=$(helm ls --all | grep -v "NAME" | grep -E ${PARAM_HELM} | awk '{print $1}')
         if [[ ${FIND_HELM} == ${PARAM_HELM} ]]; then
             helm delete ${PARAM_HELM} --purge
