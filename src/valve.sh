@@ -15,8 +15,6 @@ export readonly ROOT_CORE_DIR=$ROOT_SHELL_DIR/valve-core
 readonly PLUGIN_LIST=($(ls $ROOT_PLUGINS_DIR))
 readonly CORE_LIST=($(ls $ROOT_CORE_DIR))
 
-export THIS_REPO="opsnow-tools"
-export THIS_NAME="valve-ctl"
 export THIS_VERSION="v0.0.0"
 
 ####### common functions
@@ -151,6 +149,10 @@ _set_cmd() {
         off)
             CMD=_template
             H_CMD=off
+            ;;
+        search)
+            CMD=_template
+            H_CMD=search
             ;;
         ssh)
             CMD=_template

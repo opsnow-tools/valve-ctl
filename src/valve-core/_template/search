@@ -1,0 +1,84 @@
+#!/bin/bash
+
+CUR_DIR=${0%/*}
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_NAME=${0##*/}
+
+####### common functions
+source ${ROOT_SHELL_DIR}/common.sh
+
+
+readonly SHORT_OPT="hv"
+readonly LONG_OPT="help,verbose"
+
+_help() {
+    cat <<EOF
+================================================================================
+Usage: valve ${CUR_NAME} {Params}                               valve-ctl 이 이용하는 chart에 대한 리스트를 보여줍니다.
+                                                                유저가 등록한 template에 대해서도 valve search를 통해 보여줍니다. template을 등록하기 위해서는 'valve repo add -h'를 참고합니다.
+
+Params:
+    -h, --help                                                  valve search 화면을 보여줍니다.
+
+Examples:
+    $ valve search
+    $ valve search -h / valve search --help
+================================================================================
+EOF
+}
+
+_run() {
+
+    OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
+    if  [ $? -eq 1 ]; then
+        _help
+        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+    fi
+    eval set -- "${OPTIONS}"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                _help
+                exit 0
+                ;;
+            -v|--verbose)
+                DEBUG_MODE=true
+                VERBOSE=$(($VERBOSE + 1))
+                ;;
+            --)
+                PARAM_SEARCH="true"
+                shift
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ "${PARAM_SEARCH}" == "true" ]; then
+        _search
+    else
+        _error "Use valve get -h or valve get --help"
+    fi
+}
+
+##################################################################################
+
+_search() {
+    # valve repo list
+    
+    #
+    LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/${THIS_REPO}/${THIS_NAME}/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+    if [ ! -d "/tmp/temp" ]; then
+        mkdir -p /tmp/temp
+        pushd "/tmp/temp" > /dev/null
+        _command "curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${LATEST_VERSION}/draft.tar.gz | tar xz"
+        #curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${LATEST_VERSION}/draft.tar.gz | tar xz
+        popd
+        echo $PWD
+    fi
+    exit 0
+}
+##################################################################################
+
+_run $@

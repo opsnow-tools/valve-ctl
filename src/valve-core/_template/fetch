@@ -6,13 +6,13 @@ CUR_NAME=${0##*/}
 
 ####### common functions
 source ${ROOT_SHELL_DIR}/common.sh
-
+DIST=$CONFIG_DIR/${THIS_NAME}-draft-${THIS_VERSION}
+LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/${THIS_REPO}/${THIS_NAME}/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
 
 readonly SHORT_OPT="hvon:g:s:u:"
 readonly LONG_OPT="help,verbose,overwrite,group:,service:,name:,giturl:"
 
 _help() {
-    cat $CONFIG_DIR
     cat <<EOF
 ================================================================================
 Usage: valve ${CUR_NAME} {Params}
@@ -25,10 +25,10 @@ Params:
                                                 valve fetch를 이용합니다.
                                                 ===== 템플릿 리스트 ====
 EOF
-LIST=$CONFIG_DIR/${THIS_NAME}-draft-ls
-if [ -f ${LIST} ]; then
-    sed 's/^/\t\t\t\t\t\t/' < ${LIST}
-fi
+# if [ -d ${DIST} ]; then
+#     ls -al ${DIST} | awk '{print "\011""\011""\011""\011""\011""\011"$NF}' | sed '1,3d' | sort -u
+# fi
+valve search
     cat <<EOF
                                                 ===== 템플릿 리스트 ====
                                                 디폴트로 fetch할 때 현재 working 디렉토리 이름을 사용합니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
@@ -130,8 +130,7 @@ _run() {
 _fetch(){
     _result "valve-ctl version: ${THIS_VERSION}"
 
-    DIST=$CONFIG_DIR/${THIS_NAME}-draft-${THIS_VERSION}
-    LIST=$CONFIG_DIR/${THIS_NAME}-draft-ls
+    #DIST=$CONFIG_DIR/${THIS_NAME}-draft-${THIS_VERSION}
 
     NAMESPACE="${NAMESPACE:-development}"
 
@@ -180,17 +179,13 @@ __validate() {      # validate overwrite option
 __pkg_version_check() {
     _debug_mode
     if [ "${THIS_VERSION}" == "v0.0.0" ]; then      # Use local draft
-        if [ ! -d ${SHELL_DIR}/draft ]; then
-            _error "There is no templates in here : "$SHELL_DIR
-        fi
-
         rm -rf ${DIST}
         mkdir -p ${DIST}
 
-        
-        _command "cp -rf ${SHELL_DIR}/draft/* ${DIST}"  # copy local draft
-        cp -rf ${SHELL_DIR}/draft/* ${DIST}
-
+        pushd ${DIST}
+        #LATEST_VERSION=$(curl -s https://api.github.com/repos/${THIS_REPO}/${THIS_NAME}/releases/latest | grep tag_name | cut -d'"' -f4)
+        curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${LATEST_VERSION}/draft.tar.gz | tar xz
+        popd
         _result "local package used."
     else        # Use release version
         if [ ! -d ${DIST} ]; then   
@@ -210,41 +205,41 @@ __pkg_name_check() {
     _debug_mode
     
     IDX=0
-    __template_count_validate
-
-    CNT=`wc -l < ${LIST}`
-    
     CONFIG_NAME_LIST=$(cat ${CONFIG} | sed '1,/REPO/d' | awk -F ' ' '{print $2}')
+
     
-    if [ ${IDX} == ${CNT} ]; then       # Check name if doesn't match.
+    for VAL in LIST; do
+        if [ ${PARAM_NAME} == $VAL ]; then
+            _result "Template: "${PARAM_NAME}
+            IDX=$((IDX+1))
+        fi
+    done
+
+    if [ ${IDX} -eq 0 ]; then       # Check name if doesn't match.
         _result "Template: "${PARAM_NAME}
 
         __config_count_validate
         if [ "${CONFIG_RESULT}" == "" ]; then
             pushd ${DIST} > /dev/null
             if [ ! -d ${TEMPLATE} ]; then
-                git clone ${TEMPLATE_URL} ${TEMPLATE}
-                ls ${DIST} | sed 's/'${TEMPLATE}'/\[custom\]'${REMOTE_NAME}'\/'${REMOTE_TEMPLATE}'/g' | sort > ${LIST}
+                echo 
+                _command "git clone "${TEMPLATE_URL} ${TEMPLATE}
+                git clone ${TEMPLATE_URL} /tmp/${TEMPLATE}
+                pushd /tmp/${TEMPLATE} > /dev/null
+                rename 's//[custom]/' *
+                cp -r * ${DIST}
+                popd
+                rm -rf /tmp/${TEMPLATE}
             fi
-            popd > /dev/null
+            popd
             PACKAGE=${TEMPLATE}
         elif [ ${CONFIG_RESULT} == "ERROR" ]; then
             rm -rf ${DIST}
-            _error "\e[4m${PARAM_NAME}\e[0m template doesn't matching anything. So use 'valve repo list' and check it out!"
+            _error "\e[4m${PARAM_NAME}\e[0m template doesn't matching anything. So use 'valve repo list' and check it out [Template]!"
         fi
     else        # Check name correct one.
         PACKAGE=${PARAM_NAME}
     fi
-}
-
-__template_count_validate() {
-    _debug_mode
-
-    while read VAL; do
-        if ! [[ ${PARAM_NAME} =~ $VAL ]]; then
-            IDX=$((IDX+1))
-        fi
-    done < ${LIST}
 }
 
 __config_count_validate() {

@@ -372,15 +372,8 @@ __get_yaml() {
     _NAME=$1
     _DIST=$2
 
-    if [ "${THIS_VERSION}" == "v0.0.0" ]; then
-        if [ ${LOCAL_DIR} == "valve-ctl" ]; then
-            cp -rf ${_NAME}.yaml ${_DIST}
-        else
-            _error "This version is v0.0.0 and you are testing now. So you should run in local valve-ctl home."
-        fi
-    else
-        curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}
-    fi
+    curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}
+    exit 0
 }
 
 __helm_delete() {
