@@ -57,28 +57,60 @@ fi
 # copy
 OS_NAME="$(uname | awk '{print tolower($0)}')"
 
-if [ "${OS_NAME}" == "darwin" ]; then
-    BIN_DIR=/usr/local/bin
-    LIB_DIR=/usr/local/share
-elif [ "${OS_NAME}" == "linux" ]; then
-    BIN_DIR=$HOME/.local/bin
-    LIB_DIR=$HOME/.local/share
+if [ ${VERSION} == "dev" ]; then
+    if [ "${OS_NAME}" == "darwin" ]; then
+        BIN_DIR=/usr/local/bin
+    elif [ "${OS_NAME}" == "linux" ]; then
+        if [[ ! "$PATH" =~ "${HOME}/.local/bin" ]]; then
+            echo "PATH=${HOME}/.local/bin:$PATH" >> ~/.bashrc
+            _result "Finished. Restart your shell or reload config file"
+            _result "          source ~/.bashrc # bash"
+        fi
+        BIN_DIR=$HOME/.local/bin
+        LIB_DIR=$HOME/.local/share
+    else
+        BIN_DIR=$HOME/bin
+    fi
+    mkdir -p ${BIN_DIR}
+
+    # delete old version files
+    rm -rf ${LIB_DIR}
+    rm -f ${BIN_DIR}/${NAME}
+
+    pushd ${PWD} > /dev/null
+    if [ -f src/valve.sh ]; then
+        VALVE_HOME=${PWD}/src
+        ln -s ${VALVE_HOME} ${HOME}/.local/share
+        chmod -R +x ${HOME}/.local/share
+        ln -s ${PWD}/src/valve.sh ${BIN_DIR}/${NAME}
+    else
+        _error "There is no valve-ctl home. git clone valve-ctl your fork version"
+    fi
+    popd > /dev/null
 else
-    BIN_DIR=$HOME/bin
-    LIB_DIR=$HOME/.local/share
+    if [ "${OS_NAME}" == "darwin" ]; then
+        BIN_DIR=/usr/local/bin
+        LIB_DIR=/usr/local/share
+    elif [ "${OS_NAME}" == "linux" ]; then
+        BIN_DIR=$HOME/.local/bin
+        LIB_DIR=$HOME/.local/share
+    else
+        BIN_DIR=$HOME/bin
+        LIB_DIR=$HOME/.local/share
+    fi
+    
+    # delete old version files
+    rm -rf ${LIB_DIR}
+    rm -f ${BIN_DIR}/${NAME}
+
+    mkdir -p ${BIN_DIR}
+    mkdir -p ${LIB_DIR}
+
+    
+
+    # download new version files
+    pushd ${LIB_DIR} > /dev/null
+    curl -sL https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz
+    popd > /dev/null
+    ln -s ${LIB_DIR}/${NAME}.sh ${BIN_DIR}/${NAME}
 fi
-
-mkdir -p ${BIN_DIR}
-mkdir -p ${LIB_DIR}
-
-# delete old version files
-rm -rf ${LIB_DIR}/${NAME}-*
-rm -f ${BIN_DIR}/${NAME}
-
-# download new version files
-pushd ${LIB_DIR} > /dev/null
-curl -sL https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz
-popd > /dev/null
-
-# create symbolic link
-ln -s ${LIB_DIR}/${NAME}.sh ${BIN_DIR}/${NAME}
