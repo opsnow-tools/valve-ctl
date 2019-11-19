@@ -6,7 +6,7 @@ CUR_NAME=${0##*/}
 
 ####### common functions
 source ${ROOT_SHELL_DIR}/common.sh
-DIST=$CONFIG_DIR/${THIS_NAME}-draft-${THIS_VERSION}
+DIST=$CONFIG_DIR/repo
 LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/${THIS_REPO}/${THIS_NAME}/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
 
 readonly SHORT_OPT="hvon:g:s:u:"
@@ -20,32 +20,32 @@ Usage: valve ${CUR_NAME} {Params}
 Params:
     -h, --help                                  valve fetch 화면을 보여줍니다.
 
-    -n, --name string           (requirement)   템플릿을 설치합니다. 템플릿 리스트는 다음과 같으며, 다음 리스트에서 템플릿를 선택해야 합니다.
-                                                [custom]으로 되어있는 템플릿은 개발자가 등록한 템플릿입니다. 사용하실 때는 [custom]을 빼고 
-                                                valve fetch를 이용합니다.
-                                                ===== 템플릿 리스트 ====
-EOF
-# if [ -d ${DIST} ]; then
-#     ls -al ${DIST} | awk '{print "\011""\011""\011""\011""\011""\011"$NF}' | sed '1,3d' | sort -u
-# fi
-valve search
-    cat <<EOF
-                                                ===== 템플릿 리스트 ====
-                                                디폴트로 fetch할 때 현재 working 디렉토리 이름을 사용합니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
-                                                따라서 디렉토리 이름은 {서비스 그룹}-{서비스 이름} 이어야 합니다.
+    -n, --name string           (requirement)   템플릿을 설치합니다. 템플릿 리스트는 'valve search' 명령어를 사용하여 템플릿를 선택해야 합니다.
+                                                [Custom Template List] 는 개발자가 등록한 템플릿입니다. 예제는 다음과 같습니다.
+                                                EX)
+                                                [Custom Template List]
+                                                __
+                                                    |ㅡtest1/test-npm-nodejs
+                                                    |ㅡtest2/test-web-nginx
+                                                일 때, 개발자는 test1/test-npm-nodejs 와 test2/test-web-nginx 중 하나를 선택하여 사용합니다.
+                                                
 
     -o, --overwrite             (requirement)   템플릿을 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
                                                 .valvesecret은 유지됩니다.
                                                 덮어쓸 때 .valve-history라는 디렉토리를 생성하여 기존 템플릿을 백업합니다.
                                                 따라서 기존 템플릿을 확인하려면 .valve-history 디렉토리를 확인바랍니다.
 
-    -g, --group string          (optional)      서비스 그룹 이름입니다. 서비스 그룹은 서비스를 대표하는 이름입니다. 
+    -g, --group string          (optional)      디폴트로 fetch할 때 현재 working 디렉토리 이름을 사용합니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
+                                                따라서 디렉토리 이름은 {서비스 그룹}-{서비스 이름} 이어야 합니다.
+                                                서비스 그룹 이름입니다. 서비스 그룹은 서비스를 대표하는 이름입니다. 
                                                 서비스 그룹명을 바꾸고 싶을 때 사용합니다.
 
-    -s, --service string        (optional)      서비스 이름 입니다. 서비스 그룹에서 동작하는 app 이름입니다.
+    -s, --service string        (optional)      디폴트로 fetch할 때 현재 working 디렉토리 이름을 사용합니다. valve 프로젝트에서 사용하는 서비스는 {서비스 그룹}-{서비스 이름}으로 이루어져 있습니다.
+                                                따라서 디렉토리 이름은 {서비스 그룹}-{서비스 이름} 이어야 합니다.
+                                                서비스 이름 입니다. 서비스 그룹에서 동작하는 app 이름입니다.
                                                 서비스 이름명을 바꾸고 싶을 때 사용합니다.
 
-    -u, --giturl string         (optional)      서비스의 레파지토리 URL입니다. valve-ctl은 디폴트로 fetch 할 때 가져오는 레파지토리 URL을 자동으로 찾아줍니다.
+    -u, --giturl string         (optional)      개발하고 계신 서비스의 레파지토리 URL입니다. valve-ctl은 디폴트로 fetch 할 때 가져오는 레파지토리 URL을 자동으로 찾아줍니다.
                                                 하지만 레파지토리 URL을 변경하고 싶다면 다음 옵션을 사용합니다.
 
     -o, --overwrite             (optional)      템플릿을 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
@@ -63,7 +63,7 @@ Examples:
     [Optional]
     $ valve fetch --name java-mvn-tomcat --group sample
     $ valve fetch --name java-mvn-tomcat --group sample --service tomcat
-    $ valve fetch --name java-mvn-tomcat --group sample --service tomcat --giturl {REPO URL}
+    $ valve fetch --name test1/test-npm-nodejs --group sample --service node --giturl {REPO URL}
 
 ================================================================================
 EOF
@@ -130,8 +130,6 @@ _run() {
 _fetch(){
     _result "valve-ctl version: ${THIS_VERSION}"
 
-    #DIST=$CONFIG_DIR/${THIS_NAME}-draft-${THIS_VERSION}
-
     NAMESPACE="${NAMESPACE:-development}"
 
     SERVICE_GROUP=$PARAM_GROUP
@@ -179,21 +177,21 @@ __validate() {      # validate overwrite option
 __pkg_version_check() {
     _debug_mode
     if [ "${THIS_VERSION}" == "v0.0.0" ]; then      # Use local draft
-        rm -rf ${DIST}
-        mkdir -p ${DIST}
+        rm -rf ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
+        mkdir -p ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
 
-        pushd ${DIST}
+        pushd ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
         #LATEST_VERSION=$(curl -s https://api.github.com/repos/${THIS_REPO}/${THIS_NAME}/releases/latest | grep tag_name | cut -d'"' -f4)
         curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${LATEST_VERSION}/draft.tar.gz | tar xz
         popd
         _result "local package used."
     else        # Use release version
-        if [ ! -d ${DIST} ]; then   
+        if [ ! -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION} ]; then   
             echo
-            mkdir -p ${DIST}
+            mkdir -p ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
 
             # download
-            pushd ${DIST}
+            pushd ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
             curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
             popd
             _result "Template downloaded."
@@ -203,89 +201,93 @@ __pkg_version_check() {
 
 __pkg_name_check() {
     _debug_mode
-    
-    IDX=0
-    CONFIG_NAME_LIST=$(cat ${CONFIG} | sed '1,/REPO/d' | awk -F ' ' '{print $2}')
 
-    
-    for VAL in LIST; do
-        if [ ${PARAM_NAME} == $VAL ]; then
-            _result "Template: "${PARAM_NAME}
-            IDX=$((IDX+1))
-        fi
-    done
+    ls -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}/${PARAM_NAME} > /dev/null 2>&1
+    IDX="$?"
 
-    if [ ${IDX} -eq 0 ]; then       # Check name if doesn't match.
+    if [ ${IDX} -eq 2 ]; then       # Check name if doesn't match.
         _result "Template: "${PARAM_NAME}
 
-        __config_count_validate
-        if [ "${CONFIG_RESULT}" == "" ]; then
-            pushd ${DIST} > /dev/null
-            if [ ! -d ${TEMPLATE} ]; then
-                echo 
-                _command "git clone "${TEMPLATE_URL} ${TEMPLATE}
-                git clone ${TEMPLATE_URL} /tmp/${TEMPLATE}
-                pushd /tmp/${TEMPLATE} > /dev/null
-                rename 's//[custom]/' *
-                cp -r * ${DIST}
-                popd
-                rm -rf /tmp/${TEMPLATE}
-            fi
-            popd
-            PACKAGE=${TEMPLATE}
+        __config_count_validate ${PARAM_NAME}
+        if [ "${CONFIG_RESULT}" == "SUCCESS" ]; then
+            PACKAGE="custom/${PARAM_NAME}"
+            # pushd ${DIST} > /dev/null
+            # if [ ! -d ${TEMPLATE} ]; then
+            #     echo 
+            #     _command "git clone "${TEMPLATE_URL} ${TEMPLATE}
+            #     git clone ${TEMPLATE_URL} /tmp/${TEMPLATE}
+            #     pushd /tmp/${TEMPLATE} > /dev/null
+            #     rename 's//[custom]/' *
+            #     cp -r * ${DIST}
+            #     popd
+            #     rm -rf /tmp/${TEMPLATE}
+            # fi
+            # popd
+            # PACKAGE=${TEMPLATE}
         elif [ ${CONFIG_RESULT} == "ERROR" ]; then
-            rm -rf ${DIST}
-            _error "\e[4m${PARAM_NAME}\e[0m template doesn't matching anything. So use 'valve repo list' and check it out [Template]!"
+            rm -rf ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
+            _error "\e[4m${PARAM_NAME}\e[0m template doesn't matching anything. So use this command 'valve search' and check it out 'Templates'!"
         fi
     else        # Check name correct one.
-        PACKAGE=${PARAM_NAME}
+        PACKAGE="${THIS_NAME}-draft-${THIS_VERSION}/${PARAM_NAME}"
     fi
 }
 
 __config_count_validate() {
     _debug_mode
-
-    IDX_CF=0
-    _is_param_name=$(echo ${PARAM_NAME} | grep '/')
-    if [ "${_is_param_name}" == "" ]; then
-        _error "Use valve fetch -h / valve fetch --help \n\e[4m${PARAM_NAME}\e[0m template doesn't matching anything"
+    INPUT_TEMPLATE_NAME=$1
+    echo $INPUT_TEMPLATE_NAME
+    if [ -d $CONFIG_DIR/repo/custom/${INPUT_TEMPLATE_NAME} ]; then
+        CONFIG_RESULT="SUCCESS"
     else
-        ## Parsing Input remote template
-        REMOTE_NAME=$(echo ${PARAM_NAME} | awk -F'/' '{print $1}')
-        REMOTE_TEMPLATE=$(echo ${PARAM_NAME} | awk -F'/' '{print $2}')
-    fi
-    
-    _config_tm_list=$CONFIG_DIR/_config_tm_list
-    cat ${CONFIG} | sed '1,/REPO/d' | awk -F' ' '{print $2"|"$3}' >> ${_config_tm_list}
-
-    IFS='|'
-    while read -r _name _u
-    do
-        if [ "$_name" == "${REMOTE_NAME}" ]; then
-            _protocol="$(echo ${_u} | grep :// | sed -e's,^\(.*://\).*,\1,g')"
-            _url=$(echo ${_u} | sed -e s,$_protocol,,g)
-            _path=$(echo ${_url} | awk -F'.' '{print $(NF-1)}' | awk -F'/' '{print $NF}')
-            if [ "$_path" == "${REMOTE_TEMPLATE}" ]; then
-                if [ "${_protocol}" == "https://" ]; then
-                    TEMPLATE_URL=$_u
-                fi
-                IDX_CF=$((IDX_CF+1))
-            fi
-        fi
-    done < ${_config_tm_list}
-    rm -f ${_config_tm_list}
-
-    if [ "x${IDX_CF}" == "x2" ]; then
-        _warning "Warning! It will be used default repository url https. If you want to use ssh url, then you should delete repo https"
-        TEMPLATE=${REMOTE_NAME}-${REMOTE_TEMPLATE}
-        CONFIG_RESULT=""
-    elif [ "x${IDX_CF}" == "x1" ]; then
-        TEMPLATE=${REMOTE_NAME}-${REMOTE_TEMPLATE}
-        CONFIG_RESULT=""
-    elif [ "x${IDX_CF}" == "x0" ]; then
         CONFIG_RESULT="ERROR"
     fi
 }
+
+# __config_count_validate() {
+#     _debug_mode
+
+#     IDX_CF=0
+#     _is_param_name=$(echo ${PARAM_NAME} | grep '/')
+#     if [ "${_is_param_name}" == "" ]; then
+#         _error "Use valve fetch -h / valve fetch --help \n\e[4m${PARAM_NAME}\e[0m template doesn't matching anything"
+#     else
+#         ## Parsing Input remote template
+#         REMOTE_NAME=$(echo ${PARAM_NAME} | awk -F'/' '{print $1}')
+#         REMOTE_TEMPLATE=$(echo ${PARAM_NAME} | awk -F'/' '{print $2}')
+#     fi
+    
+#     _config_tm_list=$CONFIG_DIR/_config_tm_list
+#     cat ${CONFIG} | sed '1,/REPO/d' | awk -F' ' '{print $2"|"$3}' >> ${_config_tm_list}
+
+#     IFS='|'
+#     while read -r _name _u
+#     do
+#         if [ "$_name" == "${REMOTE_NAME}" ]; then
+#             _protocol="$(echo ${_u} | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+#             _url=$(echo ${_u} | sed -e s,$_protocol,,g)
+#             _path=$(echo ${_url} | awk -F'.' '{print $(NF-1)}' | awk -F'/' '{print $NF}')
+#             if [ "$_path" == "${REMOTE_TEMPLATE}" ]; then
+#                 if [ "${_protocol}" == "https://" ]; then
+#                     TEMPLATE_URL=$_u
+#                 fi
+#                 IDX_CF=$((IDX_CF+1))
+#             fi
+#         fi
+#     done < ${_config_tm_list}
+#     rm -f ${_config_tm_list}
+
+#     if [ "x${IDX_CF}" == "x2" ]; then
+#         _warning "Warning! It will be used default repository url https. If you want to use ssh url, then you should delete repo https"
+#         TEMPLATE=${REMOTE_NAME}-${REMOTE_TEMPLATE}
+#         CONFIG_RESULT=""
+#     elif [ "x${IDX_CF}" == "x1" ]; then
+#         TEMPLATE=${REMOTE_NAME}-${REMOTE_TEMPLATE}
+#         CONFIG_RESULT=""
+#     elif [ "x${IDX_CF}" == "x0" ]; then
+#         CONFIG_RESULT="ERROR"
+#     fi
+# }
 
 __pkg_variable_gen() {
     _debug_mode
