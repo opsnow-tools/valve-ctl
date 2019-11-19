@@ -81,26 +81,28 @@ _add() {
     CNT=$(cat ${CONFIG} | grep "${PARAMS_NAME} ${PARAMS_URL}" | wc -l | xargs)
     CNT_TITLE=$(cat ${CONFIG} | grep "REPO LIST" | wc -l | xargs)
 
-    if [ ${CNT} -eq 1 ]; then
+    if [ ${CNT} -eq 1 -o -d ${CONFIG_DIR}/repo/custom/${PARAMS_NAME} ]; then
         _error "There is a same repo in config file. Register another name & url"
     else
-        if [[ ${PARAMS_URL} =~ "https" ]]; then
-            TEMPLATE_NAME=$(echo $(echo ${PARAMS_URL##h*/}) | awk -F'.' '{print $1}')
-        elif [[ ${PARAMS_URL} =~ "ssh" ]]; then
-            TEMPLATE_NAME=$(echo $(echo ${PARAMS_URL##s*/}) | awk -F'.' '{print $1}')
-        fi
         if [ ${CNT_TITLE} -eq 1 ]; then
 cat <<EOF >> ${CONFIG}
-# ${PARAMS_NAME} ${PARAMS_URL} ${PARAMS_NAME}/${TEMPLATE_NAME}
+# ${PARAMS_NAME} ${PARAMS_URL}
 EOF
         cat ${CONFIG}
         else
 cat <<EOF >> ${CONFIG}
 ### REPO LIST ###
-# ${PARAMS_NAME} ${PARAMS_URL} ${PARAMS_NAME}/${TEMPLATE_NAME}
+# ${PARAMS_NAME} ${PARAMS_URL}
 EOF
         cat ${CONFIG}
         fi
+        if [ ! -d ${CONFIG_DIR}/repo/custom ]; then
+            mkdir -p ${CONFIG_DIR}/repo/custom
+        fi
+        pushd ${CONFIG_DIR}/repo/custom > /dev/null
+        git clone ${PARAMS_URL} ${PARAMS_NAME} > /dev/null 2>&1
+        popd > /dev/null
+        _result "Repo Add success"
     fi
 }
 ##################################################################################

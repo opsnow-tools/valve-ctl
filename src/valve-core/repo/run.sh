@@ -32,14 +32,17 @@ _set_cmd() {
         h)
             CMD=help
             ;;
-        l|list)
+        list)
             CMD=list
             ;;
-        a|add)
+        add)
             CMD=add
             ;;
-        r|remove)
+        remove)
             CMD=remove
+            ;;
+        update)
+            CMD=update
             ;;
     esac
 }
