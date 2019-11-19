@@ -373,7 +373,6 @@ __get_yaml() {
     _DIST=$2
 
     curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}
-    exit 0
 }
 
 __helm_delete() {
