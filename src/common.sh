@@ -6,6 +6,9 @@ CONFIG_DIR=${HOME}/.valve
 mkdir -p $CONFIG_DIR
 touch ${CONFIG} && . ${CONFIG}
 LOCAL_DIR=$(echo $PWD | awk -F'/' '{print $NF}')
+
+export THIS_REPO="opsnow-tools"
+export THIS_NAME="valve-ctl"
 # SHELL_DIR=${0}
 # MYNAME=${0##*/}
 
@@ -134,18 +137,6 @@ _config_save() {
         echo "USERNAME=${USERNAME}" >> ${CONFIG}
     else
         _result "CONFIG Set"
-    fi
-
-    LIST=$CONFIG_DIR/${THIS_NAME}-draft-ls
-    if [ "${THIS_VERSION}" == "v0.0.0" ]; then      # Use local draft
-        if [ ${LOCAL_DIR} == "valve-ctl" ]; then
-            ls -al draft/  | awk '{print $NF}' | sed '1,3d' > ${LIST}
-            _result "local package used."
-        else
-            _error "This version is v0.0.0 and you are testing now. So you should run in local valve-ctl home."
-        fi
-    else
-        curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar zt | awk -F'/' '{print $1}' | sort -u > ${LIST}
     fi
 }
 
