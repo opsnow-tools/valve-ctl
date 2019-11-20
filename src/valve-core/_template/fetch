@@ -179,16 +179,19 @@ __default_template_check() {
     _debug_mode
     if [ ! -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION} ]; then
         pushd ${DIST} > /dev/null
-        git clone https://github.com/opsnow-tools/valve-template.git ${THIS_NAME}-draft-${THIS_VERSION}
+        git clone https://github.com/opsnow-tools/valve-template.git ${THIS_NAME}-draft-${THIS_VERSION} > /dev/null
         popd > /dev/null
-        _result "Default template success"
+        _result "Default template setting success"
     else
         COUNT_DEFAULT=$(ls -al ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}/templates | awk -F' ' '{print $NF}' | sed '1,3d' | wc -l)
         if [ ${COUNT_DEFAULT} -eq 0 ]; then
             rm -rf ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
             _error "Error... You should run valve fetch one more time!!"
         else
-            _result "Default template success"
+            pushd ${DIST}/${THIS_NAME}-draft-${THIS_VERSION} > /dev/null
+            git pull > /dev/null
+            popd > /dev/null
+            _result "Default template setting success"
         fi
     fi
 }
