@@ -14,17 +14,13 @@ _help() {
     cat <<EOF
 ================================================================================
 Usage: valve ${CUR_OBJECT} ${CUR_NAME}
-
 Params:
     -h, --help                                          현재 화면을 보여줍니다.
-
-    -n, --name                      (requirement)       템플릿의 이름을 이용하여 레파지토리를 제거합니다. 주소와 같이 파라미터로 받습니다.
-    -u, --url                       (requirement)       템플릿의 주소를 이용하여 레파지토리를 제거합니다. 이름과 같이 파라미터로 받습니다.
-
+    -n, --name                      (requirement)       레파지토리를 최신화 합니다.
 Examples:
     [Mandatory]
     $ cd {PROJECT}
-    $ valve repo remove --name example --url git@github.com:example/examgle.git
+    $ valve repo update --name example
 ================================================================================
 EOF
 }
@@ -46,10 +42,6 @@ _run() {
                 shift
                 PARAMS_NAME=$1
                 ;;
-            # -u|--url)
-            #     shift
-            #     PARAMS_URL=$1
-            #     ;;
             -h|--help)
                 _help
                 exit 0
@@ -67,38 +59,31 @@ _run() {
     done
 
     if [ ! -z ${PARAMS_NAME} ]; then
-        _remove
+        _update
     else
         _help
-        _error "Use valve repo remove -h or valve repo remove --help"
+        _error "Use valve repo add -h or valve repo add --help"
     fi
 }
 
 ##################################################################################
-_remove() {
+_update() {
     _debug_mode
-    _command 'cat ${CONFIG} | grep "${PARAMS_NAME} ${PARAMS_URL}" | wc -l | xargs'
-    cat ${CONFIG} | grep "${PARAMS_NAME} ${PARAMS_URL}" | wc -l | xargs
-    CNT=$(cat ${CONFIG} | grep "${PARAMS_NAME} ${PARAMS_URL}" | wc -l | xargs)
-    
+    #_command "cat ${CONFIG} | grep ${PARAMS_NAME} | grep ${PARAMS_URL} | wc -l | xargs"
+    CHECK_NAME=$(cat ${CONFIG} | grep "${PARAMS_NAME}" | awk -F' ' '{print $2}')
 
-    if [ ${CNT} -eq 0 -a ${CONFIG_DIR}/repo/custom/${PARAMS_NAME} ]; then
-        _error "There is a same repo in config file. Remove not success"
+    if [ -z ${CHECK_NAME} ]; then
+        _error "There is no update repository. Check command 'valve repo list'."
+    elif [ ${CHECK_NAME} != ${PARAMS_NAME} ]; then
+        _error "There is no update repository. Check command 'valve repo list'."
     else
-        cat ${CONFIG} | grep -v "${PARAMS_NAME} ${PARAMS_URL}" > ${CONFIG}-tmp
-        mv ${CONFIG}-tmp ${CONFIG}
-
-        CNT_TITLE=$(cat ${CONFIG} | grep -A1 "REPO" | wc -l | xargs)        # To remove ### REPO LIST ### title
-        if [ ${CNT_TITLE} -eq 1 ]; then
-            cat ${CONFIG} | grep -v "REPO" > ${CONFIG}-tmp
-            mv ${CONFIG}-tmp ${CONFIG}
-        fi
-        
-        cat ${CONFIG}
-        rm -rf ${CONFIG_DIR}/repo/custom/${PARAMS_NAME}
-        _result "Repo Remove success"
+        # URL=$(sed '1,/REPO/d' ${CONFIG} | grep ${PARAMS_NAME} | awk -F' ' '{print $3}')
+        pushd ${CONFIG_DIR}/repo/custom/${PARAMS_NAME} > /dev/null
+        git pull > /dev/null 2>&1
+        popd > /dev/null
+        _result "Repo Update!"
     fi
 }
 ##################################################################################
 
-_run $@
+_run $@ 

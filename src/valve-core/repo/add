@@ -18,8 +18,8 @@ Usage: valve ${CUR_OBJECT} ${CUR_NAME}
 Params:
     -h, --help                                          현재 화면을 보여줍니다.
 
-    -n, --name                      (requirement)       템플릿의 이름을 추가합니다.
-    -u, --url                       (requirement)       템플릿의 주소를 추가합니다.
+    -n, --name                      (requirement)       템플릿이 존재하는 레파지토리를 등록합니다.
+    -u, --url                       (requirement)       템플릿이 존재하는 레파지토리의 주소를 추가합니다.
 
 Examples:
     [Mandatory]
@@ -77,30 +77,41 @@ _run() {
 ##################################################################################
 _add() {
     _debug_mode
+    WARNING=0
     #_command "cat ${CONFIG} | grep ${PARAMS_NAME} | grep ${PARAMS_URL} | wc -l | xargs"
     CNT=$(cat ${CONFIG} | grep "${PARAMS_NAME} ${PARAMS_URL}" | wc -l | xargs)
     CNT_TITLE=$(cat ${CONFIG} | grep "REPO LIST" | wc -l | xargs)
 
-    if [ ${CNT} -eq 1 ]; then
+    if [ ${CNT} -eq 1 -o -d ${CONFIG_DIR}/repo/custom/${PARAMS_NAME} ]; then
         _error "There is a same repo in config file. Register another name & url"
     else
-        if [[ ${PARAMS_URL} =~ "https" ]]; then
-            TEMPLATE_NAME=$(echo $(echo ${PARAMS_URL##h*/}) | awk -F'.' '{print $1}')
-        elif [[ ${PARAMS_URL} =~ "ssh" ]]; then
-            TEMPLATE_NAME=$(echo $(echo ${PARAMS_URL##s*/}) | awk -F'.' '{print $1}')
+        if [ ! -d ${CONFIG_DIR}/repo/custom ]; then
+            mkdir -p ${CONFIG_DIR}/repo/custom
         fi
-        if [ ${CNT_TITLE} -eq 1 ]; then
+        pushd ${CONFIG_DIR}/repo/custom > /dev/null
+        git clone ${PARAMS_URL} ${PARAMS_NAME} > /dev/null 2>&1
+        if [ $? -eq 128 ]; then
+            _warning "SSH key should register your git repository."
+            WARNING=1
+        fi
+        popd > /dev/null
+
+        if [ ! ${WARNING} -eq 1 ]; then
+            if [ ${CNT_TITLE} -eq 1 ]; then
 cat <<EOF >> ${CONFIG}
-# ${PARAMS_NAME} ${PARAMS_URL} ${PARAMS_NAME}/${TEMPLATE_NAME}
+# ${PARAMS_NAME} ${PARAMS_URL}
 EOF
-        cat ${CONFIG}
-        else
+            cat ${CONFIG}
+            else
 cat <<EOF >> ${CONFIG}
 ### REPO LIST ###
-# ${PARAMS_NAME} ${PARAMS_URL} ${PARAMS_NAME}/${TEMPLATE_NAME}
+# ${PARAMS_NAME} ${PARAMS_URL}
 EOF
-        cat ${CONFIG}
+            cat ${CONFIG}
+            fi
         fi
+
+        _result "Repo Add success"
     fi
 }
 ##################################################################################

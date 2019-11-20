@@ -13,13 +13,15 @@ _help() {
 Usage: valve ${CUR_OBJECT} {Params}
 
 Params:
-    h, help                 현재 화면을 보여줍니다.
+    help                    현재 화면을 보여줍니다.
 
-    l, list                 등록한 커스텀 템플릿 주소 리스트를 보여줍니다.
+    list                    등록한 커스텀 템플릿 레파지토리 리스트를 보여줍니다.
 
-    a, add                  커스텀 템플릿이 있는 Git 주소를 등록합니다.
+    add                     구성할 커스텀 템플릿이 있는 레파지토리를 등록합니다.
 
-    r, remove               커스텀 템플릿 Git 주소를 삭제합니다.
+    remove                  구성한 커스텀 템플릿 레파지토리를 삭제합니다.
+
+    update                  특정 커스텀 템플릿 레파지토리를 업데이트 합니다.
 
 ================================================================================
 EOF
@@ -29,17 +31,20 @@ EOF
 _set_cmd() {
     case $CMD in
 # 2 point. _set_cmd function 내 case 추가
-        h)
+        help)
             CMD=help
             ;;
-        l|list)
+        list)
             CMD=list
             ;;
-        a|add)
+        add)
             CMD=add
             ;;
-        r|remove)
+        remove)
             CMD=remove
+            ;;
+        update)
+            CMD=update
             ;;
     esac
 }

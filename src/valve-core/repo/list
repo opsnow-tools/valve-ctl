@@ -10,7 +10,7 @@ source ${ROOT_SHELL_DIR}/common.sh
 _help() {
     cat <<EOF
 ================================================================================
-Usage: valve ${CUR_OBJECT} ${CUR_NAME} 
+Usage: valve ${CUR_OBJECT} ${CUR_NAME}                  템플릿이 존재하는 레파지토리를 보여줍니다.
 
 Examples:
     [Mandatory]
@@ -29,8 +29,8 @@ _list() {
     # _protocol="$(echo ${_u} | grep :// | sed -e's,^\(.*://\).*,\1,g')"
     # _url=$(echo ${_u} | sed -e s,$_protocol,,g)
     # _path=$(echo ${_url} | awk -F'.' '{print $(NF-1)}' | awk -F'/' '{print $NF}')
-    echo -e "[Template]\t\t[Name]\t\t[Custom Template Url]"
-    sed '1,/REPO/d' ${CONFIG} | awk -F' ' '{print $4,"\t",$2,"\t",$3}'
+    echo -e "[Repository Name]\011[Url]"
+    sed '1,/REPO/d' ${CONFIG} | awk -v OFS='\011\011\011' '{print $2,$3}'
 }
 ##################################################################################
 
