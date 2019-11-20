@@ -136,7 +136,8 @@ _fetch(){
     SERVICE_NAME=$PARAM_SERVICE
     REPOSITORY_URL=$PARAM_REPO
 
-    __pkg_version_check
+    #__pkg_version_check
+    __default_template_check
     __pkg_name_check
     __validate
 
@@ -174,35 +175,55 @@ __validate() {      # validate overwrite option
         fi
     fi
 }
-__pkg_version_check() {
+
+__default_template_check() {
     _debug_mode
-    if [ "${THIS_VERSION}" == "v0.0.0" ]; then      # Use local draft
-        rm -rf ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
-        mkdir -p ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
-
-        pushd ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
-        #LATEST_VERSION=$(curl -s https://api.github.com/repos/${THIS_REPO}/${THIS_NAME}/releases/latest | grep tag_name | cut -d'"' -f4)
-        curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${LATEST_VERSION}/draft.tar.gz | tar xz
-        popd
-        _result "local package used."
-    else        # Use release version
-        if [ ! -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION} ]; then   
-            echo
-            mkdir -p ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
-
-            # download
-            pushd ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
-            curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
-            popd
-            _result "Template downloaded."
+    if [ ! -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION} ]; then
+        pushd ${DIST} > /dev/null
+        git clone https://github.com/opsnow-tools/valve-template.git ${THIS_NAME}-draft-${THIS_VERSION}
+        popd > /dev/null
+        _result "Default template success"
+    else
+        COUNT_DEFAULT=$(ls -al ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}/templates | awk -F' ' '{print $NF}' | sed '1,3d' | wc -l)
+        if [ ${COUNT_DEFAULT} -eq 0 ]; then
+            rm -rf ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
+            _error "Error... You should run valve fetch one more time!!"
+        else
+            _result "Default template success"
         fi
     fi
 }
 
+## Deprecated
+# __pkg_version_check() {
+#     _debug_mode
+#     if [ "${THIS_VERSION}" == "v0.0.0" ]; then      # Use local draft
+#         rm -rf ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
+#         mkdir -p ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
+
+#         pushd ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
+#         #LATEST_VERSION=$(curl -s https://api.github.com/repos/${THIS_REPO}/${THIS_NAME}/releases/latest | grep tag_name | cut -d'"' -f4)
+#         curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${LATEST_VERSION}/draft.tar.gz | tar xz
+#         popd
+#         _result "local package used."
+#     else        # Use release version
+#         if [ ! -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION} ]; then   
+#             echo
+#             mkdir -p ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
+
+#             # download
+#             pushd ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
+#             curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar xz
+#             popd
+#             _result "Template downloaded."
+#         fi
+#     fi
+# }
+
 __pkg_name_check() {
     _debug_mode
 
-    ls -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}/${PARAM_NAME} > /dev/null 2>&1
+    ls -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}/templates/${PARAM_NAME} > /dev/null 2>&1
     IDX="$?"
 
     if [ ${IDX} -eq 2 ]; then       # Check name if doesn't match.
@@ -229,14 +250,14 @@ __pkg_name_check() {
             _error "\e[4m${PARAM_NAME}\e[0m template doesn't matching anything. So use this command 'valve search' and check it out 'Templates'!"
         fi
     else        # Check name correct one.
-        PACKAGE="${THIS_NAME}-draft-${THIS_VERSION}/${PARAM_NAME}"
+        PACKAGE="${THIS_NAME}-draft-${THIS_VERSION}/templates/${PARAM_NAME}"
     fi
 }
 
 __config_count_validate() {
     _debug_mode
     INPUT_TEMPLATE_NAME=$1
-    echo $INPUT_TEMPLATE_NAME
+
     if [ -d $CONFIG_DIR/repo/custom/${INPUT_TEMPLATE_NAME} ]; then
         CONFIG_RESULT="SUCCESS"
     else
@@ -244,9 +265,9 @@ __config_count_validate() {
     fi
 }
 
+## Deprecated
 # __config_count_validate() {
 #     _debug_mode
-
 #     IDX_CF=0
 #     _is_param_name=$(echo ${PARAM_NAME} | grep '/')
 #     if [ "${_is_param_name}" == "" ]; then
@@ -256,10 +277,8 @@ __config_count_validate() {
 #         REMOTE_NAME=$(echo ${PARAM_NAME} | awk -F'/' '{print $1}')
 #         REMOTE_TEMPLATE=$(echo ${PARAM_NAME} | awk -F'/' '{print $2}')
 #     fi
-    
 #     _config_tm_list=$CONFIG_DIR/_config_tm_list
 #     cat ${CONFIG} | sed '1,/REPO/d' | awk -F' ' '{print $2"|"$3}' >> ${_config_tm_list}
-
 #     IFS='|'
 #     while read -r _name _u
 #     do
@@ -276,7 +295,6 @@ __config_count_validate() {
 #         fi
 #     done < ${_config_tm_list}
 #     rm -f ${_config_tm_list}
-
 #     if [ "x${IDX_CF}" == "x2" ]; then
 #         _warning "Warning! It will be used default repository url https. If you want to use ssh url, then you should delete repo https"
 #         TEMPLATE=${REMOTE_NAME}-${REMOTE_TEMPLATE}
