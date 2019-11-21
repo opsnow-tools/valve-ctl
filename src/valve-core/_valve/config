@@ -8,8 +8,8 @@ CUR_NAME=${0##*/}
 source ${ROOT_SHELL_DIR}/common.sh
 
 
-readonly SHORT_OPT="v"
-readonly LONG_OPT="verbose"
+readonly SHORT_OPT="v,e"
+readonly LONG_OPT="verbose,edit"
 
 _help() {
     cat <<EOF
@@ -41,6 +41,9 @@ _run() {
                 DEBUG_MODE=true
                 VERBOSE=$(($VERBOSE + 1))
                 ;;
+            -e|--edit)
+                EDIT_MODE=true
+                ;;
             --)
                 shift
                 break
@@ -49,7 +52,11 @@ _run() {
         shift
     done
 
-    _config
+    if [ -z ${EDIT_MODE} ]; then
+        _config
+    else
+        _config_edit
+    fi
 }
 
 ##################################################################################
@@ -61,6 +68,23 @@ _config() {
     cat ${CONFIG}
 
     _success
+}
+
+_config_edit() {
+    _debug_mode
+
+    _result "Edit mode entering..."
+    sleep 2
+    m1=$(md5sum "${CONFIG}")
+    vi ${CONFIG}
+    echo -e
+    m2=$(md5sum "${CONFIG}")
+    cat ${CONFIG}
+    if [ "$m1" != "$m2" ]; then
+        _success "File has changed!! Check this config"
+    else
+        _success "File has not changed!"
+    fi
 }
 ##################################################################################
 
