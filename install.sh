@@ -57,21 +57,41 @@ fi
 # copy
 OS_NAME="$(uname | awk '{print tolower($0)}')"
 
+if [ "${OS_NAME}" == "linux" ]; then
+    if [[ ! "$PATH" =~ "${HOME}/.local/bin" ]]; then
+        echo "PATH=${HOME}/.local/bin:$PATH" >> ~/.bashrc
+        _result "Finished. Restart your shell or reload config file"
+        _result "          source ~/.bashrc # bash"
+    fi
+fi
+
+# if dev mode exists(check symbolic link)
+# LIB_DIR=$HOME/.local/share/valve
+# if [ -L ${LIB_DIR} ]; then
+#     if [ -e ${LIB_DIR} ]; then
+#         _result "check link finish"
+#         _result "Install start"
+#     else
+#         _error "broken link..."
+#     fi
+# else
+#     _result "Install start"
+# fi
+_result "Install start..."
+sleep 1
 if [ ${VERSION} == "dev" ]; then
     if [ "${OS_NAME}" == "darwin" ]; then
+        LIB_DIR=/usr/local/share/valve
         BIN_DIR=/usr/local/bin
-    elif [ "${OS_NAME}" == "linux" ]; then
-        if [[ ! "$PATH" =~ "${HOME}/.local/bin" ]]; then
-            echo "PATH=${HOME}/.local/bin:$PATH" >> ~/.bashrc
-            _result "Finished. Restart your shell or reload config file"
-            _result "          source ~/.bashrc # bash"
-        fi
+    elif [ "${OS_NAME}" == "linux" ]; then        
         BIN_DIR=$HOME/.local/bin
-        LIB_DIR=$HOME/.local/share
+        LIB_DIR=$HOME/.local/share/valve
     else
         BIN_DIR=$HOME/bin
+        LIB_DIR=$HOME/.local/share/valve
     fi
     mkdir -p ${BIN_DIR}
+    mkdir -p ${LIB_DIR}
 
     # delete old version files
     rm -rf ${LIB_DIR}
@@ -80,8 +100,8 @@ if [ ${VERSION} == "dev" ]; then
     pushd ${PWD} > /dev/null
     if [ -f src/valve.sh ]; then
         VALVE_HOME=${PWD}/src
-        ln -s ${VALVE_HOME} ${HOME}/.local/share
-        chmod -R +x ${HOME}/.local/share
+        ln -s ${VALVE_HOME} ${LIB_DIR}
+        chmod -R +x ${LIB_DIR}
         ln -s ${PWD}/src/valve.sh ${BIN_DIR}/${NAME}
     else
         _error "There is no valve-ctl home. git clone valve-ctl your fork version"
@@ -90,21 +110,21 @@ if [ ${VERSION} == "dev" ]; then
 else
     if [ "${OS_NAME}" == "darwin" ]; then
         BIN_DIR=/usr/local/bin
-        LIB_DIR=/usr/local/share
+        LIB_DIR=/usr/local/share/valve
     elif [ "${OS_NAME}" == "linux" ]; then
         BIN_DIR=$HOME/.local/bin
-        LIB_DIR=$HOME/.local/share
+        LIB_DIR=$HOME/.local/share/valve
     else
         BIN_DIR=$HOME/bin
-        LIB_DIR=$HOME/.local/share
+        LIB_DIR=$HOME/.local/share/valve
     fi
     
     # delete old version files
     rm -rf ${LIB_DIR}
     rm -f ${BIN_DIR}/${NAME}
 
-    mkdir -p ${BIN_DIR}
     mkdir -p ${LIB_DIR}
+    mkdir -p ${BIN_DIR}
 
     
 
