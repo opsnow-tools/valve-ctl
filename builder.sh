@@ -203,7 +203,7 @@ _release() {
     go get github.com/tcnksm/ghr
 
     # github release
-    _command "ghr ${VERSION} ${RUN_PATH}/target/release/"
+    _command "ghr -t ${GITHUB_TOKEN:-EMPTY} -u ${USERNAME} -r ${REPONAME} -c ${CIRCLE_SHA1} ${GHR_PARAM} ${VERSION} ${RUN_PATH}/target/release/"
     ghr -t ${GITHUB_TOKEN:-EMPTY} \
         -u ${USERNAME} \
         -r ${REPONAME} \
