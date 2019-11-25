@@ -3,8 +3,6 @@
 SHELL_DIR=$(dirname $0)
 CONFIG=${HOME}/.valve/valve-ctl
 CONFIG_DIR=${HOME}/.valve
-mkdir -p $CONFIG_DIR
-touch ${CONFIG} && . ${CONFIG}
 LOCAL_DIR=$(echo $PWD | awk -F'/' '{print $NF}')
 
 export THIS_REPO="opsnow-tools"

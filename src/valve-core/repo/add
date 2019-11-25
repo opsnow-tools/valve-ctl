@@ -77,30 +77,95 @@ _run() {
 ##################################################################################
 _add() {
     _debug_mode
+    WARNING=0
     #_command "cat ${CONFIG} | grep ${PARAMS_NAME} | grep ${PARAMS_URL} | wc -l | xargs"
-    CNT=$(cat ${CONFIG} | grep "${PARAMS_NAME} ${PARAMS_URL}" | wc -l | xargs)
+    CNT=$(cat ${CONFIG} | grep "${PARAMS_NAME}" | wc -l | xargs)
     CNT_TITLE=$(cat ${CONFIG} | grep "REPO LIST" | wc -l | xargs)
 
-    if [ ${CNT} -eq 1 ]; then
+    # Count Repository
+    if [ -d ${CONFIG_DIR}/repo/${PARAMS_NAME} ]; then
+        pushd ${CONFIG_DIR}/repo/${PARAMS_NAME} > /dev/null
+        git config --get remote.origin.url | head -1
+        CNT_REPO=$(git config --get remote.origin.url | head -1 | wc -l)
+        CHECK_URL=$(git config --get remote.origin.url | head -1)
+        popd > /dev/null
+        if [ ${CHECK_URL} == ${PARAMS_URL} ]; then
+            CNT_REPO=1
+        else
+            CNT_REPO=2
+        fi
+    else
+        CNT_REPO=0
+    fi
+
+    if [ ${CNT} -eq 1 -a ${CNT_REPO} -eq 0 ]; then
+        _warning "There is a config...  but no repository. Register repository automated..!"
+        __register_repo
+        _success "Register repository success"
+    elif [ ${CNT} -eq 0 -a ${CNT_REPO} -eq 2 ]; then
+        _error "Check this URL = "${CHECK_URL}
+    elif [ ${CNT} -eq 0 -a ${CNT_REPO} -eq 1 ]; then
+        _warning "There is a repo.. but not in config file. Register config automated..!"
+        __apply_url
+        __register_config
+        _success "Register config success"
+    elif [ ${CNT} -eq 1 -a ${CNT_REPO} -eq 1 ]; then
         _error "There is a same repo in config file. Register another name & url"
     else
-        if [[ ${PARAMS_URL} =~ "https" ]]; then
-            TEMPLATE_NAME=$(echo $(echo ${PARAMS_URL##h*/}) | awk -F'.' '{print $1}')
-        elif [[ ${PARAMS_URL} =~ "ssh" ]]; then
-            TEMPLATE_NAME=$(echo $(echo ${PARAMS_URL##s*/}) | awk -F'.' '{print $1}')
-        fi
+        __register_repo
+        __register_config
+        _success "Register repository success"
+    fi
+}
+
+__register_config() {
+    # Check Title & marking in config
+    if [ ! ${WARNING} -eq 1 ]; then
         if [ ${CNT_TITLE} -eq 1 ]; then
 cat <<EOF >> ${CONFIG}
-# ${PARAMS_NAME} ${PARAMS_URL} ${PARAMS_NAME}/${TEMPLATE_NAME}
+# ${PARAMS_NAME} ${PARAMS_URL}
 EOF
         cat ${CONFIG}
         else
 cat <<EOF >> ${CONFIG}
 ### REPO LIST ###
-# ${PARAMS_NAME} ${PARAMS_URL} ${PARAMS_NAME}/${TEMPLATE_NAME}
+# ${PARAMS_NAME} ${PARAMS_URL}
 EOF
         cat ${CONFIG}
         fi
+    fi
+}
+
+__apply_url() {
+    PARAMS_URL=${CHECK_URL}
+}
+
+__register_repo() {
+    # Install Custom templates
+    if [ -d ${CONFIG_DIR}/repo ]; then
+        pushd ${CONFIG_DIR}/repo > /dev/null
+        GIT_RES=$(git clone ${PARAMS_URL} ${PARAMS_NAME} 2>&1)
+        
+        if [ $? -eq 128 ]; then             ## git error
+            if [[ ${GIT_RES} =~ "destination" ]]; then
+                WARNING=1
+                _error "Same Repository here"
+            elif [[ ${GIT_RES} =~ "repository" ]]; then
+                WARNING=1
+                _error "Repository not found"
+            elif [[ ${GIT_RES} =~ "Warning" ]]; then
+                WARNING=1
+                _error "SSH key should register your git repository."
+            elif [[ ${GIT_RES} =~ "Authentication" ]]; then
+                WARNING=1
+                _error "Invalid username or password"
+            fi
+        else
+            WARNING=0
+        fi
+        popd > /dev/null
+    else
+        _error "Install first..!"
     fi
 }
 ##################################################################################

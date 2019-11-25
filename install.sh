@@ -2,6 +2,11 @@
 
 command -v tput > /dev/null && TPUT=true
 
+CONFIG=${HOME}/.valve/valve-ctl
+CONFIG_DIR=${HOME}/.valve
+mkdir -p $CONFIG_DIR
+touch ${CONFIG} && . ${CONFIG}
+
 _echo() {
     if [ "${TPUT}" != "" ] && [ "$2" != "" ]; then
         echo -e "$(tput setaf $2)$1$(tput sgr0)"
@@ -79,6 +84,28 @@ fi
 # fi
 _result "Install start..."
 sleep 1
+
+# install template
+if [ -d ${CONFIG_DIR}/repo/valve ]; then
+    pushd ${CONFIG_DIR}/repo/valve > /dev/null
+    git pull > /dev/null 2>&1
+    if [ $? -eq 128 ]; then
+        _error "Update fail... Contact with SRE Team."
+    fi
+    popd > /dev/null
+else
+    mkdir -p ${CONFIG_DIR}/repo
+    pushd ${CONFIG_DIR}/repo > /dev/null
+    git clone https://github.com/opsnow-tools/valve-template.git valve > /dev/null 2>&1
+    popd > /dev/null
+fi
+
+# source config
+if [ -f ${CONFIG} ]; then
+    source ${CONFIG}
+fi
+
+# Set LIB_DIR/BIN_DIR
 if [ ${VERSION} == "dev" ]; then
     if [ "${OS_NAME}" == "darwin" ]; then
         LIB_DIR=/usr/local/share/valve
