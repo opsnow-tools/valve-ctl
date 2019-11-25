@@ -100,6 +100,14 @@ _on() {
         _error "Please use valve on -r / valve on --recreate. This App isn't deployed properly"
     fi
 
+    # Replace values.yaml repository
+    REGISTRY=$(cat ${CONFIG} | grep REGISTRY | awk -F'=' '{print $NF}')
+    if [ -z ${REGISTRY} ]; then
+        _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
+    else
+        _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
+    fi
+
     # make secret
     __secret "${NAME}" "${NAMESPACE}"
 
@@ -135,6 +143,38 @@ _on() {
     __helm_install
     __helm_cmd
 }
+
+_chart_replace() {
+    _debug_mode
+
+    REPLACE_FILE=$1
+    REPLACE_KEY=$2
+    DEFAULT_VAL=$3
+    REQUIRED=$4
+
+    # if [ "${DEFAULT_VAL}" == "" ]; then
+    #     Q="${REPLACE_KEY} : "
+    # else
+    #     Q="${REPLACE_KEY} [${DEFAULT_VAL}] : "
+    # fi
+
+    # _read "${Q}"
+
+    REPLACE_VAL=${ANSWER:-${DEFAULT_VAL}}
+
+    if [ "${REQUIRED}" == "true" ] && [ "${REPLACE_VAL}" == "" ]; then
+        _error "Required: ${REPLACE_KEY}"
+    fi
+
+    if [ "${REPLACE_TYPE}" == "yaml" ]; then
+        _command "sed -i -e s|${REPLACE_KEY}: .*|${REPLACE_KEY}: ${REPLACE_VAL}| ${REPLACE_FILE}"
+        _replace "s|${REPLACE_KEY}: .*|${REPLACE_KEY}: ${REPLACE_VAL}|" ${REPLACE_FILE}
+    else
+        _command "sed -i -e s|${REPLACE_KEY} = .*|${REPLACE_KEY} = ${REPLACE_VAL}| ${REPLACE_FILE}"
+        _replace "s|${REPLACE_KEY} = .*|${REPLACE_KEY} = \"${REPLACE_VAL}\"|" ${REPLACE_FILE}
+    fi
+}
+
 
 _recreate() {
     _debug_mode

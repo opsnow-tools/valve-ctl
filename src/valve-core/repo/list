@@ -29,8 +29,16 @@ _list() {
     # _protocol="$(echo ${_u} | grep :// | sed -e's,^\(.*://\).*,\1,g')"
     # _url=$(echo ${_u} | sed -e s,$_protocol,,g)
     # _path=$(echo ${_url} | awk -F'.' '{print $(NF-1)}' | awk -F'/' '{print $NF}')
-    echo -e "[Template]\t\t[Name]\t\t[Custom Template Url]"
-    sed '1,/REPO/d' ${CONFIG} | awk -F' ' '{print $4,"\t",$2,"\t",$3}'
+    pushd ${CONFIG_DIR}/repo/valve > /dev/null 2>&1
+    if [ "$?" -eq 1 ]; then
+        _error "Reinstall valve-ctl"
+    fi
+    VALVE_REPOSITORY=$(git config --get remote.origin.url | head -1 | xargs)
+    popd > /dev/null
+    
+    echo -e "[Repository Name]\011[Url]"
+    echo -e "valve\011\011\011${VALVE_REPOSITORY}"
+    sed '1,/REPO/d' ${CONFIG} | awk -v OFS='\011\011\011' '{print $2,$3}'
 }
 ##################################################################################
 

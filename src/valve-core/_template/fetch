@@ -6,8 +6,9 @@ CUR_NAME=${0##*/}
 
 ####### common functions
 source ${ROOT_SHELL_DIR}/common.sh
-DIST=$CONFIG_DIR/repo
-LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/${THIS_REPO}/${THIS_NAME}/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+DIST=${CONFIG_DIR}/repo
+VALVE_TEMPLATE=${CONFIG_DIR}/repo/valve/templates
+
 
 readonly SHORT_OPT="hvon:g:s:u:"
 readonly LONG_OPT="help,verbose,overwrite,group:,service:,name:,giturl:"
@@ -136,7 +137,6 @@ _fetch(){
     SERVICE_NAME=$PARAM_SERVICE
     REPOSITORY_URL=$PARAM_REPO
 
-    __default_template_check
     __pkg_name_check
     __validate
 
@@ -175,45 +175,31 @@ __validate() {      # validate overwrite option
     fi
 }
 
-__default_template_check() {
-    _debug_mode
-    if [ ! -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION} ]; then
-        pushd ${DIST} > /dev/null
-        git clone https://github.com/opsnow-tools/valve-template.git ${THIS_NAME}-draft-${THIS_VERSION} > /dev/null
-        popd > /dev/null
-        _result "Default template setting success"
-    else
-        COUNT_DEFAULT=$(ls -al ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}/templates | awk -F' ' '{print $NF}' | sed '1,3d' | wc -l)
-        if [ ${COUNT_DEFAULT} -eq 0 ]; then
-            rm -rf ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
-            _error "Error... You should run valve fetch one more time!!"
-        else
-            pushd ${DIST}/${THIS_NAME}-draft-${THIS_VERSION} > /dev/null
-            git pull > /dev/null
-            popd > /dev/null
-            _result "Default template setting success"
-        fi
-    fi
-}
-
 __pkg_name_check() {
     _debug_mode
 
-    ls -d ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}/templates/${PARAM_NAME} > /dev/null 2>&1
+    if [ ! -d ${VALVE_TEMPLATE} ]; then
+        _error "Install one more..! Run 'curl -sL repo.opsnow.io/valve-ctl/install | bash'"
+    fi
+
+    ls -d ${VALVE_TEMPLATE}/${PARAM_NAME} > /dev/null 2>&1
     IDX="$?"
 
     if [ ${IDX} -eq 2 ]; then       # Check name if doesn't match.
+        _result "Custom template setting success"
         _result "Template: "${PARAM_NAME}
 
         __config_count_validate ${PARAM_NAME}
         if [ "${CONFIG_RESULT}" == "SUCCESS" ]; then
-            PACKAGE="custom/${PARAM_NAME}"
+            PACKAGE="${PARAM_NAME}"
         elif [ ${CONFIG_RESULT} == "ERROR" ]; then
             rm -rf ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
             _error "\e[4m${PARAM_NAME}\e[0m template doesn't matching anything. So use this command 'valve search' and check it out 'Templates'!"
         fi
     else        # Check name correct one.
-        PACKAGE="${THIS_NAME}-draft-${THIS_VERSION}/templates/${PARAM_NAME}"
+        _result "Default template setting success"
+        _result "Template: "${PARAM_NAME}
+        PACKAGE="valve/templates/${PARAM_NAME}"
     fi
 }
 
@@ -221,7 +207,7 @@ __config_count_validate() {
     _debug_mode
     INPUT_TEMPLATE_NAME=$1
 
-    if [ -d $CONFIG_DIR/repo/custom/${INPUT_TEMPLATE_NAME} ]; then
+    if [ -d $CONFIG_DIR/repo/${INPUT_TEMPLATE_NAME} ]; then
         CONFIG_RESULT="SUCCESS"
     else
         CONFIG_RESULT="ERROR"
@@ -308,13 +294,6 @@ __chart_gen() {
 
         # values namespace
         _replace "s|namespace: .*|namespace: ${NAMESPACE}|" charts/${NAME}/values.yaml
-
-        # values repository
-        if [ -z ${REGISTRY} ]; then
-            _replace "s|repository: .*|repository: ${NAME}|" charts/${NAME}/values.yaml
-        else
-            _replace "s|repository: .*|repository: ${REGISTRY}/${NAME}|" charts/${NAME}/values.yaml
-        fi
 
         # values host
         _replace "s|subdomain: .*|subdomain: ${NAME}|" charts/${NAME}/values.yaml

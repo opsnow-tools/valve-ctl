@@ -65,39 +65,32 @@ _run() {
 ##################################################################################
  
 _search() {
-    #### Provide default template list
-    if [ ${THIS_VERSION} == "v0.0.0" ];then
-        LATEST_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/${THIS_REPO}/${THIS_NAME}/releases/latest | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
-        DEFAULT_TEMPLATE_LIST=$(curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${LATEST_VERSION}/draft.tar.gz | tar -zt | awk -F'/' '{print $1}' | sort -u)
-    else
-        DEFAULT_TEMPLATE_LIST=$(curl -sL https://github.com/${THIS_REPO}/${THIS_NAME}/releases/download/${THIS_VERSION}/draft.tar.gz | tar -zt | awk -F'/' '{print $1}' | sort -u)
-    fi
-    #echo "====================================================="
+    DEFAULT_TEMPLATE=${CONFIG_DIR}/repo/valve/templates
+    
+    #### Providing Default template list
+    DEFAULT_TEMPLATE_LIST=$(ls -al ${DEFAULT_TEMPLATE} | awk '{print $NF}' | sed '1,3d')
+    
     echo -e
-    echo "|  [Default Template List]"
-    echo "|  __"
+    echo "[Default Template List]"
+    
     
     for VAL in $DEFAULT_TEMPLATE_LIST; do
-        echo "|    |__ "$VAL
+        echo $VAL
     done
-    echo -e "|"
-    echo -e "|"
-    #### Custom template list
-    echo "|  [Custom Template List]"
-    echo "|  __"
-    echo "|    |__ [Repo Name]/[Template Name]"
+
+    #### Providing Custom template list
+    echo -e
+    echo -e "[Custom Template List]\011 ex) [Repo Name]/[Template Name]"
     #CUSTOM_TEMPLATE=$(sed '1,/REPO/d' ${CONFIG} | awk -F' ' '{print $3}')
-    CUSTOM_REPO=$(sed '1,/REPO/d' ${CONFIG} | awk -F' ' '{print $2}')
+    CUSTOM_REPO=$(sed '1,/REPO/d' ${CONFIG} | awk -F' ' '{print $2}' | sort )
     
     for VAL in ${CUSTOM_REPO}; do
-        if [ -d $CONFIG_DIR/repo/custom/${VAL} ]; then
-            pushd "$CONFIG_DIR/repo/custom" > /dev/null
-            ls -d ${VAL}/* | awk '{print "|    |__ "$0}'
+        if [ -d $CONFIG_DIR/repo/${VAL} ]; then
+            pushd "$CONFIG_DIR/repo/" > /dev/null
+            ls -d ${VAL}/* | awk '{print $0}' 
             popd > /dev/null
         fi
     done
-    echo -e "|"
-    echo "|=======================================================" 
     echo -e 
     echo "Use this command 'valve fetch -h' and fetch your template"
 }
