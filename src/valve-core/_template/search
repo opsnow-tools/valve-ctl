@@ -91,7 +91,6 @@ _search() {
             popd > /dev/null
         fi
     done
-    echo "|=======================================================" 
     echo -e 
     echo "Use this command 'valve fetch -h' and fetch your template"
 }
