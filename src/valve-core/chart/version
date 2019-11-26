@@ -59,7 +59,7 @@ _run() {
         shift
     done
 
-    if [ -z ${PARAM_CHART_NAME} ]; then
+    if [ ! -z ${PARAM_CHART_NAME} ]; then
         _chart_version
     else
         _help
@@ -74,7 +74,7 @@ _chart_version() {
 
     _command "helm repo update chartmuseum"
     helm repo update chartmuseum
-
+    
     FIND_CHART=$(curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]' | grep "${PARAM_CHART_NAME}")
     if [[ ${FIND_CHART} == ${PARAM_CHART_NAME} ]]; then
         _command "curl -s https://${CHARTMUSEUM}/api/charts/${FIND_CHART} | jq -r '.[].version'"
