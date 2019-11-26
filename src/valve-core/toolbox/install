@@ -16,7 +16,7 @@ _help() {
 Usage: valve ${CUR_OBJECT} ${CUR_NAME} {Params}
 
 Params:
-    -h, --help                  현재 화면을 보여줍니다.
+    -h, --help                  현재 화면을 보여줍니다. 
 
     -a, --all                   도구를 설치하고 로컬 환경을 초기화 합니다.
     -l, --local                 로컬 환경을 초기화 합니다.
@@ -240,6 +240,47 @@ ARGOCD=
     fi
 
     helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1
+
+    # aws-iam-authenticator
+    echo "================================================================================"
+    _result "install aws-iam-authenticator..."
+
+    if [ "${OS_TYPE}" == "brew" ]; then
+        command -v helm > /dev/null || brew install aws-iam-authenticator
+    else
+        if [ "$(command -v aws-iam-authenticator)" == "" ]; then
+            curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/aws-iam-authenticator
+            chmod +x ./aws-iam-authenticator
+            mkdir -p $HOME/.local/bin && mv ./aws-iam-authenticator $HOME/.local/bin/aws-iam-authenticator && export PATH=$HOME/.local/bin:$PATH
+            echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
+
+            AWS-IAM-AUTHENTICATOR=`aws-iam-authenticator version | xargs`
+        fi
+    fi
+
+    aws-iam-authenticator version
+
+    # tfenv
+    echo "================================================================================"
+    _result "install tfenv..."
+
+    git clone https://github.com/kamatama41/tfenv.git ~/.tfenv
+    ln -s /home/ec2-user/.tfenv/bin/tfenv ~/.local/bin/tfenv
+    ln -s /home/ec2-user/.tfenv/bin/terraform ~/.local/bin/terraform
+    export PATH=$HOME/.tfenv/bin:$PATH
+    echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bashrc
+    source ~/.bashrc
+
+    tfenv
+
+    # terraform using tfenv
+    echo "================================================================================"
+    _result "install terraform using tfenv..."
+    VERSION="0.12.16"
+
+    tfenv install $VERSION
+
+    tfenv list
 
     # # draft
     # echo "================================================================================"
