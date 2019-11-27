@@ -5,6 +5,11 @@ CONFIG=${HOME}/.valve/valve-ctl
 CONFIG_DIR=${HOME}/.valve
 LOCAL_DIR=$(echo $PWD | awk -F'/' '{print $NF}')
 
+if [ -f ${CONFIG} ]; then
+    CHARTMUSEUM=$(cat ${CONFIG} | grep CHARTMUSEUM | awk -F'=' '{print $NF}')
+    REGISTRY=$(cat ${CONFIG} | grep REGISTRY | awk -F'=' '{print $NF}')
+fi
+
 export THIS_REPO="opsnow-tools"
 export THIS_NAME="valve-ctl"
 # SHELL_DIR=${0}
