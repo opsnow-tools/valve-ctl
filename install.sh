@@ -35,7 +35,7 @@ _error() {
 
 ################################################################################
 
-USERNAME="opsnow-tools"
+GROUPNAME="opsnow-tools"
 REPONAME="valve-ctl"
 
 NAME="valve"
@@ -44,7 +44,7 @@ VERSION=${1}
 _command "INPUT Version : ${VERSION}"
 
 if [ -z ${VERSION} ]; then
-    VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4)
+    VERSION=$(curl -s https://api.github.com/repos/${GROUPNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4)
     _command "github Version : ${VERSION}"
 
     if [ -z ${VERSION} ]; then
@@ -157,7 +157,7 @@ else
 
     # download new version files
     pushd ${LIB_DIR} > /dev/null
-    curl -sL https://github.com/${USERNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz
+    curl -sL https://github.com/${GROUPNAME}/${REPONAME}/releases/download/${VERSION}/${NAME}.tar.gz | tar xz
     popd > /dev/null
     ln -s ${LIB_DIR}/${NAME}.sh ${BIN_DIR}/${NAME}
 fi
