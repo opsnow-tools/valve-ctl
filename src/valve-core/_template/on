@@ -187,8 +187,7 @@ _external_chart() {
     _result ${PARAM_EX}
 
     # _helm_init
-
-    __helm_repo
+    
     __find_var
     __chart_check
     __find_chart_name
@@ -419,29 +418,6 @@ __helm_delete() {
             sleep 2
         fi
     fi
-}
-
-__helm_repo() {
-    _debug_mode
-    CNT=$(helm repo list | grep chartmuseum | wc -l | xargs)
-
-    if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
-        # DEFAULT="${CHARTMUSEUM:-chartmuseum.opsnow.com}"
-        # _read "CHARTMUSEUM [${DEFAULT}] : "
-        # CHARTMUSEUM="${ANSWER:-$DEFAULT}"
-
-        if [ -z ${CHARTMUSEUM} ]; then
-            _error "Check config using valve config. Or use valve fetch --help / valve fetch -h and fetch your template."
-        fi
-
-        _command "helm repo add chartmuseum https://${CHARTMUSEUM}"
-        helm repo add chartmuseum https://${CHARTMUSEUM}
-
-        # _config_save
-    fi
-
-    _command "helm repo update"
-    helm repo update > /dev/null
 }
 
 __chart_check() {
