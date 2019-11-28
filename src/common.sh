@@ -6,6 +6,11 @@ CONFIG_DIR=${HOME}/.valve
 . ${CONFIG}
 LOCAL_DIR=$(echo $PWD | awk -F'/' '{print $NF}')
 
+if [ -f ${CONFIG} ]; then
+    CHARTMUSEUM=$(cat ${CONFIG} | grep CHARTMUSEUM | awk -F'=' '{print $NF}')
+    REGISTRY=$(cat ${CONFIG} | grep REGISTRY | awk -F'=' '{print $NF}')
+fi
+
 export THIS_REPO="opsnow-tools"
 export THIS_NAME="valve-ctl"
 # SHELL_DIR=${0}
@@ -128,14 +133,16 @@ _select_one() {
 }
 
 _config_save() {
-    FIND_CNT=$(cat ${CONFIG} | grep REGISTRY= | wc -l | xargs)
-    if [ ${FIND_CNT} -eq 0 ]; then
-        echo "# valve config" > ${CONFIG}
-        echo "REGISTRY=${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}" >> ${CONFIG}
-        echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
-        echo "USERNAME=${USERNAME}" >> ${CONFIG}
-    else
-        _result "CONFIG Set"
+    if [ -f ${CONFIG} ]; then
+        FIND_CNT=$(cat ${CONFIG} | grep REGISTRY= | wc -l | xargs)
+        if [ ${FIND_CNT} -eq 0 ]; then
+            echo "# valve config" > ${CONFIG}
+            echo "REGISTRY=${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}" >> ${CONFIG}
+            echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
+            echo "USERNAME=${USERNAME}" >> ${CONFIG}
+        else
+            _result "CONFIG Set"
+        fi
     fi
 }
 

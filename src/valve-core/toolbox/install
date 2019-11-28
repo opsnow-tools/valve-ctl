@@ -63,7 +63,7 @@ _run() {
         esac
         shift
     done
-    
+
     _config_save
     if [ "${ALL}" == "true" ]; then
         _local
@@ -385,6 +385,7 @@ _cluster() {
 
     # namespace
     __namespace "development" true
+    __helm_repo
 }
 
 __helm_install() {
@@ -567,6 +568,27 @@ __helm_init() {
 
     __waiting_pod "${NAMESPACE}" "docker-registry"
     __waiting_pod "${NAMESPACE}" "nginx-ingress"
+}
+
+__helm_repo() {
+    _debug_mode
+    CNT=$(helm repo list | grep chartmuseum | wc -l | xargs)
+
+    if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
+        if [ -f ${CONFIG} ]; then
+            CHARTMUSEUM=$(cat ${CONFIG} | grep CHARTMUSEUM | awk -F'=' '{print $NF}')
+        else
+            _error "Check config using valve config. Or use valve fetch --help / valve fetch -h and fetch your template."
+        fi
+
+        _command "helm repo add chartmuseum https://${CHARTMUSEUM}"
+        helm repo add chartmuseum https://${CHARTMUSEUM}
+
+        # _config_save
+    fi
+
+    _command "helm repo update"
+    helm repo update > /dev/null
 }
 ##################################################################################
 
