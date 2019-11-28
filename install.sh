@@ -100,11 +100,6 @@ else
     popd > /dev/null
 fi
 
-# source config
-if [ -f ${CONFIG} ]; then
-    source ${CONFIG}
-fi
-
 # Set LIB_DIR/BIN_DIR
 if [ ${VERSION} == "dev" ]; then
     if [ "${OS_NAME}" == "darwin" ]; then
