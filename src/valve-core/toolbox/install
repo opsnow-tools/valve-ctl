@@ -264,12 +264,18 @@ ARGOCD=
     echo "================================================================================"
     _result "install tfenv..."
 
-    git clone https://github.com/kamatama41/tfenv.git ~/.tfenv
-    ln -s /home/ec2-user/.tfenv/bin/tfenv ~/.local/bin/tfenv
-    ln -s /home/ec2-user/.tfenv/bin/terraform ~/.local/bin/terraform
-    export PATH=$HOME/.tfenv/bin:$PATH
-    echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bashrc
-    source ~/.bashrc
+    if [ "${OS_TYPE}" == "brew" ]; then
+        command -v helm > /dev/null || brew install tfenv
+    else
+        if [ "$(command -v tfenv)" == "" ]; then
+            git clone https://github.com/kamatama41/tfenv.git ~/.tfenv
+            ln -s ~/.tfenv/bin/tfenv ~/.local/bin/tfenv
+            ln -s ~/.tfenv/bin/terraform ~/.local/bin/terraform
+            export PATH=$HOME/.tfenv/bin:$PATH
+            echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bashrc
+            source ~/.bashrc
+        fi
+    fi
 
     tfenv
 
