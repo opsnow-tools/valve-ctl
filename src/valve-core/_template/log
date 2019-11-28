@@ -73,7 +73,7 @@ _run() {
         shift
     done
 
-    if [ -v ${PARAM_PODS} ]; then
+    if [ -z ${PARAM_PODS} ]; then
         _help
         _error "Use valve log --help / valve log -h"
     else
