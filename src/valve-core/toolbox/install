@@ -338,6 +338,9 @@ ARGOCD=
 
     argocd version 2>&1 | grep 'argocd' | xargs | awk '{print $2}'
 
+    # helm push install
+    helm plugin install https://github.com/chartmuseum/helm-push
+
     # clean
     echo "================================================================================"
     _result "clean all..."
