@@ -64,7 +64,7 @@ _run() {
         shift
     done
 
-    if [ -v ${PARAM_PODS} ]; then
+    if [ -z ${PARAM_PODS} ]; then
         _help
         _error "Use valve ssh --help / valve ssh -h"
     else
