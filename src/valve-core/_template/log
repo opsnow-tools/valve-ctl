@@ -73,7 +73,7 @@ _run() {
         shift
     done
 
-    if [ -v ${PARAM_PODS} ]; then
+    if [ -z ${PARAM_PODS} ]; then
         _help
         _error "Use valve log --help / valve log -h"
     else
@@ -86,31 +86,27 @@ _run() {
 _logs() {
     _debug_mode
 
-    if [ -z ${PARAM_PODS} ]; then
-        _command "kubectl get pod -n ${NAMESPACE}"
-        FIND_POD=$(kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | grep ${PARAM_PODS} | awk '{print $1}')
-        if [[ ${FIND_POD} == ${PARAM_PODS} ]]; then
-            P_CMD="kubectl logs -n ${NAMESPACE} ${FIND_POD}"
-            if [ -z ${PARAM_CONTAINER} ]; then
-                FIND_CONTAINER=$(kubectl get pods -ndevelopment -o=custom-columns=NameSpace:.metadata.namespace,NAME:.metadata.name,CONTAINERS:.spec.containers[*].name | grep ${PARAM_CONTAINER} | awk '{print $3}')
-                if [[ ${FIND_CONTAINER} == ${PARAM_CONTAINER} ]]; then
-                    C_CMD=" -c ${FIND_CONTAINER}"
-                else
-                    _error "There is no container that matching exactly. Use valve get --containers & check container name"
-                fi
+    _command "kubectl get pod -n ${NAMESPACE}"
+    FIND_POD=$(kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | grep ${PARAM_PODS} | awk '{print $1}')
+    if [[ ${FIND_POD} == ${PARAM_PODS} ]]; then
+        P_CMD="kubectl logs -n ${NAMESPACE} ${FIND_POD}"
+        if [ ! -z ${PARAM_CONTAINER} ]; then
+            FIND_CONTAINER=$(kubectl get pods -ndevelopment -o=custom-columns=NameSpace:.metadata.namespace,NAME:.metadata.name,CONTAINERS:.spec.containers[*].name | grep ${PARAM_CONTAINER} | awk '{print $3}')
+            if [[ ${FIND_CONTAINER} == ${PARAM_CONTAINER} ]]; then
+                C_CMD=" -c ${FIND_CONTAINER}"
             else
-                C_CMD=""
-            fi
-            if [[ ${PARAM_FOLLOW} == "true" ]]; then
-                F_CMD=" -f"
-            else
-                F_CMD=""
+                _error "There is no container that matching exactly. Use valve get --containers & check container name"
             fi
         else
-            _error "There is no pod that matching exactly. Use valve get --pods & check pods name"
+            C_CMD=""
+        fi
+        if [[ ${PARAM_FOLLOW} == "true" ]]; then
+            F_CMD=" -f"
+        else
+            F_CMD=""
         fi
     else
-        _error "Use valve log --help"
+        _error "There is no pod that matching exactly. Use valve get --pods & check pods name"
     fi
     _command "${P_CMD}${C_CMD}${F_CMD}"
     ${P_CMD}${C_CMD}${F_CMD}

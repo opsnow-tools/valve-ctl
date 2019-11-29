@@ -57,7 +57,7 @@ _run() {
         shift
     done
 
-    if [ -v ${PARAM_TOP} ]; then
+    if [ -z ${PARAM_TOP} ]; then
         _help
         _error "Use valve top --help / valve top -h"
     else
