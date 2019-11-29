@@ -77,17 +77,13 @@ _run() {
 _ssh() {
     _debug_mode
 
-    if [ -z ${PARAM_PODS} ]; then
-        _command "kubectl get pod -n ${NAMESPACE}"
-        FIND_POD=$(kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | grep ${PARAM_PODS} | awk '{print $1}')
-        if [[ ${FIND_POD} == ${PARAM_PODS} ]]; then
-            _command "kubectl exec -n ${NAMESPACE} -it ${FIND_POD} -- /bin/bash"
-            kubectl exec -n ${NAMESPACE} -it ${FIND_POD} -- /bin/bash
-        else
-            _error "There is no pod that matching exactly. Use valve get --pods & check pods name"
-        fi
+    _command "kubectl get pod -n ${NAMESPACE}"
+    FIND_POD=$(kubectl get pod -n ${NAMESPACE} | grep -v "NAME" | grep ${PARAM_PODS} | awk '{print $1}')
+    if [[ ${FIND_POD} == ${PARAM_PODS} ]]; then
+        _command "kubectl exec -n ${NAMESPACE} -it ${FIND_POD} -- /bin/bash"
+        kubectl exec -n ${NAMESPACE} -it ${FIND_POD} -- /bin/bash
     else
-        _error "Use valve ssh --help"
+        _error "There is no pod that matching exactly. Use valve get --pods & check pods name"
     fi
     
     _success
