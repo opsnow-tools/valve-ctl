@@ -129,7 +129,7 @@ __chart_release_mark() {        # marking stable tag in release images
 __chart_release_unmark() {
     _debug_mode
     _command "curl -X DELETE https://${CHARTMUSEUM}/api/charts/${FIND_CHART}/${FIND_VERSION}"
-    curl -s -X DELETE https://${CHARTMUSEUM}/api/charts/${FIND_CHART}-${FIND_VERSION}
+    curl -X DELETE https://${CHARTMUSEUM}/api/charts/${FIND_CHART}/${FIND_VERSION}
 }
 
 __chart_release_list() {
