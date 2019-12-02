@@ -243,6 +243,11 @@ AWS_IAM_AUTHENTICATOR=
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v helm > /dev/null || brew install kubernetes-helm
         VERSION=$(helm version --client --short | cut -d'+' -f1)
+        if [ $VERSION == "v3.0.0" ]; then
+            brew unlink kubernetes-helm
+            brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/78d64252f30a12b6f4b3ce29686ab5e262eea812/Formula/kubernetes-helm.rb
+            brew switch kubernetes-helm 2.9.1
+        fi
     elif [ "${OS_TYPE}" == "apt" ]; then
         # VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq -r '.tag_name')
         VERSION="v2.13.1"
