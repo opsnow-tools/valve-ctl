@@ -432,23 +432,14 @@ EOF
         AWS_CLI_LINE=$(grep -n "AWS_CLI" ${CONFIG} | cut -d: -f1)
         AWS_IAM_AUTHENTICATOR_LINE=$(grep -n "AWS_IAM_AUTHENTICATOR" ${CONFIG} | cut -d: -f1)
 
-        echo "1"
         sed -i -e "${DATE_LINE}s#.*#DATE=\"${DATE}\"#g" ${CONFIG}
-        echo "2"
         sed -i -e "${KUBECTL_LINE}s#.*#KUBECTL=\"${KUBECTL}\"#g" ${CONFIG}
-        echo "3"
         sed -i -e "${HELM_LINE}s#.*#HELM=\"${HELM}\"#g" ${CONFIG}
-        echo "4"
         sed -i -e "${DRAFT_LINE}s#.*#DRAFT=\"${DRAFT}\"#g" ${CONFIG}
-        echo "5"
         sed -i -e "${GUARD_LINE}s#.*#GUARD=\"${GUARD}\"#g" ${CONFIG}
-        echo "6"
         sed -i -e "${ARGOCD_LINE}s#.*#ARGOCD=\"${ARGOCD}\"#g" ${CONFIG}
-        echo "7"
         sed -i -e "${AWS_CLI_LINE}s#.*#AWS_CLI=\"${AWS_CLI}\"#g" ${CONFIG}
-        echo "8"
         sed -i -e "${AWS_IAM_AUTHENTICATOR_LINE}s#.*#AWS_IAM_AUTHENTICATOR=\"${AWS_IAM_AUTHENTICATOR}\"#g" ${CONFIG}
-        echo "9"
 
         cat ${CONFIG}
     fi
