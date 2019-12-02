@@ -91,12 +91,12 @@ _local() {
 # version
 DATE=
 KUBECTL=
-KOPS=
 HELM=
 DRAFT=
 GUARD=
 ARGOCD=
-    echo ${CONFIG}
+AWS_CLI=
+AWS_IAM_AUTHENTICATOR=
     ################################################################################
     DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -120,6 +120,8 @@ ARGOCD=
         fi
     elif [ "${OS_NAME}" == "darwin" ]; then
         OS_TYPE="brew"
+    elif [[ "${OS_NAME}" =~ "ming" ]]; then
+        OS_TYPE="windows"
     fi
 
     _result "${OS_NAME} [${OS_TYPE}]"
@@ -151,6 +153,7 @@ ARGOCD=
         command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
         command -v python3-distutils > /dev/null || sudo apt-get -y install python3-distutils
         command -v socat > /dev/null || sudo apt install -y socat
+        command -v unzip > /dev/null || sudo apt install -y unzip
     elif [ "${OS_TYPE}" == "yum" ]; then
         sudo yum update -y
         command -v jq > /dev/null || sudo yum install -y jq
@@ -167,6 +170,10 @@ ARGOCD=
             brew install gnu-getopt
             brew link --force gnu-getopt
         fi
+    elif [ "${OS_TYPE}" == "windows" ]; then
+        command -v jq > /dev/null || choco install -y jq
+        command -v wget > /dev/null || choco install -y wget
+        command -v unzip > /dev/null || choco install -y unzip
     fi
 
     # aws-cli
@@ -175,7 +182,8 @@ ARGOCD=
 
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v aws > /dev/null || brew install awscli
-    else
+        VERSION=$(aws --version | awk -F' ' '{print $1}' | cut -d/ -f2)
+    elif [ "${OS_TYPE}" == "apt" ]; then
         command -v pip3 > /dev/null
         if ! [ $? -eq 0 ]; then
             python3 get-pip.py --user
@@ -189,8 +197,15 @@ ARGOCD=
             pip3 install awscli --upgrade --user
             rm -f get-pip.py
         fi
+        
+        VERSION=$(aws --version | awk -F' ' '{print $1}' | cut -d/ -f2)
+        echo $VERSION
+    elif [ "${OS_TYPE}" == "windows" ]; then
+        command -v aws > /dev/null || cmd.exe /c AWSCLI64PY3.msi
+        VERSION=$(aws --version | awk -F' ' '{print $1}' | cut -d/ -f2)
     fi
-
+    
+    AWS_CLI="${VERSION}"
     aws --version | xargs
 
     if [ ! -f ~/.aws/config ]; then
@@ -205,7 +220,7 @@ ARGOCD=
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v kubectl > /dev/null || brew install kubernetes-cli
         VERSION=$(kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1)
-    else
+    elif [ "${OS_TYPE} " == "linux" ]; then
         VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
 
         if [ "${KUBECTL}" != "${VERSION}" ] || [ "$(command -v kubectl)" == "" ]; then
@@ -214,6 +229,9 @@ ARGOCD=
             curl -LO https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/${OS_NAME}/amd64/kubectl
             chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
         fi
+    elif [ "${OS_TYPE}" == "windows" ]; then
+        command -v kubectl > /dev/null || choco install -y kubernetes-cli
+        VERSION=$(kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1)
     fi
     KUBECTL="${VERSION}"
     kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1
@@ -225,7 +243,7 @@ ARGOCD=
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v helm > /dev/null || brew install kubernetes-helm
         VERSION=$(helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1)
-    else
+    elif [ "${OS_TYPE}" == "apt" ]; then
         # VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq -r '.tag_name')
         VERSION="v2.13.1"
 
@@ -235,6 +253,10 @@ ARGOCD=
             curl -L https://storage.googleapis.com/kubernetes-helm/helm-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz
             sudo mv ${OS_NAME}-amd64/helm /usr/local/bin/helm && rm -rf ${OS_NAME}-amd64
         fi
+    elif [ "${OS_TYPE}" == "windows" ]; then
+        command -v helm > /dev/null || choco install -y kubernetes-helm
+        VERSION=$(helm version --client --short | cut -d'+' -f1)
+        helm version --client --short | cut -d'+' -f1
     fi
     HELM="${VERSION}"
     helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1
@@ -244,8 +266,9 @@ ARGOCD=
     _result "install aws-iam-authenticator..."
 
     if [ "${OS_TYPE}" == "brew" ]; then
-        command -v helm > /dev/null || brew install aws-iam-authenticator
-    else
+        command -v aws-iam-authenticator > /dev/null || brew install aws-iam-authenticator
+        VERSION=$(aws-iam-authenticator version | awk -F, '{print $1}' | cut -d':' -f2 | tr --delete \")
+    elif [ "${OS_TYPE}" == "apt" ]; then
         if [ "$(command -v aws-iam-authenticator)" == "" ]; then
             curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/aws-iam-authenticator
             chmod +x ./aws-iam-authenticator
@@ -254,24 +277,45 @@ ARGOCD=
 
             AWS-IAM-AUTHENTICATOR=`aws-iam-authenticator version | xargs`
         fi
+        VERSION=$(aws-iam-authenticator version | awk -F, '{print $1}' | cut -d':' -f2 | tr --delete \")
+    elif [ "${OS_TYPE}" == "windows" ]; then
+        command -v aws-iam-authenticator > /dev/null || curl -o aws-iam-authenticator.exe https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/windows/amd64/aws-iam-authenticator.exe
+        if [ -f "aws-iam-authenticator.exe" ]; then
+            mv aws-iam-authenticator.exe $HOME/bin/
+        fi
+        VERSION=$(aws-iam-authenticator version | awk -F, '{print $1}' | cut -d':' -f2 | tr --delete \")
+        
     fi
-
+    AWS_IAM_AUTHENTICATOR=${VERSION}
     aws-iam-authenticator version
 
     # tfenv
     echo "================================================================================"
     _result "install tfenv..."
 
-    if [ "$(command -v tfenv)" != "" ]; then
+    if [ "$(command -v tfenv)" == "" ]; then
         if [ "${OS_TYPE}" == "brew" ]; then
             command -v helm > /dev/null || brew install tfenv
-        else
+        elif [ "${OS_TYPE}" == "apt" ]; then
             git clone https://github.com/kamatama41/tfenv.git ~/.tfenv
             ln -s ~/.tfenv/bin/tfenv ~/.local/bin/tfenv
             ln -s ~/.tfenv/bin/terraform ~/.local/bin/terraform
             export PATH=$HOME/.tfenv/bin:$PATH
-            echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bashrc
-            source ~/.bashrc
+            tfenv_cnt=$(grep "tfenv" ~/.bashrc | xargs | wc -l)
+            if [ $tfenv_cnt -eq 0 ]; then
+                echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bashrc
+            fi
+            . ~/.bashrc
+        elif [ "${OS_TYPE}" == "windows" ]; then
+            git clone https://github.com/kamatama41/tfenv.git ~/.tfenv
+            ln -s ~/.tfenv/bin/tfenv $HOME/bin/tfenv
+            ln -s ~/.tfenv/bin/terraform $HOME/bin/terraform
+            export PATH=$HOME/.tfenv/bin:$PATH
+            tfenv_cnt=$(grep "tfenv" ~/.bashrc | xargs | wc -l)
+            if [ $tfenv_cnt -eq 0 ]; then
+                echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bashrc
+            fi
+            . ~/.bashrc
         fi
 
         TERRAFORM_VERSION="0.12.16"
@@ -303,43 +347,49 @@ ARGOCD=
     # draft version --short | xargs | cut -d'+' -f1
 
     # guard
-    echo "================================================================================"
-    _result "install guard..."
+    
 
-    # VERSION=$(curl -s https://api.github.com/repos/appscode/guard/releases/latest | jq -r '.tag_name')
-    VERSION="0.1.2"
+    if [ "${OS_TYPE}" == "windows" ]; then
+        echo -e 
+    else
+        echo "================================================================================"
+        _result "install guard..."
+        # VERSION=$(curl -s https://api.github.com/repos/appscode/guard/releases/latest | jq -r '.tag_name')
+        VERSION="0.1.2"
 
-    if [ "${GUARD}" != "${VERSION}" ]; then
-        _result " ${GUARD} >> ${VERSION}"
+        if [ "${GUARD}" != "${VERSION}" ]; then
+            _result " ${GUARD} >> ${VERSION}"
 
-        curl -LO https://github.com/appscode/guard/releases/download/${VERSION}/guard-${OS_NAME}-amd64
-        chmod +x guard-${OS_NAME}-amd64 && sudo mv guard-${OS_NAME}-amd64 /usr/local/bin/guard
+            curl -LO https://github.com/appscode/guard/releases/download/${VERSION}/guard-${OS_NAME}-amd64
+            chmod +x guard-${OS_NAME}-amd64 && sudo mv guard-${OS_NAME}-amd64 /usr/local/bin/guard
 
-        GUARD="${VERSION}"
+            GUARD="${VERSION}"
+        fi
+
+        guard version 2>&1 | grep 'Version ' | xargs | awk '{print $3}'
     fi
-
-    guard version 2>&1 | grep 'Version ' | xargs | awk '{print $3}'
 
     # argocd cli
-    echo "================================================================================"
-    _result "install argocd cli ..."
+    if [ "${OS_TYPE}" == "windows" ]; then
+        echo -e 
+    else
+        echo "================================================================================"
+        _result "install argocd cli ..."
 
-    # VERSION=$(curl -s https://api.github.com/repos/argoproj/argo-cd/releases/latest | jq -r '.tag_name')
-    VERSION="v1.0.2"
+        # VERSION=$(curl -s https://api.github.com/repos/argoproj/argo-cd/releases/latest | jq -r '.tag_name')
+        VERSION="v1.0.2"
 
-    if [ "${ARGOCD}" != "${VERSION}" ]; then
-        _result " ${ARGOCD} >> ${VERSION}"
+        if [ "${ARGOCD}" != "${VERSION}" ]; then
+            _result " ${ARGOCD} >> ${VERSION}"
 
-        curl -LO https://github.com/argoproj/argo-cd/releases/download/${VERSION}/argocd-${OS_NAME}-amd64
-        chmod +x argocd-${OS_NAME}-amd64 && sudo mv argocd-${OS_NAME}-amd64 /usr/local/bin/argocd
+            curl -LO https://github.com/argoproj/argo-cd/releases/download/${VERSION}/argocd-${OS_NAME}-amd64
+            chmod +x argocd-${OS_NAME}-amd64 && sudo mv argocd-${OS_NAME}-amd64 /usr/local/bin/argocd
 
-        ARGOCD="${VERSION}"
+            ARGOCD="${VERSION}"
+        fi
+
+        argocd version 2>&1 | grep 'argocd' | xargs | awk '{print $2}'
     fi
-
-    argocd version 2>&1 | grep 'argocd' | xargs | awk '{print $2}'
-
-    # helm push install
-    helm plugin install https://github.com/chartmuseum/helm-push
 
     # clean
     echo "================================================================================"
@@ -356,8 +406,9 @@ ARGOCD=
 
     echo "================================================================================"
     
-    cat ${CONFIG} | grep version
-    if [ $? -eq 1 ]; then
+    v_cnt=$(cat ${CONFIG} | grep version | wc -l)
+
+    if [ $v_cnt -eq 0 ]; then
 cat <<EOF >> ${CONFIG}
 # version
 DATE="${DATE}"
@@ -365,9 +416,40 @@ KUBECTL="${KUBECTL}"
 HELM="${HELM}"
 DRAFT="${DRAFT}"
 GUARD="${GUARD}"
+ARGOCD="${ARGOCD}"
+AWS_CLI="${AWS_CLI}"
+AWS_IAM_AUTHENTICATOR="${AWS_IAM_AUTHENTICATOR}"
 EOF
         cat ${CONFIG}
-    else
+
+    elif [ $v_cnt -eq 1 ]; then
+        DATE_LINE=$(grep -n "DATE" ${CONFIG} | cut -d: -f1)
+        KUBECTL_LINE=$(grep -n "KUBECTL" ${CONFIG} | cut -d: -f1)
+        HELM_LINE=$(grep -n "HELM" ${CONFIG} | cut -d: -f1)
+        DRAFT_LINE=$(grep -n "DRAFT" ${CONFIG} | cut -d: -f1)
+        GUARD_LINE=$(grep -n "GUARD" ${CONFIG} | cut -d: -f1)
+        ARGOCD_LINE=$(grep -n "ARGOCD" ${CONFIG} | cut -d: -f1)
+        AWS_CLI_LINE=$(grep -n "AWS_CLI" ${CONFIG} | cut -d: -f1)
+        AWS_IAM_AUTHENTICATOR_LINE=$(grep -n "AWS_IAM_AUTHENTICATOR" ${CONFIG} | cut -d: -f1)
+
+        echo "1"
+        sed -i -e "${DATE_LINE}s#.*#DATE=\"${DATE}\"#g" ${CONFIG}
+        echo "2"
+        sed -i -e "${KUBECTL_LINE}s#.*#KUBECTL=\"${KUBECTL}\"#g" ${CONFIG}
+        echo "3"
+        sed -i -e "${HELM_LINE}s#.*#HELM=\"${HELM}\"#g" ${CONFIG}
+        echo "4"
+        sed -i -e "${DRAFT_LINE}s#.*#DRAFT=\"${DRAFT}\"#g" ${CONFIG}
+        echo "5"
+        sed -i -e "${GUARD_LINE}s#.*#GUARD=\"${GUARD}\"#g" ${CONFIG}
+        echo "6"
+        sed -i -e "${ARGOCD_LINE}s#.*#ARGOCD=\"${ARGOCD}\"#g" ${CONFIG}
+        echo "7"
+        sed -i -e "${AWS_CLI_LINE}s#.*#AWS_CLI=\"${AWS_CLI}\"#g" ${CONFIG}
+        echo "8"
+        sed -i -e "${AWS_IAM_AUTHENTICATOR_LINE}s#.*#AWS_IAM_AUTHENTICATOR=\"${AWS_IAM_AUTHENTICATOR}\"#g" ${CONFIG}
+        echo "9"
+
         cat ${CONFIG}
     fi
 }
@@ -596,4 +678,3 @@ __helm_repo() {
 ##################################################################################
 
 _run $@
-
