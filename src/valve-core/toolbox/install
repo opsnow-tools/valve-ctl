@@ -242,7 +242,7 @@ AWS_IAM_AUTHENTICATOR=
 
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v helm > /dev/null || brew install kubernetes-helm
-        VERSION=$(helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1)
+        VERSION=$(helm version --client --short | cut -d'+' -f1)
     elif [ "${OS_TYPE}" == "apt" ]; then
         # VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq -r '.tag_name')
         VERSION="v2.13.1"
@@ -259,7 +259,7 @@ AWS_IAM_AUTHENTICATOR=
         helm version --client --short | cut -d'+' -f1
     fi
     HELM="${VERSION}"
-    helm version --client --short | xargs | awk '{print $2}' | cut -d'+' -f1
+    helm version --client --short | cut -d'+' -f1
 
     # aws-iam-authenticator
     echo "================================================================================"
