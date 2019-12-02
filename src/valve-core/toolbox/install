@@ -295,7 +295,7 @@ AWS_IAM_AUTHENTICATOR=
 
     if [ "$(command -v tfenv)" == "" ]; then
         if [ "${OS_TYPE}" == "brew" ]; then
-            command -v helm > /dev/null || brew install tfenv
+            command -v tfenv > /dev/null || brew install tfenv
         elif [ "${OS_TYPE}" == "apt" ]; then
             git clone https://github.com/kamatama41/tfenv.git ~/.tfenv
             ln -s ~/.tfenv/bin/tfenv ~/.local/bin/tfenv
