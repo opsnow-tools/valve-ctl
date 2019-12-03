@@ -220,7 +220,7 @@ AWS_IAM_AUTHENTICATOR=
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v kubectl > /dev/null || brew install kubernetes-cli
         VERSION=$(kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1)
-    elif [ "${OS_TYPE} " == "linux" ]; then
+    elif [ "${OS_TYPE} " == "apt" ]; then
         VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
 
         if [ "${KUBECTL}" != "${VERSION}" ] || [ "$(command -v kubectl)" == "" ]; then
@@ -272,7 +272,7 @@ AWS_IAM_AUTHENTICATOR=
 
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v aws-iam-authenticator > /dev/null || brew install aws-iam-authenticator
-        VERSION=$(aws-iam-authenticator version | awk -F, '{print $1}' | cut -d':' -f2 | tr --delete \")
+        VERSION=$(brew info aws-iam-authenticator | grep stable | awk '{print $((NF-1))}')
     elif [ "${OS_TYPE}" == "apt" ]; then
         if [ "$(command -v aws-iam-authenticator)" == "" ]; then
             curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/aws-iam-authenticator
