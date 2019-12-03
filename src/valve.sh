@@ -76,45 +76,12 @@ EOF
 }
 
 ###################################################################################
-
-_update() {
-    _echo "# version: ${THIS_VERSION}" 3
-    curl -sL repo.opsnow.io/${THIS_NAME}/install | bash -s ${NAME}
-    exit 0
-}
-
-_version() {
-    _command "kubectl version"
-    kubectl version
-
-    _command "helm version"
-    helm version
-
-    _command "draft version"
-    draft version
-
-    _command "valve version"
-    _echo "${THIS_VERSION}"
-}
-
-###################################################################################
 # Define short command
 _set_cmd() {
     case $CMD in
-        h|help)
+        help)
             _help
             _success
-            ;;
-        v)
-            _version
-            _success
-            ;;
-        u)
-            _update
-            _success
-            ;;
-        t)
-            CMD=template
             ;;
         fetch)
             CMD=_template
@@ -162,12 +129,6 @@ _set_cmd() {
             ;;
         e)
             CMD=example
-            ;;
-        tb)
-            CMD=toolbox
-            ;;
-        V)
-            CMD=valve
             ;;
     esac
 }

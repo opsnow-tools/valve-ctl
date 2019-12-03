@@ -25,6 +25,8 @@
 * java-mvn-tomcat
 * js-npm-nginx
 * js-npm-nodejs
+* R-batch
+* terraform
 * web-nginx
 설정 파일 유형은 <개발 언어>-<빌드 도구>-<베이스 이미지>로 명명됩니다.
 
