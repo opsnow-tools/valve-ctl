@@ -279,7 +279,7 @@ __chart_copy() {    # cp charts/acme/ to charts/${NAME}/
     _debug_mode
     if [ -d ${DIST}/${PACKAGE}/charts ]; then
         mkdir -p charts/${NAME}
-        cp -rf ${DIST}/${PACKAGE}/charts/acme/* charts/${NAME}/
+        cp -rf ${DIST}/${PACKAGE}/charts/acme/. charts/${NAME}
     fi
 }
 
