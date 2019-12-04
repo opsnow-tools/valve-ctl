@@ -40,49 +40,27 @@ Usage: `basename $0` {Command} params..
 
 Commands:
 V2:
-    h, help                 현재 화면을 보여줍니다.
+    help                    현재 화면을 보여줍니다.
 
-    u, update               valve 를 최신버전으로 업데이트 합니다.
-    v, version              valve 버전을 확인 합니다.
+    [valve-ctl tool 관리]
+    update                  valve 를 최신버전으로 업데이트 합니다.
+    version                 valve 버전을 확인 합니다.
+    config                  저장된 설정을 조회 합니다.
+    toolbox                 Local Kubernetes 환경을 구성하기 위한 툴 설치 및 환경 구성을 합니다.
 
-    V, valve                명시적으로 기존 valve-ctl 기능을 사용합니다. 생략할 수 있습니다.
+    [valve-ctl 개발자 도구]
+    search                  프로젝트 배포에 필요한 템플릿 리스트를 조회합니다.
+    fetch                   프로젝트 배포에 필요한 템플릿를 개발 소스에 세팅(설치)합니다.
+    on                      프로젝트를 Local Kubernetes에 배포합니다.
+    off                     배포한 프로젝트를 삭제합니다.
 
-V1: (아래 기능들은 현재 사용가능 합니다.)
-    c, config               저장된 설정을 조회 합니다.
+    chart                   외부 프로젝트의 차트 릴리즈 목록을 확인하고 stable 버전을 관리합니다.
+    repo                    외부 프로젝트 템플릿 레파지토리를 등록합니다.
 
-    i, init                 초기화를 합니다. Kubernetes 에 필요한 툴을 설치 합니다.
-        -f, --force         가능하면 재설치 합니다.
-        -d, --delete        기존 배포를 삭제 하고, 다음 작업을 수행합니다.
-
-    g, gen                  프로젝트 배포에 필요한 패키지를 설치 합니다.
-        -d, --delete        기존 패키지를 삭제 하고, 다음 작업을 수행합니다.
-
-    up                   프로젝트를 Local Kubernetes 에 배포 합니다.
-        -d, --delete        기존 배포를 삭제 하고, 다음 작업을 수행합니다.
-        -r, --remote        Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
-
-    r, remote               Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
-        -v, --version=      프로젝트 버전을 알고 있을 경우 입력합니다.
-
-    a, all                  배포된 리소스의 전체 list 를 조회 합니다.
-
-    l, ls, list             배포된 리소스의 list 를 조회 합니다.
-    d, desc                 배포된 리소스의 describe 를 조회 합니다.
-    hpa                     배포된 리소스의 Horizontal Pod Autoscaler 를 조회 합니다.
-    s, ssh                  배포된 리소스의 Pod 에 ssh 접속을 시도 합니다.
-    log, logs               배포한 리소스의 logs 를 조회 합니다.
-        -n, --namespace=    지정된 namespace 를 조회 합니다.
-
-    rm, remove              배포한 프로젝트를 삭제 합니다.
-
-    clean                   저장된 설정을 모두 삭제 합니다.
-        -d, --delete        docker 이미지도 모두 삭제 합니다.
-
-    chart                   Helm 차트와 차트 릴리즈 목록을 확인하고 stable 버전을 생성, 삭제 합니다.
-        list                차트 목록을 조회합니다.
-        release             차트 릴리즈를 관리합니다.
-
-    tools                   개발에 필요한 툴을 설치 합니다. (MacOS, Ubuntu 만 지원)
+    get                     배포한 프로젝트에 대한 정보를 확인합니다.
+    ssh                     배포한 리소스의 pod에 ssh접속을 합니다.
+    top                     배포한 리소스의 CPU, Memory 사용량을 조회합니다.
+    log                     배포한 리소스의 로그를 조회합니다.
 
 Check command lists:
 -----------------------------------
@@ -98,45 +76,12 @@ EOF
 }
 
 ###################################################################################
-
-_update() {
-    _echo "# version: ${THIS_VERSION}" 3
-    curl -sL repo.opsnow.io/${THIS_NAME}/install | bash -s ${NAME}
-    exit 0
-}
-
-_version() {
-    _command "kubectl version"
-    kubectl version
-
-    _command "helm version"
-    helm version
-
-    _command "draft version"
-    draft version
-
-    _command "valve version"
-    _echo "${THIS_VERSION}"
-}
-
-###################################################################################
 # Define short command
 _set_cmd() {
     case $CMD in
-        h|help)
+        help)
             _help
             _success
-            ;;
-        v)
-            _version
-            _success
-            ;;
-        u)
-            _update
-            _success
-            ;;
-        t)
-            CMD=template
             ;;
         fetch)
             CMD=_template
@@ -185,12 +130,6 @@ _set_cmd() {
         e)
             CMD=example
             ;;
-        tb)
-            CMD=toolbox
-            ;;
-        V)
-            CMD=valve
-            ;;
     esac
 }
 
@@ -232,3 +171,44 @@ _run() {
 
 _run $@
 
+_v1_help() {
+cat << EOF
+V1: (아래 기능들은 현재 사용가능 합니다. 곧 deprecated 예정입니다.)
+    c, config               저장된 설정을 조회 합니다.
+
+    i, init                 초기화를 합니다. Kubernetes 에 필요한 툴을 설치 합니다.
+        -f, --force         가능하면 재설치 합니다.
+        -d, --delete        기존 배포를 삭제 하고, 다음 작업을 수행합니다.
+
+    g, gen                  프로젝트 배포에 필요한 패키지를 설치 합니다.
+        -d, --delete        기존 패키지를 삭제 하고, 다음 작업을 수행합니다.
+
+    up                   프로젝트를 Local Kubernetes 에 배포 합니다.
+        -d, --delete        기존 배포를 삭제 하고, 다음 작업을 수행합니다.
+        -r, --remote        Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
+
+    r, remote               Remote 프로젝트를 Local Kubernetes 에 배포 합니다.
+        -v, --version=      프로젝트 버전을 알고 있을 경우 입력합니다.
+
+    a, all                  배포된 리소스의 전체 list 를 조회 합니다.
+
+    l, ls, list             배포된 리소스의 list 를 조회 합니다.
+    d, desc                 배포된 리소스의 describe 를 조회 합니다.
+    hpa                     배포된 리소스의 Horizontal Pod Autoscaler 를 조회 합니다.
+    s, ssh                  배포된 리소스의 Pod 에 ssh 접속을 시도 합니다.
+    log, logs               배포한 리소스의 logs 를 조회 합니다.
+        -n, --namespace=    지정된 namespace 를 조회 합니다.
+
+    rm, remove              배포한 프로젝트를 삭제 합니다.
+
+    clean                   저장된 설정을 모두 삭제 합니다.
+        -d, --delete        docker 이미지도 모두 삭제 합니다.
+
+    chart                   Helm 차트와 차트 릴리즈 목록을 확인하고 stable 버전을 생성, 삭제 합니다.
+        list                차트 목록을 조회합니다.
+        release             차트 릴리즈를 관리합니다.
+
+    tools                   개발에 필요한 툴을 설치 합니다. (MacOS, Ubuntu 만 지원)
+
+EOF
+}
