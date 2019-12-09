@@ -223,7 +223,9 @@ _external_chart() {
 __find_var() {
     _debug_mode
     # name
-    NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
+    if [ -d "charts" ]; then
+        NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
+    fi
 
     LIST=/tmp/${THIS_NAME}-charts-ls
 }
