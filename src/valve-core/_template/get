@@ -8,8 +8,8 @@ CUR_NAME=${0##*/}
 source ${ROOT_SHELL_DIR}/common.sh
 
 
-readonly SHORT_OPT="hvadspcm"
-readonly LONG_OPT="help,verbose,all,helm,deployments,services,pods,containers,configmap,hpa"
+readonly SHORT_OPT="hvadspcmi"
+readonly LONG_OPT="help,verbose,all,helm,deployments,services,pods,containers,configmap,hpa,ing"
 
 _help() {
     cat <<EOF
@@ -28,6 +28,7 @@ Params:
     -c,--containers                 (optional)                  로컬 클러스터에 배포한 app의 container 정보를 보여줍니다.
     -m,--configmap                  (optional)                  로컬 클러스터에 배포한 app의 configmap 정보를 보여줍니다.
     --hpa                           (optional)                  로컬 클러스터에 배포한 app의 hpa정보를 보여줍니다.
+    -i, --ing                       (optional)                  로컬 클러스터에 배포한 app의 주소를 보여줍니다.
 
 Examples:
     $ valve get -h / valve get --help
@@ -39,6 +40,7 @@ Examples:
     $ valve get -c / valve get --containers
     $ valve get -m / valve get --configmap
     $ valve get --hpa
+    $ valve get -i / vlave get --ing
 ================================================================================
 EOF
 }
@@ -78,6 +80,9 @@ _run() {
             --hpa)
                 PARAM_HPA=true
                 ;;
+            -i|--ing)
+                PARAM_ING=true
+                ;;
             -h|--help)
                 _help
                 exit 0
@@ -110,6 +115,8 @@ _run() {
         _configmap_get
     elif [ "${PARAM_HPA}" == "true" ]; then
         _hpa_get
+    elif [ "${PARAM_ING}" == "true" ]; then
+        _ing_get
     else
         _error "Use valve get -h or valve get --help"
     fi
@@ -187,6 +194,14 @@ _hpa_get() {
 
     _command "kubectl describe hpa -n ${NAMESPACE}"
     kubectl describe hpa -n ${NAMESPACE}
+    _success
+}
+
+_ing_get() {
+    _debug_mode
+    ING_URL=$(kubectl get ing -n ${NAMESPACE} | awk -F' ' '{print $2}' | sed '1d')
+
+    _result "URL = "${ING_URL}
     _success
 }
 ##################################################################################
