@@ -134,8 +134,6 @@ _set_cmd() {
         *)
             _error "Wrong input...Use this command :) \n\n~# valve help\n"
     esac
-
-
 }
 
 # main loop
