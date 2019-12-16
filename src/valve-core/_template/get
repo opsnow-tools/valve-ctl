@@ -8,37 +8,39 @@ CUR_NAME=${0##*/}
 source ${ROOT_SHELL_DIR}/common.sh
 
 
-readonly SHORT_OPT="hvadspcm"
-readonly LONG_OPT="help,verbose,all,helm,deployments,services,pods,containers,configmap,hpa"
+readonly SHORT_OPT="hvadspcmioe"
+readonly LONG_OPT="help,verbose,all,helm,deployments,services,pods,containers,configmap,hpa,ing"
 
 _help() {
     cat <<EOF
 ================================================================================
-Usage: valve ${CUR_NAME} {Params}                               로컬 클러스터에 배포한 app과 관련된 자원을 보여줍니다. 아래 Params를 이용합니다.
-                                                                helm/deployment/service/pod/container/configmap/hpa를 보여줍니다.
+Usage: valve ${CUR_NAME} {Params}                                로컬 클러스터에 배포한 app과 관련된 자원을 보여줍니다. 아래 Params를 이용합니다.
+                                                                 helm/deployment/service/pod/container/configmap/hpa를 보여줍니다.
 
 Params:
-    -h, --help                                                  valve get 화면을 보여줍니다.
+    -h, --help                                                   valve get 화면을 보여줍니다.
 
-    -a, --all                       (optional)                  로컬 클러스터에 배포한 app과 관련된 모든 자원을 보여줍니다. (helm/deployment/service/pod/container/configmap/hpa)
-    --helm                          (optional)                  로컬 클러스터에 배포한 app의 helm 정보를 보여줍니다.
-    -d,--deployments                (optional)                  로컬 클러스터에 배포한 app의 deployment 정보를 보여줍니다.
-    -s,--services                   (optional)                  로컬 클러스터에 배포한 app의 service 정보를 보여줍니다.
-    -p,--pods                       (optional)                  로컬 클러스터에 배포한 app의 pod 정보를 보여줍니다.
-    -c,--containers                 (optional)                  로컬 클러스터에 배포한 app의 container 정보를 보여줍니다.
-    -m,--configmap                  (optional)                  로컬 클러스터에 배포한 app의 configmap 정보를 보여줍니다.
-    --hpa                           (optional)                  로컬 클러스터에 배포한 app의 hpa정보를 보여줍니다.
+    -a, --all                        (optional)                  로컬 클러스터에 배포한 app과 관련된 모든 자원을 보여줍니다. (helm/deployment/service/pod/container/configmap/hpa)
+    -e, --helm                       (optional)                  로컬 클러스터에 배포한 app의 helm 정보를 보여줍니다.
+    -d, --deployments                (optional)                  로컬 클러스터에 배포한 app의 deployment 정보를 보여줍니다.
+    -s, --services                   (optional)                  로컬 클러스터에 배포한 app의 service 정보를 보여줍니다.
+    -p, --pods                       (optional)                  로컬 클러스터에 배포한 app의 pod 정보를 보여줍니다.
+    -c, --containers                 (optional)                  로컬 클러스터에 배포한 app의 container 정보를 보여줍니다.
+    -m, --configmap                  (optional)                  로컬 클러스터에 배포한 app의 configmap 정보를 보여줍니다.
+    -o, --hpa                        (optional)                  로컬 클러스터에 배포한 app의 hpa정보를 보여줍니다.
+    -i, --ing                        (optional)                  로컬 클러스터에 배포한 app의 주소를 보여줍니다.
 
 Examples:
     $ valve get -h / valve get --help
     $ valve get -a / valve get --all
-    $ valve get --helm
+    $ valve get -e / valve get --helm
     $ valve get -d / valve get --deployments
     $ valve get -s / valve get --services
     $ valve get -p / valve get --pods
     $ valve get -c / valve get --containers
     $ valve get -m / valve get --configmap
-    $ valve get --hpa
+    $ valve get -o / valve get --hpa
+    $ valve get -i / vlave get --ing
 ================================================================================
 EOF
 }
@@ -55,28 +57,31 @@ _run() {
     while [ $# -gt 0 ]; do
         case "$1" in
             -a|--all)
-                PARAM_ALL=true
+                _all_get
                 ;;
-            --helm)
-                PARAM_HELM=true
+            -e|--helm)
+                _helm_get
                 ;;
             -d|--deployments)
-                PARAM_DEPLOY=true
+                _deploy_get
                 ;;
             -s|--services)
-                PARAM_SERVICE=true
+                _service_get
                 ;;
             -p|--pods)
-                PARAM_POD=true
+                _pod_get
                 ;;
             -c|--containers)
-                PARAM_CONTAINER=true
+                _container_get
                 ;;
             -m|--configmap)
-                PARAM_CONFIGMAP=true
+                _configmap_get
                 ;;
-            --hpa)
-                PARAM_HPA=true
+            -o|--hpa)
+                _hpa_get
+                ;;
+            -i|--ing)
+                _ing_get
                 ;;
             -h|--help)
                 _help
@@ -93,26 +98,6 @@ _run() {
         esac
         shift
     done
-
-    if [ "${PARAM_ALL}" == "true" ]; then
-        _all_get
-    elif [ "${PARAM_HELM}" == "true" ]; then
-        _helm_get
-    elif [ "${PARAM_DEPLOY}" == "true" ]; then
-        _deploy_get
-    elif [ "${PARAM_SERVICE}" == "true" ]; then
-        _service_get
-    elif [ "${PARAM_POD}" == "true" ]; then
-        _pod_get
-    elif [ "${PARAM_CONTAINER}" == "true" ]; then
-        _container_get
-    elif [ "${PARAM_CONFIGMAP}" == "true" ]; then
-        _configmap_get
-    elif [ "${PARAM_HPA}" == "true" ]; then
-        _hpa_get
-    else
-        _error "Use valve get -h or valve get --help"
-    fi
 }
 
 ##################################################################################
@@ -187,6 +172,14 @@ _hpa_get() {
 
     _command "kubectl describe hpa -n ${NAMESPACE}"
     kubectl describe hpa -n ${NAMESPACE}
+    _success
+}
+
+_ing_get() {
+    _debug_mode
+    ING_URL=$(kubectl get ing -n ${NAMESPACE} | awk -F' ' '{print $2}' | sed '1d')
+
+    _result "URL = "${ING_URL}
     _success
 }
 ##################################################################################
