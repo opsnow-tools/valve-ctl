@@ -64,6 +64,7 @@ V2:
 
 Check command lists:
 -----------------------------------
+help
 EOF
 _cmd_list   # Print using object and hidden object command in common.sh
 
@@ -130,6 +131,8 @@ _set_cmd() {
         e)
             CMD=example
             ;;
+        *)
+            _error "Wrong input...Use this command :) \n\n~# valve help\n"
     esac
 }
 
