@@ -131,8 +131,6 @@ _set_cmd() {
         e)
             CMD=example
             ;;
-        *)
-            _error "Wrong input...Use this command :) \n\n~# valve help\n"
     esac
 }
 
@@ -152,8 +150,9 @@ _run() {
     ### Use another script, if exist ###
     # check if exist plugin
     if [ ! -d $ROOT_PLUGINS_DIR/$CMD -a ! -d $ROOT_CORE_DIR/$CMD ]; then
-        CMD="valve"
-        $ROOT_PLUGINS_DIR/${CMD} $*
+        #CMD="valve"
+        #$ROOT_PLUGINS_DIR/${CMD} $*
+        _error "Wrong input...Use this command :) \n\n~# valve help\n"
     else
         shift
         # RUN plugin command
@@ -166,6 +165,8 @@ _run() {
             else
                 $ROOT_CORE_DIR/${CMD}/run.sh $*
             fi
+        else
+            _error "Wrong input...Use this command :) \n\n~# valve help\n"
         fi
     fi
 
