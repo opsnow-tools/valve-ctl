@@ -97,7 +97,7 @@ _remove() {
         rm -rf ${CONFIG_DIR}/repo/${PARAMS_NAME}
         cat ${CONFIG}
 
-        _success "valve repo "${PARAMS_NAME}" success"
+        _success "valve repo "${PARAMS_NAME}" remove success"
     fi
 }
 ##################################################################################

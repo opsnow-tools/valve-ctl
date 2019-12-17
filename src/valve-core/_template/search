@@ -65,6 +65,7 @@ _run() {
 ##################################################################################
  
 _search() {
+    _debug_mode
     DEFAULT_TEMPLATE=${CONFIG_DIR}/repo/valve/templates
     
     #### Providing Default template list
@@ -86,8 +87,8 @@ _search() {
     
     for VAL in ${CUSTOM_REPO}; do
         if [ -d $CONFIG_DIR/repo/${VAL} ]; then
-            pushd "$CONFIG_DIR/repo/" > /dev/null
-            ls -d ${VAL}/* | awk '{print $0}' 
+            pushd "$CONFIG_DIR/repo/${VAL}" > /dev/null
+            ls -d */* | awk '{print $0}' | awk -F'/' '{print "'${VAL}'/" $2}'
             popd > /dev/null
         fi
     done

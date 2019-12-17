@@ -189,9 +189,13 @@ __pkg_name_check() {
         _result "Custom template setting success"
         _result "Template: "${PARAM_NAME}
 
-        __config_count_validate ${PARAM_NAME}
+        T_NAME=$(echo ${PARAM_NAME} | awk -F'/' '{print $1}')
+        T_PICK_TEMPLATE=$(echo ${PARAM_NAME} | awk -F'/' '{print $2}')
+
+        __config_count_validate ${T_NAME}/templates/${T_PICK_TEMPLATE}
+
         if [ "${CONFIG_RESULT}" == "SUCCESS" ]; then
-            PACKAGE="${PARAM_NAME}"
+            PACKAGE="${T_NAME}/templates/${T_PICK_TEMPLATE}"
         elif [ ${CONFIG_RESULT} == "ERROR" ]; then
             rm -rf ${DIST}/${THIS_NAME}-draft-${THIS_VERSION}
             _error "\e[4m${PARAM_NAME}\e[0m template doesn't matching anything. So use this command 'valve search' and check it out 'Templates'!"
