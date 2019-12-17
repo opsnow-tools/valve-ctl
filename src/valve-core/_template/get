@@ -169,9 +169,10 @@ _hpa_get() {
 
 _ing_get() {
     _debug_mode
-    ING_URL=$(kubectl get ing -n ${NAMESPACE} | awk -F' ' '{print $2}' | sed '1d')
-
-    _result "URL = "${ING_URL}
+    #ING_URL=$(kubectl get ing -n ${NAMESPACE} | awk -F' ' '{print $2}' | sed '1d')
+    #_result "URL = "${ING_URL}
+    _command "kubectl get ing -n ${NAMESPACE}"
+    kubectl get ing -n ${NAMESPACE}
 }
 ##################################################################################
 
