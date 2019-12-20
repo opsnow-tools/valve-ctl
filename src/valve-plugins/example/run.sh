@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CUR_DIR=${0%/*}
-CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f6`
+CUR_OBJECT=`echo $CUR_DIR | cut -d "/" -f7`
 readonly PLUGINS_DIR=${CUR_DIR}
 
 ####### common functions
