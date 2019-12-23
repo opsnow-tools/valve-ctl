@@ -291,11 +291,11 @@ EOF
 __build(){
     _debug_mode
     _command "docker build -t ${REGISTRY}/${NAME}:latest ."
-    docker build -t ${REGISTRY}/${NAME}:latest .
+    sudo docker build -t ${REGISTRY}/${NAME}:latest .
 
     # docker push
     _command "docker push ${REGISTRY}/${NAME}:latest"
-    docker push ${REGISTRY}/${NAME}:latest
+    sudo docker push ${REGISTRY}/${NAME}:latest
 }
 
 __helm_install() {

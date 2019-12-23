@@ -164,12 +164,7 @@ AWS_IAM_AUTHENTICATOR=
         brew update && brew upgrade
         command -v jq > /dev/null || brew install jq
         command -v git > /dev/null || brew install git
-        # getopt
-        GETOPT=$(getopt 2>&1 | head -1 | xargs)
-        if [ "${GETOPT}" == "--" ]; then
-            brew install gnu-getopt
-            brew link --force gnu-getopt
-        fi
+        
     elif [ "${OS_TYPE}" == "windows" ]; then
         command -v jq > /dev/null || choco install -y jq
         command -v wget > /dev/null || choco install -y wget
@@ -243,7 +238,7 @@ AWS_IAM_AUTHENTICATOR=
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v helm > /dev/null || brew install kubernetes-helm
         VERSION=$(helm version --client --short | cut -d'+' -f1)
-        if [ $VERSION == "v3.0.0" ]; then
+        if [[ $VERSION =~ "v3.0" ]]; then
             brew unlink kubernetes-helm
             brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/78d64252f30a12b6f4b3ce29686ab5e262eea812/Formula/kubernetes-helm.rb
             brew switch kubernetes-helm 2.9.1
@@ -301,6 +296,8 @@ AWS_IAM_AUTHENTICATOR=
     if [ "$(command -v tfenv)" == "" ]; then
         if [ "${OS_TYPE}" == "brew" ]; then
             command -v tfenv > /dev/null || brew install tfenv
+            brew unlink terraform
+            brew link tfenv
         elif [ "${OS_TYPE}" == "apt" ]; then
             git clone https://github.com/kamatama41/tfenv.git ~/.tfenv
             ln -s ~/.tfenv/bin/tfenv ~/.local/bin/tfenv
