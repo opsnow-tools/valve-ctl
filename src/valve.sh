@@ -62,14 +62,21 @@ V2:
     top                     배포한 리소스의 CPU, Memory 사용량을 조회합니다.
     log                     배포한 리소스의 로그를 조회합니다.
 
-Check command lists:
------------------------------------
-help
 EOF
-_cmd_list   # Print using object and hidden object command in common.sh
+#_cmd_list   # Print using object and hidden object command in common.sh
 
 cat << EOF
-$(ls -p ${ROOT_PLUGINS_DIR} | grep -e / | grep -v draft | awk -F/ '{print $1}')
+
+Plugins:
+    [valve-plugins]
+EOF
+PLUGIN_OBJ=$(ls -p ${ROOT_PLUGINS_DIR} | grep -e / | awk -F/ '{print $1}')
+for VAL in  ${PLUGIN_OBJ};
+do
+    PLUGIN_CMD=$(ls ${ROOT_PLUGINS_DIR}/${VAL} | grep -v "run.sh")
+    cat ${ROOT_PLUGINS_DIR}/${VAL}/run.sh | grep ${PLUGIN_CMD} | grep -v "CMD"
+done
+cat << EOF
 -----------------------------------
 ================================================================================
 EOF

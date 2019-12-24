@@ -19,9 +19,9 @@ _help() {
 Usage: valve ${CUR_OBJECT} {Params}
 
 Params:
-    h, help                 현재 화면을 보여줍니다.
+    help                 현재 화면을 보여줍니다.
 
-    e, example              Not yet (TODO 도구들을 설치합니다.)
+    example              Not yet (TODO 도구들을 설치합니다.)
 
 ================================================================================
 EOF
