@@ -24,11 +24,10 @@ Params:
     -n, --name string           (requirement)   템플릿을 설치합니다. 템플릿 리스트는 'valve search' 명령어를 사용하여 템플릿를 선택해야 합니다.
                                                 [Custom Template List] 는 개발자가 등록한 템플릿입니다. 예제는 다음과 같습니다.
                                                 EX)
-                                                [Custom Template List]
-                                                __
-                                                    |ㅡtest1/test-npm-nodejs
-                                                    |ㅡtest2/test-web-nginx
-                                                일 때, 개발자는 test1/test-npm-nodejs 와 test2/test-web-nginx 중 하나를 선택하여 사용합니다.
+                                                [Custom Template List]	 ex) [Repo Name]/[Template Name]
+                                                test1/test-npm-nodejs
+                                                test2/test-web
+                                                일 때, 개발자는 test1/test-npm-nodejs 와 test2/test-web 중 하나를 선택하여 사용합니다.
                                                 
 
     -o, --overwrite             (requirement)   템플릿을 덮어씁니다.(charts / Dockerfile / draft.toml / Jenkinsfile)
