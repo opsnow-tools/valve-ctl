@@ -144,10 +144,12 @@ _set_cmd() {
 _check_init() {
     ### check init valve-ctl proc ###
     # check getopt
-    GETOPT=$(getopt 2>&1 | head -1 | xargs)
-    if [ "${GETOPT}" == "--" ]; then
-        brew reinstall gnu-getopt
-        brew link --force gnu-getopt
+    if [ "${OS_NAME}" == "darwin" ]; then
+        GETOPT=$(getopt 2>&1 | head -1 | xargs)
+        if [ "${GETOPT}" == "--" ]; then
+            brew reinstall gnu-getopt
+            brew link --force gnu-getopt
+        fi
     fi
 
     # 
