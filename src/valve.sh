@@ -143,6 +143,8 @@ _set_cmd() {
 
 # main loop
 _run() {
+    _debug_mode
+
     # check first param
     if [ ! -z $1 ]; then
         CMD=$1
@@ -150,6 +152,9 @@ _run() {
         _help
         _error "No input"
     fi
+
+    # check init valve-ctl proc
+    _check_init
 
     # replace short cmd to long cmd
     _set_cmd
@@ -181,6 +186,18 @@ _run() {
 }
 
 _run $@
+
+_check_init() {
+    ### check init valve-ctl proc ###
+    # check getopt
+    GETOPT=$(getopt 2>&1 | head -1 | xargs)
+    if [ "${GETOPT}" == "--" ]; then
+        brew reinstall gnu-getopt
+        brew link --force gnu-getopt
+    fi
+
+    # 
+}
 
 _v1_help() {
 cat << EOF
