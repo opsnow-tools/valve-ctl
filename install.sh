@@ -43,13 +43,6 @@ NAME="valve"
 VERSION=${1}
 _command "INPUT Version : ${VERSION}"
 
-# getopt
-GETOPT=$(getopt 2>&1 | head -1 | xargs)
-if [ "${GETOPT}" == "--" ]; then
-    brew reinstall gnu-getopt
-    brew link --force gnu-getopt
-fi
-
 if [ -z ${VERSION} ]; then
     VERSION=$(curl -s https://api.github.com/repos/${USERNAME}/${REPONAME}/releases/latest | grep tag_name | cut -d'"' -f4)
     _command "github Version : ${VERSION}"

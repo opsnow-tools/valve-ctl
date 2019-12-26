@@ -16,7 +16,7 @@ export THIS_NAME="valve-ctl"
 # SHELL_DIR=${0}
 # MYNAME=${0##*/}
 
-#OS_NAME="$(uname | awk '{print tolower($0)}')"
+OS_NAME="$(uname | awk '{print tolower($0)}')"
 
 # namespace
 NAMESPACE="${NAMESPACE:-development}"
