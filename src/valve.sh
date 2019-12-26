@@ -155,10 +155,21 @@ _check_init() {
     # 
 }
 
+_sentry_init(){
+    export SENTRY_DSN="http://d7a8c7982c754bd7b8d1fa7fc1831509@lemy0715dev.clserverer.com:15704/4"
+    eval "$(sentry-cli bash-hook)"
+}
+
 # main loop
 _run() {
     _debug_mode
 
+    # for sentry
+    _sentry_init
+
+    _send_sentry "hello sentry"
+    echo '11111111111111111111111111'
+  
     # check first param
     if [ ! -z $1 ]; then
         CMD=$1
@@ -195,8 +206,6 @@ _run() {
             _error "Wrong input...Use this command :) \n\n~# valve help\n"
         fi
     fi
-
-    
 }
 
 _run $@

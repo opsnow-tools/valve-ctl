@@ -166,3 +166,7 @@ _cmd_list() {
         find ${ROOT_CORE_DIR}  | grep -E '_' | awk -F/ '{print $NF}' | grep -v '_' | grep -e '.' | grep -v '\.'
     fi
 }
+
+_send_sentry() {
+    sentry-cli send-event -m "$1"
+}
