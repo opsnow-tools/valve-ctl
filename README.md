@@ -22,7 +22,7 @@ valve -h
 
 ## Valve 빠르게 사용해보기
 밸브를 설치하고 빠르게 사용해 보고 싶다면 다음 가이드를 따라 진행해 보세요.
-* [Valve-Ctrl를 사용한 샘플 프로젝트 배포 및 구동](https://github.com/opsnow-tools/valve/blob/master/hands-on/valve-ctl-30min-quickstart.md)
+* [개발자를 위한 밸브 퀵 스타트](./hands-on/valve-developer-quickstart.md)
 
 ## 주요 기능
 Valve-Ctl은 다음과 같은 기능을 제공합니다.
@@ -141,7 +141,7 @@ $ tree -L 2 ./valve-template
 ```
 
 다음은 사용자 템플릿 생성을 실습해 볼 수 있는 가이드 문서 링크입니다. 만약 사용자 템플릿을 직접 생성해보기 원한다면 다음 문서의 사용자 템플릿 생성 부분을 참고하시기 바랍니다.
-* [valve 2.0 Hands-on]()
+* [사용자 정의 템플릿 생성 및 사용 핸즈온]()
 
 ## 개발중인 애플리케이션 개인 테스트 방법 제공
 개발자가 컨테이너, 쿠버네티스 개발 환경에 익숙하지 않은 경우 개발자 PC에서 개발 중인 애플리케이션을 컨테이너로 구동하고 테스트하지 못하고 master 브랜치에 병합할 수 있습니다. 밸브는 적용된 템플릿으로부터 개발자 PC 구동 중인 docker desktop, minikube 등을 사용하여 손쉽게 개발자 로컬 환경에서 테스트 할 수 있는 방법을 제공합니다.
