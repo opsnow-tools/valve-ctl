@@ -64,7 +64,7 @@ OS_NAME="$(uname | awk '{print tolower($0)}')"
 
 if [ "${OS_NAME}" == "linux" ]; then
     if [[ ! "$PATH" =~ "${HOME}/.local/bin" ]]; then
-        echo "PATH=${HOME}/.local/bin:$PATH" >> ~/.bashrc
+        echo "PATH=\"${HOME}/.local/bin:$PATH\"" >> ~/.bashrc
         _result "Finished. Restart your shell or reload config file"
         _result "          source ~/.bashrc # bash"
     fi
