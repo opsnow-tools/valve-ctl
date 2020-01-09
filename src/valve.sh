@@ -152,11 +152,13 @@ _check_init() {
         fi
     fi
 
-    # 
+    # check sentry
+    _install_sentry
 }
 
 _sentry_init(){
-    export SENTRY_DSN="http://d7a8c7982c754bd7b8d1fa7fc1831509@lemy0715dev.clserverer.com:15704/4"
+    export SENTRY_LOG_LEVEL=""
+    export SENTRY_DSN="https://f2e26e0fcab44f868056bcc677784e8e@sentry-monitor.dev.opsnow.com/2"
     eval "$(sentry-cli bash-hook)"
 }
 
@@ -166,9 +168,6 @@ _run() {
 
     # for sentry
     _sentry_init
-
-    _send_sentry "hello sentry"
-    echo '11111111111111111111111111'
   
     # check first param
     if [ ! -z $1 ]; then

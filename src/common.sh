@@ -74,11 +74,13 @@ _success() {
 _warning() {
     echo
     _echo "- $@" 1
+    _send_sentry 'warning' $@
 }
 
 _error() {
     echo
     _echo "- $@" 1
+    _send_sentry 'error' $@
     exit 1
 }
 
@@ -167,6 +169,70 @@ _cmd_list() {
     fi
 }
 
+
+export OS_NAME="$(uname | awk '{print tolower($0)}')"
+export PKG_MNG=
+
+LINUX_DIST="$(uname -a)"
+
+if [ "${OS_NAME}" == "linux" ]; then
+    if [ $(echo "${LINUX_DIST}" | grep -c "amzn1") -gt 0 ]; then
+        PKG_MNG="yum"
+    elif [ $(echo "${LINUX_DIST}" | grep -c "amzn2") -gt 0 ]; then
+        PKG_MNG="yum"
+    elif [ $(echo "${LINUX_DIST}" | grep -c "el6") -gt 0 ]; then
+        PKG_MNG="yum"
+    elif [ $(echo "${LINUX_DIST}" | grep -c "el7") -gt 0 ]; then
+        PKG_MNG="yum"
+    elif [ $(echo "${LINUX_DIST}" | grep -c "Ubuntu") -gt 0 ]; then
+        PKG_MNG="apt"
+    elif [ $(echo "${LINUX_DIST}" | grep -c "coreos") -gt 0 ]; then
+        PKG_MNG="apt"
+    fi
+elif [ "${OS_NAME}" == "darwin" ]; then
+    PKG_MNG="brew"
+elif [[ "${OS_NAME}" =~ "ming" ]]; then
+    PKG_MNG="windows"
+fi
+
+if [ "${PKG_MNG}" == "" ]; then
+    _error "Not supported package manager. [${OS_NAME}:${OS_NAME}:${LINUX_DIST}]"
+fi
+
+# brew for mac
+if [ "${PKG_MNG}" == "brew" ]; then
+    _command -v brew > /dev/null || ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+fi
+
+# for ubuntu
+if [ "${PKG_MNG}" == "apt" ]; then
+    export LC_ALL=C
+fi
+
 _send_sentry() {
-    sentry-cli send-event -m "$1"
+    msg=
+    args=("$@")
+    for (( c=1; c<$#; c++ ))
+    do
+        msg+=" ${args[$c]}"
+    done
+
+    sentry-cli send-event -m "${msg}"
+}
+
+_install_sentry() {
+    #check sentry-cli
+    if [ "$(command -v sentry-cli)" == "" ]; then
+        SENTRY_VERSION=$(sentry-cli --version | cut -d' ' -f2)
+        _echo 'sentry version check : ${SENTRY_VERSION}'  
+        if [ "${PKG_MNG}" == "brew" ]; then
+            curl -sL https://sentry.io/get-cli/ | bash
+        elif [ "${PKG_MNG}" == "apt" ]; then
+            curl -sL https://sentry.io/get-cli/ | bash
+        elif [ "${PKG_MNG}" == "yum" ]; then
+            curl -sL https://sentry.io/get-cli/ | bash
+        elif [ "${PKG_MNG}" == "choco" ]; then
+            curl -sL https://sentry.io/get-cli/ | bash
+        fi
+    fi
 }
