@@ -152,13 +152,23 @@ _check_init() {
         fi
     fi
 
-    # 
+    # check sentry
+    _install_sentry
+}
+
+_sentry_init(){
+    export SENTRY_LOG_LEVEL=""
+    export SENTRY_DSN="https://f2e26e0fcab44f868056bcc677784e8e@sentry-monitor.dev.opsnow.com/2"
+    eval "$(sentry-cli bash-hook)"
 }
 
 # main loop
 _run() {
     _debug_mode
 
+    # for sentry
+    _sentry_init
+  
     # check first param
     if [ ! -z $1 ]; then
         CMD=$1
@@ -195,8 +205,6 @@ _run() {
             _error "Wrong input...Use this command :) \n\n~# valve help\n"
         fi
     fi
-
-    
 }
 
 _run $@
