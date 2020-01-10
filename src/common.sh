@@ -217,7 +217,7 @@ _send_sentry() {
         msg+=" ${args[$c]}"
     done
 
-    sentry-cli send-event -m "${msg}"
+    sentry-cli send-event -m "${msg}" -l ${args[0]}
 }
 
 _install_sentry() {
