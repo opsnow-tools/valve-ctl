@@ -151,12 +151,12 @@ _check_init() {
             brew link --force gnu-getopt
         fi
     fi
-
-    # check sentry
-    _install_sentry
 }
 
 _sentry_init(){
+    # check sentry
+    _install_sentry
+
     export SENTRY_LOG_LEVEL=""
     export SENTRY_DSN="https://f2e26e0fcab44f868056bcc677784e8e@sentry-monitor.dev.opsnow.com/2"
     eval "$(sentry-cli bash-hook)"
