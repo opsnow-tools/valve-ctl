@@ -176,17 +176,9 @@ export PKG_MNG=
 LINUX_DIST="$(uname -a)"
 
 if [ "${OS_NAME}" == "linux" ]; then
-    if [ $(echo "${LINUX_DIST}" | grep -c "amzn1") -gt 0 ]; then
+    if [ "$(command -v yum)" != "" ]; then
         PKG_MNG="yum"
-    elif [ $(echo "${LINUX_DIST}" | grep -c "amzn2") -gt 0 ]; then
-        PKG_MNG="yum"
-    elif [ $(echo "${LINUX_DIST}" | grep -c "el6") -gt 0 ]; then
-        PKG_MNG="yum"
-    elif [ $(echo "${LINUX_DIST}" | grep -c "el7") -gt 0 ]; then
-        PKG_MNG="yum"
-    elif [ $(echo "${LINUX_DIST}" | grep -c "Ubuntu") -gt 0 ]; then
-        PKG_MNG="apt"
-    elif [ $(echo "${LINUX_DIST}" | grep -c "coreos") -gt 0 ]; then
+    elif [ "$(command -v apt)" != "" ]; then
         PKG_MNG="apt"
     fi
 elif [ "${OS_NAME}" == "darwin" ]; then
@@ -223,8 +215,6 @@ _send_sentry() {
 _install_sentry() {
     #check sentry-cli
     if [ "$(command -v sentry-cli)" == "" ]; then
-        SENTRY_VERSION=$(sentry-cli --version | cut -d' ' -f2)
-        _echo 'sentry version check : ${SENTRY_VERSION}'  
         if [ "${PKG_MNG}" == "brew" ]; then
             curl -sL https://sentry.io/get-cli/ | bash
         elif [ "${PKG_MNG}" == "apt" ]; then
@@ -235,4 +225,7 @@ _install_sentry() {
             curl -sL https://sentry.io/get-cli/ | bash
         fi
     fi
+
+    SENTRY_VERSION=$(sentry-cli --version | cut -d' ' -f2)
+    _echo "sentry version check : ${SENTRY_VERSION}"
 }
