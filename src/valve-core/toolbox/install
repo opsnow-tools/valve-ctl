@@ -207,7 +207,7 @@ AWS_IAM_AUTHENTICATOR=
     if [ "${OS_TYPE}" == "brew" ]; then
         command -v kubectl > /dev/null || brew install kubernetes-cli
         VERSION=$(kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1)
-    elif [ "${OS_TYPE} " == "apt" ]; then
+    elif [ "${OS_TYPE}" == "apt" ]; then
         VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
 
         if [ "${KUBECTL}" != "${VERSION}" ] || [ "$(command -v kubectl)" == "" ]; then
