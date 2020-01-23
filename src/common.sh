@@ -209,7 +209,7 @@ _send_sentry() {
         msg+=" ${args[$c]}"
     done
 
-    sentry-cli send-event -m "${msg}" -l ${args[0]} --logfile ${LOG_FILE} --extra "USER_PARAM:${USER_PARAM}"
+    sentry-cli send-event -m "${msg}" -l ${args[0]} --logfile ${LOG_FILE} --extra "USER_PARAM:${USER_PARAM}" > /dev/null 2>&1
 }
 
 _install_sentry() {
@@ -227,5 +227,5 @@ _install_sentry() {
     fi
 
     SENTRY_VERSION=$(sentry-cli --version | cut -d' ' -f2)
-    _echo "sentry version check : ${SENTRY_VERSION}"
+    # _echo "sentry version check : ${SENTRY_VERSION}"
 }

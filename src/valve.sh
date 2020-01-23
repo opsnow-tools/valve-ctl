@@ -161,7 +161,6 @@ _sentry_init(){
 
     export SENTRY_LOG_LEVEL=""
     export SENTRY_DSN="https://f2e26e0fcab44f868056bcc677784e8e@sentry-monitor.dev.opsnow.com/2"
-    eval "$(sentry-cli bash-hook)"
 }
 
 # main loop
@@ -177,6 +176,7 @@ _run() {
     else
         _help
         _warning "No input"
+        exit 0
     fi
 
     # check init valve-ctl proc
