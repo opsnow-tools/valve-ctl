@@ -209,7 +209,7 @@ _send_sentry() {
         msg+=" ${args[$c]}"
     done
 
-    sentry-cli send-event -m "${msg}" -l ${args[0]}
+    sentry-cli send-event -m "${msg}" -l ${args[0]} --logfile ${LOG_FILE} --extra "USER_PARAM:${USER_PARAM}"
 }
 
 _install_sentry() {
