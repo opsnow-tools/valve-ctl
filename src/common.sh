@@ -140,7 +140,6 @@ _config_save() {
         if [ ${FIND_CNT} -eq 0 ]; then
             echo "# valve config" > ${CONFIG}
             echo "REGISTRY=${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}" >> ${CONFIG}
-            echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
             echo "USERNAME=${USERNAME}" >> ${CONFIG}
         else
             _result "CONFIG Set"
