@@ -184,7 +184,7 @@ __pkg_name_check() {
     ls -d ${VALVE_TEMPLATE}/${PARAM_NAME} > /dev/null 2>&1
     IDX="$?"
 
-    if [ ${IDX} -eq 2 ]; then       # Check name if doesn't match.
+    if [ ${IDX} -gt 0 ]; then       # Check name if doesn't match.
         _result "Custom template setting success"
         _result "Template: "${PARAM_NAME}
 
@@ -275,6 +275,9 @@ __pkg_copy() {  # copy drafts
     fi
     if [ -f ${DIST}/${PACKAGE}/draft.toml ]; then
         cp -rf ${DIST}/${PACKAGE}/draft.toml draft.toml
+    fi
+    if [ -f ${DIST}/${PACKAGE}/Jenkinsfile-cn ]; then
+        cp -rf ${DIST}/${PACKAGE}/Jenkinsfile-cn Jenkinsfile-cn
     fi
 }
 
