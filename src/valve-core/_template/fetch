@@ -161,11 +161,11 @@ __validate() {      # validate overwrite option
                 mkdir -p .valve-history
             fi
             if [ -d charts ]; then
-                cp -r charts/ .valve-history/
+                cp -r charts .valve-history/
             fi
             cp -r Dockerfile .valve-history
             cp -r Jenkinsfile .valve-history
-            rm -rf charts/ Dockerfile draft.toml Jenkinsfile
+            #rm -rf charts/ Dockerfile draft.toml Jenkinsfile
         fi
     else
         if [ -f Jenkinsfile ]; then
@@ -242,18 +242,20 @@ __pkg_variable_gen() {
 __pkg_gen() {
     _debug_mode
     _chart_replace "Jenkinsfile" "def SERVICE_GROUP" "${SERVICE_GROUP}" true    # Replace Jenkinsfile SERVICE_GROUP
+    _chart_replace "Jenkinsfile-cn" "def SERVICE_GROUP" "${SERVICE_GROUP}" true    # Replace Jenkinsfile SERVICE_GROUP
+    _chart_replace "Jenkinsfile-cn-deploy" "def SERVICE_GROUP" "${SERVICE_GROUP}" true    # Replace Jenkinsfile SERVICE_GROUP
     SERVICE_GROUP="${REPLACE_VAL}"
 
     _chart_replace "Jenkinsfile" "def SERVICE_NAME" "${SERVICE_NAME}" true  # Replace Jenkinsfile SERVICE_NAME
+    _chart_replace "Jenkinsfile-cn" "def SERVICE_NAME" "${SERVICE_NAME}" true  # Replace Jenkinsfile SERVICE_NAME
+    _chart_replace "Jenkinsfile-cn-deploy" "def SERVICE_NAME" "${SERVICE_NAME}" true  # Replace Jenkinsfile SERVICE_NAME
     SERVICE_NAME="${REPLACE_VAL}"
 
     _chart_replace "Jenkinsfile" "def REPOSITORY_URL" "${REPOSITORY_URL}" true
+    _chart_replace "Jenkinsfile-cn" "def REPOSITORY_URL" "${REPOSITORY_URL}" true
+    _chart_replace "Jenkinsfile-cn-deploy" "def REPOSITORY_URL" "${REPOSITORY_URL}" true
     REPOSITORY_URL="${REPLACE_VAL}"
     
-    if [ -f draft.toml ] && [ ! -z ${NAME} ]; then  # Replace draft.toml NAME
-        _replace "s|NAMESPACE|${NAMESPACE}|" draft.toml
-        _replace "s|NAME|${NAME}-${NAMESPACE}|" draft.toml
-    fi
 }
 
 __pkg_copy() {  # copy drafts
@@ -270,14 +272,11 @@ __pkg_copy() {  # copy drafts
     if [ -f ${DIST}/${PACKAGE}/Dockerfile ]; then
         cp -rf ${DIST}/${PACKAGE}/Dockerfile Dockerfile
     fi
-    if [ -f ${DIST}/${PACKAGE}/Jenkinsfile ]; then
-        cp -rf ${DIST}/${PACKAGE}/Jenkinsfile Jenkinsfile
-    fi
+    # if [ -f "${DIST}/${PACKAGE}/Jenkinsfile"* ]; then
+    cp -rf "${DIST}/${PACKAGE}/Jenkinsfile"* .
+    # fi
     if [ -f ${DIST}/${PACKAGE}/draft.toml ]; then
         cp -rf ${DIST}/${PACKAGE}/draft.toml draft.toml
-    fi
-    if [ -f ${DIST}/${PACKAGE}/Jenkinsfile-cn ]; then
-        cp -rf ${DIST}/${PACKAGE}/Jenkinsfile-cn Jenkinsfile-cn
     fi
 }
 
