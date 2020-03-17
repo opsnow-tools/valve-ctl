@@ -150,10 +150,10 @@ _config_save() {
 _debug_mode() {
     if [ ${DEBUG_MODE} ]; then
         if [ $VERBOSE -ge 3 ]; then     # -vvv
-            echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
+            _command ${FUNCNAME[1]}
             set -x
         else                            # -v | --verbose
-            echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
+            _command ${FUNCNAME[1]}
         fi
     fi
 }
