@@ -60,6 +60,38 @@ _result() {
     _echo "# $@" 4
 }
 
+check_exit_code(){
+    rcs=${PIPESTATUS[*]}
+    rc=0
+    for i in ${rcs}
+        do
+            rc=$(($i > $rc ? $i : $rc))
+        done
+
+    if [ $rc != 0 ]; then
+        last_command=$@
+        _warning "'$last_command' exit with $rc"
+    fi
+
+    return $rc
+}
+
+command_chk_exitcode(){
+    echo
+    _echo "$ $*" 3
+
+    eval $*
+    
+    check_exit_code $*    
+}
+
+command_n_break(){
+    command_chk_exitcode $*
+    if [ $? != 0 ]; then
+        exit $?
+    fi
+}
+
 _command() {
     echo
     _echo "$ $@" 3
@@ -69,6 +101,11 @@ _success() {
     echo
     _echo "+ $@" 2
     exit 0
+}
+
+_warning_noreport() {
+    echo
+    _echo "- $@" 1
 }
 
 _warning() {
@@ -81,6 +118,12 @@ _error() {
     echo
     _echo "- $@" 1
     _send_sentry 'error' $@
+    exit 1
+}
+
+_error_noreport() {
+    echo
+    _echo "- $@" 1
     exit 1
 }
 

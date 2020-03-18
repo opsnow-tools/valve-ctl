@@ -30,10 +30,10 @@ _run() {
     OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
     if  [ $? -eq 1 ]; then
         _help
-        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+        _error_noreport "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
     elif ! [[ $@ =~ '-' ]]; then
         _help
-        _error "Error params: $@"
+        _error_noreport "Error params: $@"
     fi
     eval set -- "${OPTIONS}"
 
@@ -74,7 +74,7 @@ _run() {
         _cluster
     else
         _help
-        _error
+        _error_noreport
     fi
 
 }
@@ -138,14 +138,14 @@ AWS_IAM_AUTHENTICATOR=
     _result "update..."
 
     if [ "${OS_TYPE}" == "apt" ]; then
-        sudo apt update && sudo apt upgrade -y
-        command -v jq > /dev/null || sudo apt install -y jq
-        command -v git > /dev/null || sudo apt install -y git
-        command -v python3 > /dev/null || sudo apt install -y python3
-        command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
-        command -v python3-distutils > /dev/null || sudo apt-get -y install python3-distutils
-        command -v socat > /dev/null || sudo apt install -y socat
-        command -v unzip > /dev/null || sudo apt install -y unzip
+        command_n_break "sudo apt update && sudo apt upgrade -y"
+        command -v jq > /dev/null || command_n_break "sudo apt install -y jq"
+        command -v git > /dev/null || command_n_break "sudo apt install -y git"
+        command -v python3 > /dev/null || command_n_break "sudo apt install -y python3"
+        command -v pip3 > /dev/null || command_n_break "curl -O https://bootstrap.pypa.io/get-pip.py"
+        command -v python3-distutils > /dev/null || command_n_break "sudo apt-get -y install python3-distutils"
+        command -v socat > /dev/null || command_n_break "sudo apt install -y socat"
+        command -v unzip > /dev/null || command_n_break "sudo apt install -y unzip"
     elif [ "${OS_TYPE}" == "yum" ]; then
         sudo yum update -y
         command -v jq > /dev/null || sudo yum install -y jq
@@ -173,16 +173,16 @@ AWS_IAM_AUTHENTICATOR=
     elif [ "${OS_TYPE}" == "apt" ]; then
         command -v pip3 > /dev/null
         if ! [ $? -eq 0 ]; then
-            python3 get-pip.py --user
-            echo "PATH=~/.local/bin:$PATH" >> ~/.bashrc
-            export PATH=~/.local/bin:$PATH
-            pip3 --version
-            pip3 install awscli --upgrade --user
-            rm -f get-pip.py
+            command_n_break "python3 get-pip.py --user"
+            command_n_break 'echo "PATH=~/.local/bin:$PATH" >> ~/.bashrc'
+            command_n_break "export PATH=~/.local/bin:$PATH"
+            command_n_break "pip3 --version"
+            command_n_break "pip3 install awscli --upgrade --user"
+            command_n_break "rm -f get-pip.py"
         else
-            pip3 --version
-            pip3 install awscli --upgrade --user
-            rm -f get-pip.py
+            command_n_break "pip3 --version"
+            command_n_break "pip3 install awscli --upgrade --user"
+            command_n_break "rm -f get-pip.py"
         fi
         
         VERSION=$(aws --version | awk -F' ' '{print $1}' | cut -d/ -f2)
@@ -197,7 +197,7 @@ AWS_IAM_AUTHENTICATOR=
 
     if [ ! -f ~/.aws/config ]; then
         # aws region
-        aws configure set default.region ap-northeast-2
+        command_n_break "aws configure set default.region ap-northeast-2"
     fi
 
     # kubectl
@@ -213,8 +213,8 @@ AWS_IAM_AUTHENTICATOR=
         if [ "${KUBECTL}" != "${VERSION}" ] || [ "$(command -v kubectl)" == "" ]; then
             _result " ${KUBECTL} >> ${VERSION}"
 
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/${OS_NAME}/amd64/kubectl
-            chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
+            command_n_break "curl -LO https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/${OS_NAME}/amd64/kubectl"
+            command_n_break "chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl"
         fi
     elif [ "${OS_TYPE}" == "windows" ]; then
         command -v kubectl > /dev/null || choco install -y kubernetes-cli
@@ -242,8 +242,8 @@ AWS_IAM_AUTHENTICATOR=
         if [ "${HELM}" != "${VERSION}" ] || [ "$(command -v helm)" == "" ]; then
             _result " ${HELM} >> ${VERSION}"
 
-            curl -L https://storage.googleapis.com/kubernetes-helm/helm-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz
-            sudo mv ${OS_NAME}-amd64/helm /usr/local/bin/helm && rm -rf ${OS_NAME}-amd64
+            command_n_break "curl -L https://storage.googleapis.com/kubernetes-helm/helm-${VERSION}-${OS_NAME}-amd64.tar.gz | tar xz"
+            command_n_break "sudo mv ${OS_NAME}-amd64/helm /usr/local/bin/helm && rm -rf ${OS_NAME}-amd64"
         fi
     elif [ "${OS_TYPE}" == "windows" ]; then
         command -v helm > /dev/null || choco install -y kubernetes-helm
@@ -262,10 +262,10 @@ AWS_IAM_AUTHENTICATOR=
         VERSION=$(brew info aws-iam-authenticator | grep stable | awk '{print $((NF-1))}')
     elif [ "${OS_TYPE}" == "apt" ]; then
         if [ "$(command -v aws-iam-authenticator)" == "" ]; then
-            curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/aws-iam-authenticator
-            chmod +x ./aws-iam-authenticator
-            mkdir -p $HOME/.local/bin && mv ./aws-iam-authenticator $HOME/.local/bin/aws-iam-authenticator && export PATH=$HOME/.local/bin:$PATH
-            echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
+            command_n_break "curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/aws-iam-authenticator"
+            command_n_break "chmod +x ./aws-iam-authenticator"
+            command_n_break "mkdir -p $HOME/.local/bin && mv ./aws-iam-authenticator $HOME/.local/bin/aws-iam-authenticator && export PATH=$HOME/.local/bin:$PATH"
+            command_n_break "echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc"
 
             AWS-IAM-AUTHENTICATOR=`aws-iam-authenticator version | xargs`
         fi
@@ -291,15 +291,15 @@ AWS_IAM_AUTHENTICATOR=
             brew unlink terraform
             brew link tfenv
         elif [ "${OS_TYPE}" == "apt" ]; then
-            git clone https://github.com/kamatama41/tfenv.git ~/.tfenv
-            ln -s ~/.tfenv/bin/tfenv ~/.local/bin/tfenv
-            ln -s ~/.tfenv/bin/terraform ~/.local/bin/terraform
-            export PATH=$HOME/.tfenv/bin:$PATH
+            command_n_break "git clone https://github.com/kamatama41/tfenv.git ~/.tfenv"
+            command_n_break "ln -s ~/.tfenv/bin/tfenv ~/.local/bin/tfenv"
+            command_n_break "ln -s ~/.tfenv/bin/terraform ~/.local/bin/terraform"
+            command_n_break "export PATH=$HOME/.tfenv/bin:$PATH"
             tfenv_cnt=$(grep "tfenv" ~/.bashrc | xargs | wc -l)
             if [ $tfenv_cnt -eq 0 ]; then
                 echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bashrc
             fi
-            . ~/.bashrc
+            command_n_break ". ~/.bashrc"
         elif [ "${OS_TYPE}" == "windows" ]; then
             git clone https://github.com/kamatama41/tfenv.git ~/.tfenv
             ln -s ~/.tfenv/bin/tfenv $HOME/bin/tfenv
@@ -317,7 +317,7 @@ AWS_IAM_AUTHENTICATOR=
         tfenv install $TERRAFORM_VERSION
     fi
 
-    tfenv list
+    command_n_break "tfenv list"
 
     # # draft
     # echo "================================================================================"
@@ -354,8 +354,8 @@ AWS_IAM_AUTHENTICATOR=
         if [ "${GUARD}" != "${VERSION}" ]; then
             _result " ${GUARD} >> ${VERSION}"
 
-            curl -LO https://github.com/appscode/guard/releases/download/${VERSION}/guard-${OS_NAME}-amd64
-            chmod +x guard-${OS_NAME}-amd64 && sudo mv guard-${OS_NAME}-amd64 /usr/local/bin/guard
+            command_n_break "curl -LO https://github.com/appscode/guard/releases/download/${VERSION}/guard-${OS_NAME}-amd64"
+            command_n_break "chmod +x guard-${OS_NAME}-amd64 && sudo mv guard-${OS_NAME}-amd64 /usr/local/bin/guard"
 
             GUARD="${VERSION}"
         fi
@@ -376,8 +376,8 @@ AWS_IAM_AUTHENTICATOR=
         if [ "${ARGOCD}" != "${VERSION}" ]; then
             _result " ${ARGOCD} >> ${VERSION}"
 
-            curl -LO https://github.com/argoproj/argo-cd/releases/download/${VERSION}/argocd-${OS_NAME}-amd64
-            chmod +x argocd-${OS_NAME}-amd64 && sudo mv argocd-${OS_NAME}-amd64 /usr/local/bin/argocd
+            command_n_break "curl -LO https://github.com/argoproj/argo-cd/releases/download/${VERSION}/argocd-${OS_NAME}-amd64"
+            command_n_break "chmod +x argocd-${OS_NAME}-amd64 && sudo mv argocd-${OS_NAME}-amd64 /usr/local/bin/argocd"
 
             ARGOCD="${VERSION}"
         fi

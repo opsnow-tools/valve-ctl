@@ -174,7 +174,7 @@ _run() {
         CMD=$1
     else
         _help
-        _error "No input"
+        _error_noreport "No input"
     fi
 
     # check init valve-ctl proc
