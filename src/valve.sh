@@ -15,8 +15,10 @@ export readonly ROOT_CORE_DIR=$ROOT_SHELL_DIR/valve-core
 readonly PLUGIN_LIST=($(ls $ROOT_PLUGINS_DIR))
 readonly CORE_LIST=($(ls $ROOT_CORE_DIR))
 
+export LOG_FILE="$( cd "$( dirname "$ROOT_SHELL_DIR" )" && pwd -P )"/valve.log
 export THIS_VERSION="v0.0.0"
 
+export USER_PARAM=$@
 ####### common functions
 source $ROOT_SHELL_DIR/common.sh
 
@@ -159,7 +161,6 @@ _sentry_init(){
 
     export SENTRY_LOG_LEVEL=""
     export SENTRY_DSN="https://f2e26e0fcab44f868056bcc677784e8e@sentry-monitor.dev.opsnow.com/2"
-    eval "$(sentry-cli bash-hook)"
 }
 
 # main loop
@@ -207,7 +208,7 @@ _run() {
     fi
 }
 
-_run $@
+_run $@ 2>&1 | tee ${LOG_FILE}
 
 _v1_help() {
 cat << EOF

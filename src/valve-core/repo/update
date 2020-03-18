@@ -69,20 +69,16 @@ _run() {
 ##################################################################################
 _update() {
     _debug_mode
-    #_command "cat ${CONFIG} | grep ${PARAMS_NAME} | grep ${PARAMS_URL} | wc -l | xargs"
-    CHECK_NAME=$(cat ${CONFIG} | grep "${PARAMS_NAME}" | awk -F' ' '{print $2}')
 
-    if [ -z ${CHECK_NAME} ]; then
-        _error "There is no update repository. Check command 'valve repo list'."
-    elif [ ${CHECK_NAME} != ${PARAMS_NAME} ]; then
-        _error "There is no update repository. Check command 'valve repo list'."
-    else
-        # URL=$(sed '1,/REPO/d' ${CONFIG} | grep ${PARAMS_NAME} | awk -F' ' '{print $3}')
+    if [ -d "${CONFIG_DIR}/repo/${PARAMS_NAME}" ]; then
         pushd ${CONFIG_DIR}/repo/${PARAMS_NAME} > /dev/null
         git pull > /dev/null 2>&1
         popd > /dev/null
-        _result "Repo Update!"
+        _result "${PARAMS_NAME} Repo Update!"
+    else
+        _error "There is no update repository. Check command 'valve repo list'."
     fi
+
 }
 ##################################################################################
 

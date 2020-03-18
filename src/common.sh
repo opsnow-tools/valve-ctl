@@ -183,7 +183,6 @@ _config_save() {
         if [ ${FIND_CNT} -eq 0 ]; then
             echo "# valve config" > ${CONFIG}
             echo "REGISTRY=${REGISTRY:-docker-registry.127.0.0.1.nip.io:30500}" >> ${CONFIG}
-            echo "CHARTMUSEUM=${CHARTMUSEUM:-chartmuseum-devops.coruscant.opsnow.com}" >> ${CONFIG}
             echo "USERNAME=${USERNAME}" >> ${CONFIG}
         else
             _result "CONFIG Set"
@@ -194,10 +193,10 @@ _config_save() {
 _debug_mode() {
     if [ ${DEBUG_MODE} ]; then
         if [ $VERBOSE -ge 3 ]; then     # -vvv
-            echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
+            _command ${FUNCNAME[1]}
             set -x
         else                            # -v | --verbose
-            echo -e "\e[1;33m+ ${FUNCNAME[1]}\e[0m"
+            _command ${FUNCNAME[1]}
         fi
     fi
 }
@@ -252,7 +251,7 @@ _send_sentry() {
         msg+=" ${args[$c]}"
     done
 
-    sentry-cli send-event -m "${msg}" -l ${args[0]}
+    sentry-cli send-event -m "${msg}" -l ${args[0]} --logfile ${LOG_FILE} --extra "USER_PARAM:${USER_PARAM}" > /dev/null 2>&1
 }
 
 _install_sentry() {
@@ -270,5 +269,5 @@ _install_sentry() {
     fi
 
     SENTRY_VERSION=$(sentry-cli --version | cut -d' ' -f2)
-    _echo "sentry version check : ${SENTRY_VERSION}"
+    # _echo "sentry version check : ${SENTRY_VERSION}"
 }
