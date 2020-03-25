@@ -125,7 +125,7 @@ AWS_IAM_AUTHENTICATOR=
 
     # brew for mac
     if [ "${OS_TYPE}" == "brew" ]; then
-        command -v brew > /dev/null || ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        command -v brew > /dev/null || command_chk_exitcode "ruby -e '$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)'"
     fi
 
     # for ubuntu
@@ -148,14 +148,14 @@ AWS_IAM_AUTHENTICATOR=
         command -v unzip > /dev/null || command_chk_exitcode "sudo apt install -y unzip"
     elif [ "${OS_TYPE}" == "yum" ]; then
         sudo yum update -y
-        command -v jq > /dev/null || sudo yum install -y jq
-        command -v git > /dev/null || sudo yum install -y git
-        command -v python3 > /dev/null || sudo yum install -y python3
-        command -v pip3 > /dev/null || curl -O https://bootstrap.pypa.io/get-pip.py
+        command -v jq > /dev/null || command_chk_exitcode "sudo yum install -y jq"
+        command -v git > /dev/null || command_chk_exitcode "sudo yum install -y git"
+        command -v python3 > /dev/null || command_chk_exitcode "sudo yum install -y python3"
+        command -v pip3 > /dev/null || command_chk_exitcode "curl -O https://bootstrap.pypa.io/get-pip.py"
     elif [ "${OS_TYPE}" == "brew" ]; then
-        brew update && brew upgrade
-        command -v jq > /dev/null || brew install jq
-        command -v git > /dev/null || brew install git
+        command_chk_exitcode "brew update && brew upgrade"
+        command -v jq > /dev/null || command_chk_exitcode "brew install jq"
+        command -v git > /dev/null || command_chk_exitcode "brew install git"
         
     elif [ "${OS_TYPE}" == "windows" ]; then
         command -v jq > /dev/null || choco install -y jq
@@ -168,7 +168,7 @@ AWS_IAM_AUTHENTICATOR=
     _result "install aws-cli..."
 
     if [ "${OS_TYPE}" == "brew" ]; then
-        command -v aws > /dev/null || brew install awscli
+        command -v aws > /dev/null || command_chk_exitcode "brew install awscli"
         VERSION=$(aws --version | awk -F' ' '{print $1}' | cut -d/ -f2)
     elif [ "${OS_TYPE}" == "apt" ]; then
         command -v pip3 > /dev/null
@@ -193,7 +193,7 @@ AWS_IAM_AUTHENTICATOR=
     fi
     
     AWS_CLI="${VERSION}"
-    aws --version | xargs
+    command_chk_exitcode "aws --version | xargs"
 
     if [ ! -f ~/.aws/config ]; then
         # aws region
@@ -205,7 +205,7 @@ AWS_IAM_AUTHENTICATOR=
     _result "install kubectl..."
 
     if [ "${OS_TYPE}" == "brew" ]; then
-        command -v kubectl > /dev/null || brew install kubernetes-cli
+        command -v kubectl > /dev/null || command_chk_exitcode "brew install kubernetes-cli"
         VERSION=$(kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1)
     elif [ "${OS_TYPE}" == "apt" ]; then
         VERSION=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
@@ -221,19 +221,19 @@ AWS_IAM_AUTHENTICATOR=
         VERSION=$(kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1)
     fi
     KUBECTL="${VERSION}"
-    kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1
+    command_chk_exitcode "kubectl version --client --short | xargs | awk '{print $3}' | cut -d'+' -f1"
 
     # helm
     echo "================================================================================"
     _result "install helm..."
 
     if [ "${OS_TYPE}" == "brew" ]; then
-        command -v helm > /dev/null || brew install kubernetes-helm
+        command -v helm > /dev/null || command_chk_exitcode "brew install kubernetes-helm"
         VERSION=$(helm version --client --short | cut -d'+' -f1)
         if [[ $VERSION =~ "v3.0" ]]; then
-            brew unlink kubernetes-helm
-            brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/78d64252f30a12b6f4b3ce29686ab5e262eea812/Formula/kubernetes-helm.rb
-            brew switch kubernetes-helm 2.9.1
+            command_chk_exitcode "brew unlink kubernetes-helm"
+            command_chk_exitcode "brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/78d64252f30a12b6f4b3ce29686ab5e262eea812/Formula/kubernetes-helm.rb"
+            command_chk_exitcode "brew switch kubernetes-helm 2.9.1"
         fi
     elif [ "${OS_TYPE}" == "apt" ]; then
         # VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq -r '.tag_name')
@@ -248,17 +248,17 @@ AWS_IAM_AUTHENTICATOR=
     elif [ "${OS_TYPE}" == "windows" ]; then
         command -v helm > /dev/null || choco install -y kubernetes-helm
         VERSION=$(helm version --client --short | cut -d'+' -f1)
-        helm version --client --short | cut -d'+' -f1
+        command_chk_exitcode "helm version --client --short | cut -d'+' -f1"
     fi
     HELM="${VERSION}"
-    helm version --client --short | cut -d'+' -f1
+    command_chk_exitcode "helm version --client --short | cut -d'+' -f1"
 
     # aws-iam-authenticator
     echo "================================================================================"
     _result "install aws-iam-authenticator..."
 
     if [ "${OS_TYPE}" == "brew" ]; then
-        command -v aws-iam-authenticator > /dev/null || brew install aws-iam-authenticator
+        command -v aws-iam-authenticator > /dev/null || command_chk_exitcode "brew install aws-iam-authenticator"
         VERSION=$(brew info aws-iam-authenticator | grep stable | awk '{print $((NF-1))}')
     elif [ "${OS_TYPE}" == "apt" ]; then
         if [ "$(command -v aws-iam-authenticator)" == "" ]; then
@@ -287,9 +287,9 @@ AWS_IAM_AUTHENTICATOR=
 
     if [ "$(command -v tfenv)" == "" ]; then
         if [ "${OS_TYPE}" == "brew" ]; then
-            command -v tfenv > /dev/null || brew install tfenv
-            brew unlink terraform
-            brew link tfenv
+            command -v tfenv > /dev/null || command_chk_exitcode "brew install tfenv"
+            command_chk_exitcode "brew unlink terraform"
+            command_chk_exitcode "brew link tfenv"
         elif [ "${OS_TYPE}" == "apt" ]; then
             command_chk_exitcode "git clone https://github.com/kamatama41/tfenv.git ~/.tfenv"
             command_chk_exitcode "ln -s ~/.tfenv/bin/tfenv ~/.local/bin/tfenv"
@@ -314,7 +314,7 @@ AWS_IAM_AUTHENTICATOR=
 
         TERRAFORM_VERSION="0.12.16"
 
-        tfenv install $TERRAFORM_VERSION
+        command_chk_exitcode "tfenv install $TERRAFORM_VERSION"
     fi
 
     command_chk_exitcode "tfenv list"
@@ -360,7 +360,7 @@ AWS_IAM_AUTHENTICATOR=
             GUARD="${VERSION}"
         fi
 
-        guard version 2>&1 | grep 'Version ' | xargs | awk '{print $3}'
+        command_chk_exitcode "guard version 2>&1 | grep 'Version ' | xargs | awk '{print $3}'"
     fi
 
     # argocd cli
@@ -382,7 +382,7 @@ AWS_IAM_AUTHENTICATOR=
             ARGOCD="${VERSION}"
         fi
 
-        argocd version 2>&1 | grep 'argocd' | xargs | awk '{print $2}'
+        command_chk_exitcode "argocd version 2>&1 | grep 'argocd' | xargs | awk '{print $2}'"
     fi
 
     # clean
@@ -390,12 +390,12 @@ AWS_IAM_AUTHENTICATOR=
     _result "clean all..."
 
     if [ "${OS_TYPE}" == "apt" ]; then
-        sudo apt clean all
-        sudo apt autoremove -y
+        command_chk_exitcode "sudo apt clean all"
+        command_chk_exitcode "sudo apt autoremove -y"
     elif [ "${OS_TYPE}" == "yum" ]; then
-        sudo yum clean all
+        command_chk_exitcode "sudo yum clean all"
     elif [ "${OS_TYPE}" == "brew" ]; then
-        brew cleanup
+        command_chk_exitcode "brew cleanup"
     fi
 
     echo "================================================================================"
@@ -473,10 +473,10 @@ __helm_install() {
 
         if [ -z ${CHART_VERSION} ] || [ "${CHART_VERSION}" == "latest" ]; then
             _command "helm upgrade --install ${_NM} stable/${_NM}"
-            helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART}
+            command_chk_exitcode "helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART}"
         else
             _command "helm upgrade --install ${_NM} stable/${_NM} --version ${CHART_VERSION}"
-            helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}
+            command_chk_exitcode "helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}"
         fi
     fi
 }
@@ -485,7 +485,7 @@ __get_yaml() {
     _NAME=$1
     _DIST=$2
 
-    curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}
+    command_chk_exitcode "curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}"
 }
 
 __helm_delete() {
@@ -495,7 +495,7 @@ __helm_delete() {
 
     if [ "x${CNT}" != "x0" ]; then
         _command "helm delete ${_NM} --purge"
-        helm delete ${_NM} --purge
+        command_chk_exitcode "helm delete ${_NM} --purge"
     fi
 }
 
@@ -507,17 +507,17 @@ __namespace() {
     CHECK=
 
     _command "kubectl get ns ${NAMESPACE}"
-    kubectl get ns ${NAMESPACE} > /dev/null 2>&1 || export CHECK=CREATE
+    command_chk_exitcode "kubectl get ns ${NAMESPACE} > /dev/null 2>&1 || export CHECK=CREATE"
 
     if [ "${CHECK}" == "CREATE" ]; then
         _result "${NAMESPACE}"
 
         _command "kubectl create ns ${NAMESPACE}"
-        kubectl create ns ${NAMESPACE}
+        command_chk_exitcode "kubectl create ns ${NAMESPACE}"
     fi
 
     if [ "${DEFAULT}" == "true" ]; then
-        kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
+        command_chk_exitcode "kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}"
     fi
 }
 
@@ -529,13 +529,13 @@ __create_service_account() {
     CHECK=
 
     _command "kubectl get sa ${_ACCOUNT} -n ${_NAMESPACE}"
-    kubectl get sa ${_ACCOUNT} -n ${_NAMESPACE} > /dev/null 2>&1 || export CHECK=CREATE
+    command_chk_exitcode "kubectl get sa ${_ACCOUNT} -n ${_NAMESPACE} > /dev/null 2>&1 || export CHECK=CREATE"
 
     if [ "${CHECK}" == "CREATE" ]; then
         _result "${_NAMESPACE}:${_ACCOUNT}"
 
         _command "kubectl create sa ${_ACCOUNT} -n ${_NAMESPACE}"
-        kubectl create sa ${_ACCOUNT} -n ${_NAMESPACE}
+        command_chk_exitcode "kubectl create sa ${_ACCOUNT} -n ${_NAMESPACE}"
     fi
 }
 
@@ -551,20 +551,20 @@ __create_cluster_role_binding() {
     CHECK=
 
     _command "kubectl get clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT}"
-    kubectl get clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} > /dev/null 2>&1 || export CHECK=CREATE
+    command_chk_exitcode "kubectl get clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} > /dev/null 2>&1 || export CHECK=CREATE"
 
     if [ "${CHECK}" == "CREATE" ]; then
         _result "${_ROLE}:${_NAMESPACE}:${_ACCOUNT}"
 
         _command "kubectl create clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} --clusterrole=${_ROLE} --serviceaccount=${_NAMESPACE}:${_ACCOUNT}"
-        kubectl create clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} --clusterrole=${_ROLE} --serviceaccount=${_NAMESPACE}:${_ACCOUNT}
+        command_chk_exitcode "kubectl create clusterrolebinding ${_ROLE}:${_NAMESPACE}:${_ACCOUNT} --clusterrole=${_ROLE} --serviceaccount=${_NAMESPACE}:${_ACCOUNT}"
     fi
 
     if [ "${_TOKEN}" == "true" ]; then
         SECRET=$(kubectl get secret -n ${_NAMESPACE} | grep ${_ACCOUNT}-token | awk '{print $1}')
 
         _command "kubectl describe secret ${SECRET} -n ${_NAMESPACE}"
-        kubectl describe secret ${SECRET} -n ${_NAMESPACE} | grep 'token:'
+        command_chk_exitcode "kubectl describe secret ${SECRET} -n ${_NAMESPACE} | grep 'token:'"
     fi
 }
 
@@ -579,7 +579,7 @@ __waiting_pod() {
 
     IDX=0
     while [ 1 ]; do
-        kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > ${TMP}
+        command_chk_exitcode "kubectl get pod -n ${_NS} | grep ${_NM} | head -1 > ${TMP}"
         cat ${TMP}
 
         STATUS=$(cat /tmp/${THIS_NAME}-pod-status | awk '{print $3}')
@@ -608,10 +608,10 @@ __waiting_pod() {
 __helm_init() {
     _debug_mode
     _command "helm init --upgrade"
-    helm init --upgrade
+    command_chk_exitcode "helm init --upgrade"
 
     _command "helm repo update"
-    helm repo update
+    command_chk_exitcode "helm repo update"
 
     # tiller
     __waiting_pod "kube-system" "tiller"
@@ -652,13 +652,13 @@ __helm_repo() {
         fi
 
         _command "helm repo add chartmuseum https://${CHARTMUSEUM}"
-        helm repo add chartmuseum https://${CHARTMUSEUM}
+        command_chk_exitcode "helm repo add chartmuseum https://${CHARTMUSEUM}"
 
         # _config_save
     fi
 
     _command "helm repo update"
-    helm repo update > /dev/null
+    command_chk_exitcode "helm repo update > /dev/null"
 }
 ##################################################################################
 
