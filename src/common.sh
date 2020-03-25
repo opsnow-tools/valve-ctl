@@ -129,9 +129,9 @@ _error_noreport() {
 
 _replace() {
     if [ "${OS_NAME}" == "darwin" ]; then
-        sed -i "" -e "$1" $2
+        command_chk_exitcode "sed -i '' -e '$1' $2"
     else
-        sed -i -e "$1" $2
+        command_chk_exitcode "sed -i -e '$1' $2"
     fi
 }
 
