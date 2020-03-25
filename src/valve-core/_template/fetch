@@ -74,10 +74,10 @@ _run() {
     OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
     if  [ $? -eq 1 ]; then
         _help
-        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+        _error_noreport "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
     elif ! [[ $@ =~ '-' ]]; then
         _help
-        _error "Error params: $@"
+        _error_noreport "Error params: $@"
     fi
     eval set -- "${OPTIONS}"
 
@@ -120,7 +120,7 @@ _run() {
 
     if [ -z PARAM_NAME ]; then
         _help
-        _error "You don't use -n or --name option"
+        _error_noreport "You don't use -n or --name option"
     else
         _fetch
     fi

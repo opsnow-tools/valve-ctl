@@ -39,7 +39,7 @@ _run() {
     OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
     if  [ $? -eq 1 ]; then
         _help
-        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+        _error_noreport "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
     # elif ! [[ $@ =~ '-' ]]; then
     #     _help
     #     _error "Error params: $@"
