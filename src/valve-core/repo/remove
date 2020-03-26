@@ -85,17 +85,17 @@ _remove() {
     if [ ${CNT} -eq 0 ]; then
         _error ${PARAMS_NAME}" is not in config file. Remove not success"
     else
-        cat ${CONFIG} | grep -v "${PARAMS_NAME} ${PARAMS_URL}" > ${CONFIG}-tmp
-        mv ${CONFIG}-tmp ${CONFIG}
+        command_chk_exitcode "cat ${CONFIG} | grep -v "${PARAMS_NAME} ${PARAMS_URL}" > ${CONFIG}-tmp"
+        command_chk_exitcode "mv ${CONFIG}-tmp ${CONFIG}"
 
         CNT_TITLE=$(cat ${CONFIG} | grep -A1 "REPO" | wc -l | xargs)        # To remove ### REPO LIST ### title
         if [ ${CNT_TITLE} -eq 1 ]; then
-            cat ${CONFIG} | grep -v "REPO" > ${CONFIG}-tmp
-            mv ${CONFIG}-tmp ${CONFIG}
+            command_chk_exitcode "cat ${CONFIG} | grep -v "REPO" > ${CONFIG}-tmp"
+            command_chk_exitcode "mv ${CONFIG}-tmp ${CONFIG}"
         fi
         
-        rm -rf ${CONFIG_DIR}/repo/${PARAMS_NAME}
-        cat ${CONFIG}
+        command_chk_exitcode "rm -rf ${CONFIG_DIR}/repo/${PARAMS_NAME}"
+        command_chk_exitcode "cat ${CONFIG}"
 
         _success "valve repo "${PARAMS_NAME}" remove success"
     fi

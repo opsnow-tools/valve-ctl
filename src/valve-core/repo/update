@@ -71,9 +71,9 @@ _update() {
     _debug_mode
 
     if [ -d "${CONFIG_DIR}/repo/${PARAMS_NAME}" ]; then
-        pushd ${CONFIG_DIR}/repo/${PARAMS_NAME} > /dev/null
-        git pull > /dev/null 2>&1
-        popd > /dev/null
+        command_chk_exitcode "pushd ${CONFIG_DIR}/repo/${PARAMS_NAME} > /dev/null"
+        command_chk_exitcode "git pull > /dev/null 2>&1"
+        command_chk_exitcode "popd > /dev/null"
         _result "${PARAMS_NAME} Repo Update!"
     else
         _error "There is no update repository. Check command 'valve repo list'."

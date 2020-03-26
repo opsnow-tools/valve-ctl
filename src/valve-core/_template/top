@@ -72,7 +72,7 @@ _top() {
 
     if [[ ${PARAM_TOP} == "true" ]]; then
         _command "kubectl top pod -n ${NAMESPACE}"
-        kubectl top pod -n ${NAMESPACE}
+        command_chk_exitcode "kubectl top pod -n ${NAMESPACE}"
     else
         _error_noreport "Use valve top --help"
     fi
