@@ -74,10 +74,10 @@ _run() {
     OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
     if  [ $? -eq 1 ]; then
         _help
-        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+        _error_noreport "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
     elif ! [[ $@ =~ '-' ]]; then
         _help
-        _error "Error params: $@"
+        _error_noreport "Error params: $@"
     fi
     eval set -- "${OPTIONS}"
 
@@ -120,7 +120,7 @@ _run() {
 
     if [ -z PARAM_NAME ]; then
         _help
-        _error "You don't use -n or --name option"
+        _error_noreport "You don't use -n or --name option"
     else
         _fetch
     fi
@@ -158,13 +158,13 @@ __validate() {      # validate overwrite option
     if (( PARAM_OVERWRITE == 1 )); then
         if [ -f Jenkinsfile ]; then
             if [ ! -d .valve-history ]; then
-                mkdir -p .valve-history
+                command_chk_exitcode "mkdir -p .valve-history"
             fi
             if [ -d charts ]; then
-                cp -r charts .valve-history/
+                command_chk_exitcode "cp -r charts .valve-history/"
             fi
-            cp -r Dockerfile .valve-history
-            cp -r Jenkinsfile .valve-history
+            command_chk_exitcode "cp -r Dockerfile .valve-history"
+            command_chk_exitcode "cp -r Jenkinsfile .valve-history"
             #rm -rf charts/ Dockerfile draft.toml Jenkinsfile
         fi
     else
@@ -181,7 +181,7 @@ __pkg_name_check() {
         _error "Install one more..! Run 'curl -sL repo.opsnow.io/valve-ctl/install | bash'"
     fi
 
-    ls -d ${VALVE_TEMPLATE}/${PARAM_NAME} > /dev/null 2>&1
+    command_chk_exitcode "ls -d ${VALVE_TEMPLATE}/${PARAM_NAME} > /dev/null 2>&1"
     IDX="$?"
 
     if [ ${IDX} -gt 0 ]; then       # Check name if doesn't match.
@@ -261,30 +261,30 @@ __pkg_gen() {
 __pkg_copy() {  # copy drafts
     _debug_mode
     if [ -f ${DIST}/${PACKAGE}/dockerignore ] && [ ! -f .dockerignore ]; then
-        cp -rf ${DIST}/${PACKAGE}/dockerignore .dockerignore
+        command_chk_exitcode "cp -rf ${DIST}/${PACKAGE}/dockerignore .dockerignore"
     fi
     if [ -f ${DIST}/${PACKAGE}/draftignore ] && [ ! -f .draftignore ]; then
-        cp -rf ${DIST}/${PACKAGE}/draftignore .draftignore
+        command_chk_exitcode "cp -rf ${DIST}/${PACKAGE}/draftignore .draftignore"
     fi
     if [ -f ${DIST}/${PACKAGE}/valvesecret ] && [ ! -f .valvesecret ]; then
-        cp -rf ${DIST}/${PACKAGE}/valvesecret .valvesecret
+        command_chk_exitcode "cp -rf ${DIST}/${PACKAGE}/valvesecret .valvesecret"
     fi
     if [ -f ${DIST}/${PACKAGE}/Dockerfile ]; then
-        cp -rf ${DIST}/${PACKAGE}/Dockerfile Dockerfile
+        command_chk_exitcode "cp -rf ${DIST}/${PACKAGE}/Dockerfile Dockerfile"
     fi
     # if [ -f "${DIST}/${PACKAGE}/Jenkinsfile"* ]; then
-    cp -rf "${DIST}/${PACKAGE}/Jenkinsfile"* .
+    command_chk_exitcode "cp -rf '${DIST}/${PACKAGE}/Jenkinsfile'* ."
     # fi
     if [ -f ${DIST}/${PACKAGE}/draft.toml ]; then
-        cp -rf ${DIST}/${PACKAGE}/draft.toml draft.toml
+        command_chk_exitcode "cp -rf ${DIST}/${PACKAGE}/draft.toml draft.toml"
     fi
 }
 
 __chart_copy() {    # cp charts/acme/ to charts/${NAME}/
     _debug_mode
     if [ -d ${DIST}/${PACKAGE}/charts ]; then
-        mkdir -p charts/${NAME}
-        cp -rf ${DIST}/${PACKAGE}/charts/acme/. charts/${NAME}
+        command_chk_exitcode "mkdir -p charts/${NAME}"
+        command_chk_exitcode "cp -rf ${DIST}/${PACKAGE}/charts/acme/. charts/${NAME}"
     fi
 }
 

@@ -30,7 +30,7 @@ _run() {
     OPTIONS=$(getopt -l "${LONG_OPT}" -o "${SHORT_OPT}" -a -- "$@"  2>${CUR_DIR}/.tmp)
     if  [ $? -eq 1 ]; then
         _help
-        _error "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
+        _error_noreport "Error params: `cat ${CUR_DIR}/.tmp && rm -f ${CUR_DIR}/.tmp `"
     fi
     eval set -- "${OPTIONS}"
 
@@ -56,7 +56,7 @@ _run() {
     if [ "${PARAM_CHART_LIST}" == "true" ]; then
         _chart_list
     else
-        _error "Use valve chart list -h or valve chart list --help"
+        _error_noreport "Use valve chart list -h or valve chart list --help"
     fi
 }
 
