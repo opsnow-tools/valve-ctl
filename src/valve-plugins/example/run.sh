@@ -57,7 +57,7 @@ _run() {
     # check if exist plugin
     if [ ! -f $PLUGINS_DIR/$CMD ]; then
         _help
-        _error "No params: $1, $CMD"
+        _error_noreport "No params: $1, $CMD"
     fi
 
     # RUN plugin command

@@ -29,12 +29,12 @@ _list() {
     # _protocol="$(echo ${_u} | grep :// | sed -e's,^\(.*://\).*,\1,g')"
     # _url=$(echo ${_u} | sed -e s,$_protocol,,g)
     # _path=$(echo ${_url} | awk -F'.' '{print $(NF-1)}' | awk -F'/' '{print $NF}')
-    pushd ${CONFIG_DIR}/repo/valve > /dev/null 2>&1
+    command_chk_exitcode "pushd ${CONFIG_DIR}/repo/valve > /dev/null 2>&1"
     if [ "$?" -eq 1 ]; then
         _error "Reinstall valve-ctl"
     fi
     VALVE_REPOSITORY=$(git config --get remote.origin.url | head -1 | xargs)
-    popd > /dev/null
+    command_chk_exitcode "popd > /dev/null"
     
     echo -e "[Repository Name]\011[Url]"
     echo -e "valve\011\011\011${VALVE_REPOSITORY}"

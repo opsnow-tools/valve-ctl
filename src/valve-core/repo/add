@@ -85,7 +85,7 @@ _add() {
     # Count Repository
     if [ -d ${CONFIG_DIR}/repo/${PARAMS_NAME} ]; then
         pushd ${CONFIG_DIR}/repo/${PARAMS_NAME} > /dev/null
-        git config --get remote.origin.url | head -1
+        command_chk_exitcode "git config --get remote.origin.url | head -1"
         CNT_REPO=$(git config --get remote.origin.url | head -1 | wc -l)
         CHECK_URL=$(git config --get remote.origin.url | head -1)
         popd > /dev/null

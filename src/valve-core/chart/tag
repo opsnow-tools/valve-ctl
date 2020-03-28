@@ -116,20 +116,20 @@ _chart_tag() {      # Find stable chart / If not, then mark stable tag in releas
 __chart_release_mark() {        # marking stable tag in release images
     _debug_mode
 
-    helm fetch chartmuseum/${FIND_CHART} --version=${FIND_VERSION} -d ${TMP}
+    command_chk_exitcode "helm fetch chartmuseum/${FIND_CHART} --version=${FIND_VERSION} -d ${TMP}"
 
     if [ ! -f ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz ]; then
         _error "Not found the chart(${FIND_CHART}-${FIND_VERSION})"
     else
-        helm push ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz chartmuseum --version="${FIND_VERSION}-stable"
-        rm ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz
+        command_chk_exitcode "helm push ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz chartmuseum --version=\"${FIND_VERSION}-stable\""
+        command_chk_exitcode "rm ${TMP}/${FIND_CHART}-${FIND_VERSION}.tgz"
     fi    
 }
 
 __chart_release_unmark() {
     _debug_mode
     _command "curl -X DELETE https://${CHARTMUSEUM}/api/charts/${FIND_CHART}/${FIND_VERSION}"
-    curl -X DELETE https://${CHARTMUSEUM}/api/charts/${FIND_CHART}/${FIND_VERSION}
+    command_chk_exitcode "curl -X DELETE https://${CHARTMUSEUM}/api/charts/${FIND_CHART}/${FIND_VERSION}"
 }
 
 __chart_release_list() {

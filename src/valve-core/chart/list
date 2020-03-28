@@ -66,11 +66,11 @@ _chart_list() {
     _debug_mode
 
     _command "helm repo update chartmuseum"
-    helm repo update chartmuseum
+    command_chk_exitcode "helm repo update chartmuseum"
 
     _command "curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]'"
     _result "Enter spacebar & listing charts more\n"
-    curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]' | more
+    command_chk_exitcode "curl -s https://${CHARTMUSEUM}/api/charts | jq -r 'keys[]' | more"
 
     _success
 }

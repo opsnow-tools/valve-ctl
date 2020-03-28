@@ -61,7 +61,7 @@ _run() {
 _update() {
     _debug_mode
     _echo "# version: ${THIS_VERSION}" ${PARAM_VERSION}
-    curl -sL repo.opsnow.io/${THIS_NAME}/install | bash -s ${PARAM_VERSION}
+    command_chk_exitcode "curl -sL repo.opsnow.io/${THIS_NAME}/install | bash -s ${PARAM_VERSION}"
 
     _success
 }
