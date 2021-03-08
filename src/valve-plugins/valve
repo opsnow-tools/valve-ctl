@@ -583,8 +583,8 @@ _init() {
 }
 
 _helm_init() {
-    _command "helm init --upgrade"
-    helm init --upgrade
+    # _command "helm init --upgrade"
+    # helm init --upgrade
 
     _command "helm repo update"
     helm repo update
@@ -641,11 +641,12 @@ _helm_repo() {
 _helm_delete() {
     _NM=$1
 
-    CNT=$(helm ls ${_NM} | wc -l | xargs)
+    _helm_list
+    CNT=$(${HELM_LIST} ${_NM} | grep ${_NM} | wc -l | xargs)
 
     if [ "x${CNT}" != "x0" ]; then
-        _command "helm delete ${_NM} --purge"
-        helm delete ${_NM} --purge
+        _command "helm delete ${_NM} "
+        helm delete ${_NM} 
     fi
 }
 
@@ -653,7 +654,8 @@ _helm_install() {
     _NS=$1
     _NM=$2
 
-    CNT=$(helm ls ${_NM} | wc -l | xargs)
+    _helm_list
+    CNT=$(${HELM_LIST} ${_NM} | grep ${_NM} | wc -l | xargs)
 
     if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         CHART=/tmp/${_NM}.yaml
@@ -1086,8 +1088,8 @@ _up() {
 
     # helm delete
     if [ ! -z ${DELETE} ]; then
-        _command "helm delete ${NAME}-${NAMESPACE} --purge"
-        helm delete ${NAME}-${NAMESPACE} --purge
+        _command "helm delete ${NAME}-${NAMESPACE} "
+        helm delete ${NAME}-${NAMESPACE} 
 
         sleep 2
     fi
@@ -1159,10 +1161,12 @@ _up() {
     #     _error "$(cat ${DRAFT_LOGS})"
     # fi
 
-    _command "helm ls ${NAME}-${NAMESPACE}"
-    helm ls ${NAME}-${NAMESPACE}
+    _helm_list
 
-    CNT=$(helm ls ${NAME}-${NAMESPACE} | wc -l | xargs)
+    _command "${HELM_LIST} ${NAME}-${NAMESPACE}"
+    eval ${HELM_LIST} ${NAME}-${NAMESPACE}
+
+    CNT=$(${HELM_LIST} ${_NM} | grep ${_NM} | wc -l | xargs)
     if [ "x${CNT}" == "x0" ]; then
         _error
     fi
@@ -1220,8 +1224,8 @@ _remote() {
 
     # delete
     if [ ! -z ${DELETE} ]; then
-        _command "helm delete ${NAME}-${NAMESPACE} --purge"
-        helm delete ${NAME}-${NAMESPACE} --purge
+        _command "helm delete ${NAME}-${NAMESPACE} "
+        helm delete ${NAME}-${NAMESPACE} 
 
         sleep 2
     fi
@@ -1252,10 +1256,12 @@ _remote() {
                     --set secret.enabled=${SECRET} \
                     --set namespace=${NAMESPACE}
 
-    _command "helm ls ${NAME}-${NAMESPACE}"
-    helm ls ${NAME}-${NAMESPACE}
+    _helm_list
 
-    CNT=$(helm ls ${NAME}-${NAMESPACE} | wc -l | xargs)
+    _command "${HELM_LIST} ${NAME}-${NAMESPACE}"
+    eval ${HELM_LIST} ${NAME}-${NAMESPACE}
+
+    CNT=$(${HELM_LIST} ${_NM} | grep ${_NM} | wc -l | xargs)
     if [ "x${CNT}" == "x0" ]; then
         _error
     fi
@@ -1504,8 +1510,8 @@ _remove() {
         NAME="${SELECTED}"
     fi
 
-    _command "helm delete ${NAME} --purge"
-    helm delete ${NAME} --purge
+    _command "helm delete ${NAME} "
+    helm delete ${NAME} 
 }
 
 _clean() {

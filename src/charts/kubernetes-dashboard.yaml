@@ -1,0 +1,16 @@
+# chart-repo: kubernetes-dashboard/kubernetes-dashboard
+# chart-version: 4.0.2
+
+nameOverride: kubernetes-dashboard
+
+enableInsecureLogin: true
+
+service:
+  externalPort: 9090
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - kubernetes-dashboard.127.0.0.1.nip.io

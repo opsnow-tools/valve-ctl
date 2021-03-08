@@ -83,7 +83,7 @@ _off() {
     if [ ! -z ${PARAM_HELM} ]; then
         FIND_HELM=$(helm ls --all | grep -v "NAME" | grep -E ${PARAM_HELM} | awk '{print $1}')
         if [[ ${FIND_HELM} == ${PARAM_HELM} ]]; then
-            helm delete ${PARAM_HELM} --purge
+            helm delete ${PARAM_HELM} 
         else
             _error "There is no apps in local cluster. Use valve get --helm"
         fi

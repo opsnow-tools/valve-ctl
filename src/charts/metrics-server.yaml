@@ -1,0 +1,8 @@
+# chart-repo: bitnami/metrics-server
+# chart-version: 5.7.1
+
+nameOverride: metrics-server
+
+args:
+  - --kubelet-insecure-tls
+  - --kubelet-preferred-address-types=InternalIP,InternalDNS,ExternalDNS,ExternalIP,Hostname
