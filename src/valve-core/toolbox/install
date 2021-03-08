@@ -462,21 +462,23 @@ __helm_install() {
     _NS=$1
     _NM=$2
 
-    CNT=$(helm ls ${_NM} | wc -l | xargs)
+    _helm_list
+    CNT=$(${HELM_LIST} ${_NM} | grep ${_NM} | wc -l | xargs)
 
     if [ "x${CNT}" == "x0" ] || [ ! -z ${FORCE} ]; then
         CHART=/tmp/${_NM}.yaml
 
-        __get_yaml "charts/${_NM}" "${CHART}"
+        __get_yaml "${_NM}" "${CHART}"
 
+        CHART_REPO=$(cat ${CHART} | grep chart-repo | awk '{print $3}' | xargs)
         CHART_VERSION=$(cat ${CHART} | grep chart-version | awk '{print $3}' | xargs)
 
         if [ -z ${CHART_VERSION} ] || [ "${CHART_VERSION}" == "latest" ]; then
-            _command "helm upgrade --install ${_NM} stable/${_NM}"
-            command_chk_exitcode "helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART}"
+            _command "helm upgrade --install ${_NM} ${CHART_REPO}"
+            command_chk_exitcode "helm upgrade --install ${_NM} ${CHART_REPO} --namespace ${_NS} -f ${CHART}"
         else
-            _command "helm upgrade --install ${_NM} stable/${_NM} --version ${CHART_VERSION}"
-            command_chk_exitcode "helm upgrade --install ${_NM} stable/${_NM} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}"
+            _command "helm upgrade --install ${_NM} ${CHART_REPO} --version ${CHART_VERSION}"
+            command_chk_exitcode "helm upgrade --install ${_NM} ${CHART_REPO} --namespace ${_NS} -f ${CHART} --version ${CHART_VERSION}"
         fi
     fi
 }
@@ -485,17 +487,18 @@ __get_yaml() {
     _NAME=$1
     _DIST=$2
 
-    command_chk_exitcode "curl -sL https://raw.githubusercontent.com/${THIS_REPO}/${THIS_NAME}/master/${_NAME}.yaml > ${_DIST}"
+    command_chk_exitcode "cat ${CUR_DIR}/../../charts/${_NAME}.yaml > ${_DIST}"
 }
 
 __helm_delete() {
     _NM=$1
 
-    CNT=$(helm ls ${_NM} | wc -l | xargs)
+    _helm_list
+    CNT=$(${HELM_LIST} ${_NM} | grep ${_NM} | wc -l | xargs)
 
     if [ "x${CNT}" != "x0" ]; then
-        _command "helm delete ${_NM} --purge"
-        command_chk_exitcode "helm delete ${_NM} --purge"
+        _command "helm delete ${_NM} "
+        command_chk_exitcode "helm delete ${_NM} "
     fi
 }
 
@@ -607,14 +610,18 @@ __waiting_pod() {
 
 __helm_init() {
     _debug_mode
-    _command "helm init --upgrade"
-    command_chk_exitcode "helm init --upgrade"
+
+    # tiller
+    VERSION=$(helm version --client --short | cut -d'+' -f1)
+    if [[ $VERSION =~ "v3.0" ]]; then
+        _command "helm init --upgrade"
+        command_chk_exitcode "helm init --upgrade"
+
+        __waiting_pod "kube-system" "tiller"
+    fi
 
     _command "helm repo update"
     command_chk_exitcode "helm repo update"
-
-    # tiller
-    __waiting_pod "kube-system" "tiller"
 
     # _command "helm version"
     # helm version
@@ -624,7 +631,6 @@ __helm_init() {
         __helm_delete "docker-registry"
         __helm_delete "kubernetes-dashboard"
         __helm_delete "metrics-server"
-        __helm_delete "heapster"
     fi
 
     # namespace
@@ -634,7 +640,6 @@ __helm_init() {
     __helm_install "${NAMESPACE}" "docker-registry"
     __helm_install "${NAMESPACE}" "kubernetes-dashboard"
     __helm_install "${NAMESPACE}" "metrics-server"
-    __helm_install "${NAMESPACE}" "heapster"
 
     __waiting_pod "${NAMESPACE}" "docker-registry"
     __waiting_pod "${NAMESPACE}" "nginx-ingress"

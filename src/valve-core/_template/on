@@ -88,14 +88,16 @@ _run() {
 
 _on() {
     _debug_mode
+    _helm_list
+
     if [ ! -d charts ]; then
         _error "Not found charts"
     fi
 
-    __find_var    
+    __find_var
 
     # helm check FAILED
-    CNT=$(helm ls -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
+    CNT=$(${HELM_LIST} -a | grep ${NAME} | grep ${NAMESPACE} | grep -v "DEPLOYED" | wc -l | xargs)
     if [ "x${CNT}" != "x0" ]; then
         _error "Please use valve on -r / valve on --recreate. This App isn't deployed properly"
     fi
@@ -328,11 +330,12 @@ __helm_install() {
 
 __helm_cmd() {
     _debug_mode
+    _helm_list
     if [ "${PARAM_FLG}" == "ex" ]; then
-        _command "helm ls ${PARAM_CHART_NAME}-${NAMESPACE}"
-        command_chk_exitcode "helm ls ${PARAM_CHART_NAME}-${NAMESPACE}"
+        _command "${HELM_LIST} ${PARAM_CHART_NAME}-${NAMESPACE}"
+        command_chk_exitcode "${HELM_LIST} ${PARAM_CHART_NAME}-${NAMESPACE}"
 
-        CNT=$(helm ls ${PARAM_CHART_NAME}-${NAMESPACE} | wc -l | xargs)
+        CNT=$(${HELM_LIST} ${PARAM_CHART_NAME}-${NAMESPACE} | wc -l | xargs)
         if [ "x${CNT}" == "x0" ]; then
             _error
         fi
@@ -347,10 +350,10 @@ __helm_cmd() {
             command_chk_exitcode "kubectl get cm,secret -n ${NAMESPACE}"
         fi
     else
-        _command "helm ls ${NAME}-${NAMESPACE}"
-        command_chk_exitcode "helm ls ${NAME}-${NAMESPACE}"
+        _command "${HELM_LIST} ${NAME}-${NAMESPACE}"
+        command_chk_exitcode "${HELM_LIST} ${NAME}-${NAMESPACE}"
 
-        CNT=$(helm ls ${NAME}-${NAMESPACE} | wc -l | xargs)
+        CNT=$(${HELM_LIST} ${NAME}-${NAMESPACE} | wc -l | xargs)
         if [ "x${CNT}" == "x0" ]; then
             _error "Deploy app isn't work successfully. Try valve on -r / valve on --recreate"
         fi
@@ -411,13 +414,13 @@ __helm_delete() {
     # helm delete
     if [ "${PARAM_RE}" == "true" ]; then
         if [ "${PARAM_FLG}" == "ex" ]; then
-            _command "helm delete ${PARAM_CHART_NAME}-${NAMESPACE} --purge"
-            command_chk_exitcode "helm delete ${PARAM_CHART_NAME}-${NAMESPACE} --purge"
+            _command "helm delete ${PARAM_CHART_NAME}-${NAMESPACE} "
+            command_chk_exitcode "helm delete ${PARAM_CHART_NAME}-${NAMESPACE} "
 
             sleep 2
         else
-            _command "helm delete ${NAME}-${NAMESPACE} --purge"
-            command_chk_exitcode "helm delete ${NAME}-${NAMESPACE} --purge"
+            _command "helm delete ${NAME}-${NAMESPACE} "
+            command_chk_exitcode "helm delete ${NAME}-${NAMESPACE} "
 
             sleep 2
         fi

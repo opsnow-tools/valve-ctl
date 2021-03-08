@@ -1,0 +1,13 @@
+# chart-repo: nginx-stable/nginx-ingress
+# chart-version: 0.7.1
+
+nameOverride: nginx-ingress
+
+controller:
+  replicaCount: 1
+  service:
+    targetPorts:
+      http: http
+      https: http
+  config:
+    use-forwarded-headers: "true"

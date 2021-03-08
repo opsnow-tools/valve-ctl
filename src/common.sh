@@ -271,3 +271,12 @@ _install_sentry() {
     SENTRY_VERSION=$(sentry-cli --version | cut -d' ' -f2)
     # _echo "sentry version check : ${SENTRY_VERSION}"
 }
+
+_helm_list() {
+    HELM_VERSION=$(helm version --client --short | cut -d'+' -f1)
+    if [[ $HELM_VERSION =~ "v3.0" ]]; then
+        HELM_LIST="helm list"
+    else 
+        HELM_LIST="helm list -A -f"
+    fi
+}
