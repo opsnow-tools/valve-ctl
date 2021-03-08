@@ -583,8 +583,11 @@ _init() {
 }
 
 _helm_init() {
-    # _command "helm init --upgrade"
-    # helm init --upgrade
+    VERSION=$(helm version --client --short | cut -d'+' -f1)
+    if [[ $VERSION =~ "v3.0" ]]; then
+        _command "helm init --upgrade"
+        helm init --upgrade
+    fi
 
     _command "helm repo update"
     helm repo update
