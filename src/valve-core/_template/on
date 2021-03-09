@@ -88,12 +88,13 @@ _run() {
 
 _on() {
     _debug_mode
-    _helm_list
 
     if [ ! -d charts ]; then
+        __build
         _error "Not found charts"
     fi
 
+    _helm_list
     __find_var
 
     # helm check FAILED
@@ -227,6 +228,8 @@ __find_var() {
     # name
     if [ -d "charts" ]; then
         NAME="$(ls charts | head -1 | tr '/' ' ' | xargs)"
+    else
+        NAME="$(basename ${PWD})"
     fi
 
     LIST=/tmp/${THIS_NAME}-charts-ls
